@@ -1,6 +1,8 @@
 # raid.py
 
+import copy
 from decimal import Decimal, ROUND_HALF_UP
+import itertools
 import re
 from typing import Dict, Optional
 
@@ -64,7 +66,7 @@ async def call_raid_helper(message: discord.Message, embed_data: Dict, user: Opt
             except exceptions.FirstTimeUserError:
                 return add_reaction
         if not user_settings.bot_enabled or not user_settings.helper_raid_enabled: return add_reaction
-        enemies = {}
+        enemies_stats = {}
         field_enemies = ''
         for line in embed_data['field0']['value'].split('\n'):
             if 'none' in line.lower():
@@ -78,13 +80,13 @@ async def call_raid_helper(message: discord.Message, embed_data: Dict, user: Opt
                 enemy_hp_max = int(enemy_data_match.group(4))
                 enemy_power = (
                     (strings.WORKER_STATS[enemy_type]['speed'] + strings.WORKER_STATS[enemy_type]['strength'] + strings.WORKER_STATS[enemy_type]['intelligence'])
-                    * (1 + (strings.WORKER_TYPES.index(enemy_type) + 1) / 4) * (1 + enemy_level / 2.5)
+                    * (1 + (strings.WORKER_TYPES.index(enemy_type) + 1) / 4) * (1 + enemy_level / 2.5) * (enemy_hp_max / 100)
                 )
                 enemy_power = int(Decimal(enemy_power).quantize(Decimal(1), rounding=ROUND_HALF_UP))
-                enemies[enemy_type] = {
+                enemies_stats[enemy_type] = {
                     'level': enemy_level,
                     'power': enemy_power,
-                    'hp_current': enemy_hp_current,
+                    'power_remaining': enemy_power,
                     'hp_max': enemy_hp_max
                 }
                 enemy_emoji = getattr(emojis, f'WORKER_{enemy_type}'.upper(), emojis.WARNING)
@@ -94,6 +96,7 @@ async def call_raid_helper(message: discord.Message, embed_data: Dict, user: Opt
             )
         user_workers = await workers.get_user_workers(user.id)
         field_workers = ''
+        workers_power = {}
         for worker_type in strings.WORKER_TYPES:
             for user_worker in user_workers:
                 if user_worker.worker_name == worker_type:
@@ -104,6 +107,7 @@ async def call_raid_helper(message: discord.Message, embed_data: Dict, user: Opt
                   + strings.WORKER_STATS[worker.worker_name]['intelligence']))
                 * (1 + (strings.WORKER_TYPES.index(worker.worker_name) + 1) / 4) * (1 + worker.worker_level / 2.5)
             )
+            workers_power[worker.worker_name] = worker_power
             worker_emoji = getattr(emojis, f'WORKER_{worker.worker_name}'.upper(), emojis.WARNING)
             field_workers = (
                 f'{field_workers}\n'
@@ -115,9 +119,63 @@ async def call_raid_helper(message: discord.Message, embed_data: Dict, user: Opt
             value = field_workers.strip()
         )
         embed.add_field(
-            name = 'Your enemies',
+            name = 'Enemy farms',
             value = field_enemies.strip()
         )
+
+        workers_by_power = dict(sorted(workers_power.items(), key=lambda x:x[1]))
+        remaining_workers = workers_by_power.copy()
+        worker_solution = {}
+        possible_solutions = []
+        for enemy_stats in enemies_stats.values():
+            worker_found = False
+            for worker_name, power in remaining_workers.copy().items():
+                if power >= enemy_stats['power']:
+                    worker_solution[worker_name] = power
+                    del remaining_workers[worker_name]
+                    worker_found = True
+                    break
+            if worker_found: continue
+            permutations = list(itertools.permutations(list(remaining_workers.keys())))
+            possible_solutions = []
+            for permutation in permutations:
+                possible_solutions.append(list(worker_solution.keys()) + list(permutation))
+            break
+        if possible_solutions:    
+            best_solution = []
+            for possible_solution in possible_solutions:
+                enemies_stats_copy = copy.deepcopy(enemies_stats)
+                for worker_name in possible_solution:    
+                    for enemy_type, enemy_stats in enemies_stats_copy.items():
+                        if enemies_stats_copy[enemy_type]['power_remaining'] == 0: continue
+                        power_remaining = enemies_stats_copy[enemy_type]['power_remaining'] - workers_by_power[worker_name]
+                        if power_remaining < 0: power_remaining = 0
+                        enemies_stats_copy[enemy_type]['power_remaining'] = power_remaining
+                        break
+                    killed_enemies = len([enemy_stats for enemy_stats in enemies_stats_copy.values() if enemy_stats['power_remaining'] == 0])
+                    if killed_enemies >= len(enemies_stats_copy.keys()): break
+                if best_solution:
+                    if killed_enemies > best_solution[0]:
+                        best_solution = [killed_enemies, possible_solution]
+                else:
+                    best_solution = [killed_enemies, possible_solution]
+                if killed_enemies >= len(enemies_stats.keys()): break
+            worker_solution = {worker_name: workers_by_power[worker_name] for worker_name in best_solution[1]}
+        field_solution = ''
+        for worker_name, power in worker_solution.items():
+            worker_emoji = getattr(emojis, f'WORKER_{worker_name}'.upper(), emojis.WARNING)
+            field_solution = worker_emoji if field_solution == '' else f'{field_solution} ➜ {worker_emoji}'
+        embed.add_field(
+            name = 'Calculated solution',
+            value = field_solution.strip(),
+            inline = False
+        )
+            
+        
+                    
+        
+
+        
         await message.reply(embed=embed)
 
 
