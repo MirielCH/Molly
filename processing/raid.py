@@ -4,7 +4,7 @@ import copy
 from decimal import Decimal, ROUND_HALF_UP
 import itertools
 import re
-from typing import Dict, Optional
+from typing import Dict, Optional, Tuple
 
 import discord
 from discord import utils
@@ -38,6 +38,74 @@ async def call_raid_helper(message: discord.Message, embed_data: Dict, user: Opt
     - True if a logo reaction should be added to the message
     - False otherwise
     """
+    async def calculate_best_solution(workers_power: Dict[str, int], enemies_power: Dict[str, int]) -> Tuple[int, Dict[str, int]]:
+            """Calculates the best solution for a raid and returns a dictionary with the worker names and their power.
+            The calculation returns the first solution that kills all enemies as there is no point in checking other
+            solutions after that.
+
+            Arguments
+            ---------
+            workers_power: Dict[worker_name: worker_power]
+            enemies_power: Dict[enemy_name: enemy_power_remaining]
+
+            Returns
+            -------
+            Tuple with the amount of killed enemies (int) and the solution (Dict[worker_name: worker_power])
+
+            """
+            workers_by_power = dict(sorted(workers_power.items(), key=lambda x:x[1]))
+            remaining_workers = copy.deepcopy(workers_by_power)
+            worker_solution = {}
+            used_workers = {}
+            possible_solutions = []
+            killed_enemies = 0
+            for enemy_name, enemy_power in enemies_power.items():
+                worker_found = False
+                for worker_name, power in remaining_workers.copy().items():
+                    if power >= enemy_power:
+                        used_workers[worker_name] = power
+                        del remaining_workers[worker_name]
+                        worker_found = True
+                        killed_enemies += 1
+                        break
+                if worker_found: continue
+                permutations = list(itertools.permutations(list(remaining_workers.keys())))
+                possible_solutions = []
+                for permutation in permutations:
+                    possible_solutions.append(list(used_workers.keys()) + list(permutation))
+                break
+            if possible_solutions:    
+                best_solution = []
+                for possible_solution in possible_solutions:
+                    enemies_powers_copy = copy.deepcopy(enemies_power)
+                    for worker_name in possible_solution:    
+                        for enemy_name, enemy_power in enemies_powers_copy.items():
+                            if enemy_power == 0: continue
+                            worker_power = workers_by_power[worker_name]
+                            power_remaining = enemies_powers_copy[enemy_name] - worker_power
+                            used_workers[worker_name] = worker_power
+                            if power_remaining < 0: power_remaining = 0
+                            enemies_powers_copy[enemy_name] = power_remaining
+                            break
+                        killed_enemies = len([enemy_name for enemy_name, enemy_power in enemies_powers_copy.items() if enemy_power == 0])
+                        if killed_enemies >= len(enemies_powers_copy.keys()): break
+                    if best_solution:
+                        if killed_enemies > best_solution[0]:
+                            best_solution = [killed_enemies, possible_solution]
+                    else:
+                        best_solution = [killed_enemies, possible_solution]
+                    if killed_enemies >= len(enemies_power.keys()): break
+                killed_enemies = best_solution[0]
+            for x in range(empty_fields_found):
+                if len(used_workers) < len(workers_power):
+                    for worker_name, worker_power in workers_power.items():
+                        if worker_name not in used_workers:
+                            used_workers[worker_name] = worker_power
+                            break
+                    
+                #worker_solution = {worker_name: workers_by_power[worker_name] for worker_name in best_solution[1]}
+            return (killed_enemies, used_workers)
+    
     add_reaction = False
     search_strings = [
         'farms will be raided in order', #English
@@ -68,10 +136,12 @@ async def call_raid_helper(message: discord.Message, embed_data: Dict, user: Opt
         if not user_settings.bot_enabled or not user_settings.helper_raid_enabled: return add_reaction
         enemies_stats = {}
         field_enemies = ''
+        empty_fields_found = 0
         for line in embed_data['field0']['value'].split('\n'):
             if 'none' in line.lower():
                  enemy_emoji = emojis.NONE
                  enemy_power = 0
+                 empty_fields_found += 1
             else:
                 enemy_data_match = re.search(r'<a:(.+?)worker.+lv(\d+) \|.+`(\d+)/(\d+)`', line.lower())
                 enemy_type = enemy_data_match.group(1)
@@ -89,7 +159,7 @@ async def call_raid_helper(message: discord.Message, embed_data: Dict, user: Opt
                     'power_remaining': enemy_power,
                     'hp_max': enemy_hp_max
                 }
-                enemy_emoji = getattr(emojis, f'WORKER_{enemy_type}'.upper(), emojis.WARNING)
+                enemy_emoji = getattr(emojis, f'WORKER_{enemy_type}_A'.upper(), emojis.WARNING)
             field_enemies = (
                 f'{field_enemies}\n'
                 f'{enemy_emoji} - **{enemy_power}** {emojis.WORKER_POWER}'
@@ -98,17 +168,19 @@ async def call_raid_helper(message: discord.Message, embed_data: Dict, user: Opt
         field_workers = ''
         workers_power = {}
         for worker_type in strings.WORKER_TYPES:
+            worker = None
             for user_worker in user_workers:
                 if user_worker.worker_name == worker_type:
                     worker = user_worker
                     break
+            if worker is None: continue
             worker_power = round(
                 ((strings.WORKER_STATS[worker.worker_name]['speed'] + strings.WORKER_STATS[worker.worker_name]['strength']
                   + strings.WORKER_STATS[worker.worker_name]['intelligence']))
                 * (1 + (strings.WORKER_TYPES.index(worker.worker_name) + 1) / 4) * (1 + worker.worker_level / 2.5)
             )
             workers_power[worker.worker_name] = worker_power
-            worker_emoji = getattr(emojis, f'WORKER_{worker.worker_name}'.upper(), emojis.WARNING)
+            worker_emoji = getattr(emojis, f'WORKER_{worker.worker_name}_A'.upper(), emojis.WARNING)
             field_workers = (
                 f'{field_workers}\n'
                 f'{worker_emoji} - **{worker_power}** {emojis.WORKER_POWER}'
@@ -122,54 +194,26 @@ async def call_raid_helper(message: discord.Message, embed_data: Dict, user: Opt
             name = 'Enemy farms',
             value = field_enemies.strip()
         )
-
-        workers_by_power = dict(sorted(workers_power.items(), key=lambda x:x[1]))
-        remaining_workers = workers_by_power.copy()
-        worker_solution = {}
-        possible_solutions = []
-        for enemy_stats in enemies_stats.values():
-            worker_found = False
-            for worker_name, power in remaining_workers.copy().items():
-                if power >= enemy_stats['power']:
-                    worker_solution[worker_name] = power
-                    del remaining_workers[worker_name]
-                    worker_found = True
-                    break
-            if worker_found: continue
-            permutations = list(itertools.permutations(list(remaining_workers.keys())))
-            possible_solutions = []
-            for permutation in permutations:
-                possible_solutions.append(list(worker_solution.keys()) + list(permutation))
-            break
-        if possible_solutions:    
-            best_solution = []
-            for possible_solution in possible_solutions:
-                enemies_stats_copy = copy.deepcopy(enemies_stats)
-                for worker_name in possible_solution:    
-                    for enemy_type, enemy_stats in enemies_stats_copy.items():
-                        if enemies_stats_copy[enemy_type]['power_remaining'] == 0: continue
-                        power_remaining = enemies_stats_copy[enemy_type]['power_remaining'] - workers_by_power[worker_name]
-                        if power_remaining < 0: power_remaining = 0
-                        enemies_stats_copy[enemy_type]['power_remaining'] = power_remaining
-                        break
-                    killed_enemies = len([enemy_stats for enemy_stats in enemies_stats_copy.values() if enemy_stats['power_remaining'] == 0])
-                    if killed_enemies >= len(enemies_stats_copy.keys()): break
-                if best_solution:
-                    if killed_enemies > best_solution[0]:
-                        best_solution = [killed_enemies, possible_solution]
-                else:
-                    best_solution = [killed_enemies, possible_solution]
-                if killed_enemies >= len(enemies_stats.keys()): break
-            worker_solution = {worker_name: workers_by_power[worker_name] for worker_name in best_solution[1]}
-        field_solution = ''
+        enemies_power = {enemy_name: enemy_stats['power'] for enemy_name, enemy_stats in enemies_stats.items()}
+        killed_enemies, worker_solution = await calculate_best_solution(workers_power, enemies_power)
+        worker_emojis = {}
         for worker_name, power in worker_solution.items():
-            worker_emoji = getattr(emojis, f'WORKER_{worker_name}'.upper(), emojis.WARNING)
-            field_solution = worker_emoji if field_solution == '' else f'{field_solution} ➜ {worker_emoji}'
-        embed.add_field(
-            name = 'Calculated solution',
-            value = field_solution.strip(),
+            worker_emojis[worker_name] = getattr(emojis, f'WORKER_{worker_name}_S'.upper(), emojis.WARNING)
+        killed_enemies = 'all' if killed_enemies >= len(enemies_power.keys()) else killed_enemies
+        field_solution = ''
+        for worker_name, emoji in worker_emojis.items():
+            field_solution = emoji if field_solution == '' else f'{field_solution} ➜ {emoji}'
+        embed.insert_field_at(
+            0,
+            name = 'Solution',
+            value = f'{field_solution.strip()}\n{emojis.BLANK}',
             inline = False
         )
+        embed.set_footer(text=f'You can kill {killed_enemies} enemies')
+
+
+        # Wait for edits. Get last used  If correct choice was taken, cross out worker, move on with current solution.
+        # If not, recalculate and present new solution
             
         
                     

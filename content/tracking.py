@@ -118,7 +118,7 @@ async def design_field(timeframe: timedelta, user: discord.Member) -> str:
         f'{emojis.BP} **{report.roll_amount:,} rolls**'
     )
     for worker_name, worker_amount in report.workers.items():
-        worker_emoji = getattr(emojis, f'WORKER_{worker_name}'.upper(), emojis.WARNING)
+        worker_emoji = getattr(emojis, f'WORKER_{worker_name}_A'.upper(), emojis.WARNING)
         detail_emoji = emojis.DETAIL if worker_name == list(report.workers.keys())[-1] else emojis.DETAIL2
         try:
             percentage = round(worker_amount / report.roll_amount * 100, 2)

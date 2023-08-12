@@ -98,7 +98,7 @@ async def call_teamraid_helper(message: discord.Message, embed_data: Dict, user:
                 'hp_current': enemy_hp_current,
                 'hp_max': enemy_hp_max
             }
-            enemy_emoji = getattr(emojis, f'WORKER_{enemy_type}'.upper(), emojis.WARNING)
+            enemy_emoji = getattr(emojis, f'WORKER_{enemy_type}_A'.upper(), emojis.WARNING)
             field_enemies = (
                 f'{field_enemies}\n'
                 f'{enemy_emoji} - **{enemy_power}** {emojis.WORKER_POWER}'
@@ -116,7 +116,7 @@ async def call_teamraid_helper(message: discord.Message, embed_data: Dict, user:
             except exceptions.FirstTimeUserError:
                 user_settings = user_workers = None
             for worker_type in teamraid_users_workers[teamraid_user.name]:
-                worker_emoji = getattr(emojis, f'WORKER_{worker_type}'.upper(), emojis.WARNING)
+                worker_emoji = getattr(emojis, f'WORKER_{worker_type}_A'.upper(), emojis.WARNING)
                 if user_workers is None:
                     current_worker = f'{worker_emoji} - **?** {emojis.WORKER_POWER}'    
                 else:

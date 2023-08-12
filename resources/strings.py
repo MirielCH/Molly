@@ -201,13 +201,13 @@ TRACKED_WORKER_TYPES = (
  ) # Sorted by rarity
 
 TRACKED_ITEMS_EMOJIS = {
-    'worker-useless': emojis.WORKER_USELESS,
-    'worker-deficient': emojis.WORKER_DEFICIENT,
-    'worker-common': emojis.WORKER_COMMON,
-    'worker-talented': emojis.WORKER_TALENTED,
-    'worker-wise': emojis.WORKER_WISE,
-    'worker-expert': emojis.WORKER_EXPERT,
-    'worker-masterful': emojis.WORKER_MASTERFUL,
+    'worker-useless': emojis.WORKER_USELESS_A,
+    'worker-deficient': emojis.WORKER_DEFICIENT_A,
+    'worker-common': emojis.WORKER_COMMON_A,
+    'worker-talented': emojis.WORKER_TALENTED_A,
+    'worker-wise': emojis.WORKER_WISE_A,
+    'worker-expert': emojis.WORKER_EXPERT_A,
+    'worker-masterful': emojis.WORKER_MASTERFUL_A,
  }
 
 WORKER_TYPES = (
