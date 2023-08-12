@@ -89,23 +89,6 @@ class DeleteCustomReminderSelect(discord.ui.Select):
         await interaction.response.edit_message(embed=embed, view=self.view)
 
 
-class ToggleTimestampsButton(discord.ui.Button):
-    """Button to toggle reminder list between timestamps and timestrings"""
-    def __init__(self, label: str):
-        super().__init__(style=discord.ButtonStyle.grey, custom_id='toggle_timestamps', label=label,
-                         emoji=None, row=1)
-
-    async def callback(self, interaction: discord.Interaction) -> None:
-        self.view.show_timestamps = not self.view.show_timestamps
-        if self.view.show_timestamps:
-            self.label = 'Show time left'
-        else:
-            self.label = 'Show end time'
-        embed = await self.view.embed_function(self.view.bot, self.view.user, self.view.user_settings,
-                                               self.view.user_reminders, self.view.show_timestamps)
-        await interaction.response.edit_message(embed=embed, view=self.view)
-
-
 # --- Settings: General ---
 class SwitchSettingsSelect(discord.ui.Select):
     """Select to switch between settings embeds"""
@@ -137,7 +120,7 @@ class ManageClanSettingsSelect(discord.ui.Select):
                                             value='reset_channel', emoji=emojis.REMOVE))
         options.append(discord.SelectOption(label='Remove reminder role',
                                             value='reset_role', emoji=emojis.REMOVE))
-        super().__init__(placeholder='Change settings', min_values=1, max_values=1, options=options, row=row,
+        super().__init__(placeholder='Change reminder settings', min_values=1, max_values=1, options=options, row=row,
                          custom_id='manage_clan_settings')
 
     async def callback(self, interaction: discord.Interaction):
@@ -275,7 +258,35 @@ class SetClanReminderRoleSelect(discord.ui.Select):
             await interaction.message.edit(embed=embed, view=self.view)
         else:
             await interaction.response.edit_message(embed=embed, view=self.view)
-            
+
+
+# --- Settings: Helpers ---
+class ManageHelperSettingsSelect(discord.ui.Select):
+    """Select to change helper settings"""
+    def __init__(self, view: discord.ui.View, row: Optional[int] = None):
+        options = []
+        raid_helper_mode = 'compact mode' if not view.user_settings.helper_raid_compact_mode_enabled else 'full mode'
+        options.append(discord.SelectOption(label=f'Use raid guide in {raid_helper_mode}',
+                                            value='toggle_raid_guide_mode'))
+        super().__init__(placeholder='Change helper settings', min_values=1, max_values=1, options=options, row=row,
+                         custom_id='manage_helper_settings')
+
+    async def callback(self, interaction: discord.Interaction):
+        select_value = self.values[0]
+        if select_value == 'toggle_raid_guide_mode':
+            await self.view.user_settings.update(
+                helper_raid_compact_mode_enabled=not self.view.user_settings.helper_raid_compact_mode_enabled
+            )
+        for child in self.view.children.copy():
+            if isinstance(child, ManageHelperSettingsSelect):
+                self.view.remove_item(child)
+                self.view.add_item(ManageHelperSettingsSelect(self.view))
+                break
+        embed = await self.view.embed_function(self.view.bot, self.view.ctx, self.view.user_settings)
+        if interaction.response.is_done():
+            await interaction.message.edit(embed=embed, view=self.view)
+        else:
+            await interaction.response.edit_message(embed=embed, view=self.view)   
 
 # --- Settings: Reminders ---
 class ManageReminderSettingsSelect(discord.ui.Select):
@@ -672,33 +683,15 @@ class ManageUserSettingsSelect(discord.ui.Select):
             await interaction.response.edit_message(embed=embed, view=self.view)
 
 
-class SetDonorTierSelect(discord.ui.Select):
-    """Select to set a donor tier"""
-    def __init__(self, view: discord.ui.View, placeholder: str, donor_type: Optional[str] = 'user',
-                 disabled: Optional[bool] = False, row: Optional[int] = None):
-        self.donor_type = donor_type
-        options = []
-        for index, donor_tier in enumerate(list(strings.DONOR_TIERS_EMOJIS.keys())):
-            options.append(discord.SelectOption(label=donor_tier, value=str(index),
-                                                emoji=strings.DONOR_TIERS_EMOJIS[donor_tier]))
-        super().__init__(placeholder=placeholder, min_values=1, max_values=1, options=options, disabled=disabled,
-                         row=row, custom_id=f'set_{donor_type}_donor_tier')
-
-    async def callback(self, interaction: discord.Interaction):
-        select_value = self.values[0]
-        await self.view.user_settings.update(donor_tier=int(select_value))
-        embed = await self.view.embed_function(self.view.bot, self.view.ctx, self.view.user_settings)
-        await interaction.response.edit_message(embed=embed, view=self.view)
-
-
 class ToggleServerSettingsSelect(discord.ui.Select):
     """Toggle select that shows and toggles the status of server settings."""
     def __init__(self, view: discord.ui.View, toggled_settings: Dict[str, str], placeholder: str,
                  custom_id: Optional[str] = 'toggle_server_settings', row: Optional[int] = None):
         self.toggled_settings = toggled_settings
         options = []
-        options.append(discord.SelectOption(label='Enable all', value='enable_all', emoji=None))
-        options.append(discord.SelectOption(label='Disable all', value='disable_all', emoji=None))
+        if len(toggled_settings) > 1:
+            options.append(discord.SelectOption(label='Enable all', value='enable_all', emoji=None))
+            options.append(discord.SelectOption(label='Disable all', value='disable_all', emoji=None))
         for label, setting in toggled_settings.items():
             setting_enabled = getattr(view.guild_settings, setting)
             if isinstance(setting_enabled, guilds.EventPing):
@@ -735,18 +728,17 @@ class ToggleServerSettingsSelect(discord.ui.Select):
         await interaction.response.edit_message(embed=embed, view=self.view)
 
         
-class ToggleUserSettingsSelect(discord.ui.Select):
-    """Toggle select that shows and toggles the status of user settings (except alerts)."""
+class ToggleClanSettingsSelect(discord.ui.Select):
+    """Toggle select that shows and toggles the status of clan settings."""
     def __init__(self, view: discord.ui.View, toggled_settings: Dict[str, str], placeholder: str,
-                 custom_id: Optional[str] = 'toggle_user_settings', row: Optional[int] = None):
+                 custom_id: Optional[str] = 'toggle_clan_settings', row: Optional[int] = None):
         self.toggled_settings = toggled_settings
         options = []
-        options.append(discord.SelectOption(label='Enable all', value='enable_all', emoji=None))
-        options.append(discord.SelectOption(label='Disable all', value='disable_all', emoji=None))
+        if len(toggled_settings) > 1:
+            options.append(discord.SelectOption(label='Enable all', value='enable_all', emoji=None))
+            options.append(discord.SelectOption(label='Disable all', value='disable_all', emoji=None))
         for label, setting in toggled_settings.items():
-            setting_enabled = getattr(view.user_settings, setting)
-            if isinstance(setting_enabled, users.UserReminder):
-                setting_enabled = getattr(setting_enabled, 'enabled')
+            setting_enabled = getattr(view.clan_settings, setting)
             emoji = emojis.ENABLED if setting_enabled else emojis.DISABLED
             options.append(discord.SelectOption(label=label, value=setting, emoji=emoji))
         super().__init__(placeholder=placeholder, min_values=1, max_values=1, options=options, row=row,
@@ -762,12 +754,63 @@ class ToggleUserSettingsSelect(discord.ui.Select):
                     setting = f'{setting}_enabled'
                 kwargs[setting] = enabled
         else:
+            setting_value = getattr(self.view.clan_settings, select_value)
+            new_setting_value = not setting_value
+            if not select_value.endswith('_enabled'):
+                select_value = f'{select_value}_enabled'
+            kwargs[select_value] = new_setting_value
+        await self.view.clan_settings.update(**kwargs)
+        for child in self.view.children.copy():
+            if child.custom_id == self.custom_id:
+                self.view.remove_item(child)
+                self.view.add_item(ToggleClanSettingsSelect(self.view, self.toggled_settings,
+                                                            self.placeholder, self.custom_id))
+                break
+        embed = await self.view.embed_function(self.view.bot, self.view.ctx, self.view.clan_settings)
+        await interaction.response.edit_message(embed=embed, view=self.view)
+        if new_setting_value and select_value == 'helper_teamraid_enabled':
+            await interaction.followup.send(
+                f'To use the teamraid guide, please use '
+                f'{await functions.get_game_command(self.view.user_settings, "worker stats")} to update your workers.',
+                ephemeral=True
+            )
+
+            
+class ToggleUserSettingsSelect(discord.ui.Select):
+    """Toggle select that shows and toggles the status of user settings (except alerts)."""
+    def __init__(self, view: discord.ui.View, toggled_settings: Dict[str, str], placeholder: str,
+                 custom_id: Optional[str] = 'toggle_user_settings', row: Optional[int] = None):
+        self.toggled_settings = toggled_settings
+        options = []
+        if len(toggled_settings) > 1:
+            options.append(discord.SelectOption(label='Enable all', value='enable_all', emoji=None))
+            options.append(discord.SelectOption(label='Disable all', value='disable_all', emoji=None))
+        for label, setting in toggled_settings.items():
+            setting_enabled = getattr(view.user_settings, setting)
+            if isinstance(setting_enabled, users.UserReminder):
+                setting_enabled = getattr(setting_enabled, 'enabled')
+            emoji = emojis.ENABLED if setting_enabled else emojis.DISABLED
+            options.append(discord.SelectOption(label=label, value=setting, emoji=emoji))
+        super().__init__(placeholder=placeholder, min_values=1, max_values=1, options=options, row=row,
+                         custom_id=custom_id)
+
+    async def callback(self, interaction: discord.Interaction):
+        select_value = self.values[0]
+        kwargs = {}
+        if select_value in ('enable_all','disable_all'):
+            new_setting_value = True if select_value == 'enable_all' else False
+            for setting in self.toggled_settings.values():
+                if not setting.endswith('_enabled'):
+                    setting = f'{setting}_enabled'
+                kwargs[setting] = new_setting_value
+        else:
             setting_value = getattr(self.view.user_settings, select_value)
+            new_setting_value = not setting_value
             if isinstance(setting_value, users.UserReminder):
                 setting_value = getattr(setting_value, 'enabled')
             if not select_value.endswith('_enabled'):
                 select_value = f'{select_value}_enabled'
-            kwargs[select_value] = not setting_value
+            kwargs[select_value] = new_setting_value
         await self.view.user_settings.update(**kwargs)
         for child in self.view.children.copy():
             if child.custom_id == self.custom_id:
@@ -777,6 +820,12 @@ class ToggleUserSettingsSelect(discord.ui.Select):
                 break
         embed = await self.view.embed_function(self.view.bot, self.view.ctx, self.view.user_settings)
         await interaction.response.edit_message(embed=embed, view=self.view)
+        if new_setting_value and 'helper_raid_enabled' in kwargs:
+            await interaction.followup.send(
+                f'To use the raid guide, please use '
+                f'{await functions.get_game_command(self.view.user_settings, "worker stats")} to update your workers.',
+                ephemeral=True
+            )
 
 
 # --- Tracking ---
@@ -982,14 +1031,3 @@ class SetClaimReminderTimeReminderList(discord.ui.Select):
         embed = await self.view.embed_function(self.view.bot, self.view.user, self.view.user_settings, 
                                                self.view.custom_reminders)
         await interaction.response.edit_message(embed=embed, view=self.view)
-
-        
-class RandomRoleSelect(discord.ui.Select):
-    """Select to manage cooldowns"""
-    def __init__(self, view: discord.ui.View, row: Optional[int] = None):
-        super().__init__(placeholder='Select role', select_type=discord.ComponentType.role_select, row=row,
-                         custom_id='select_role')
-
-    async def callback(self, interaction: discord.Interaction):
-        select_value = self.values[0]
-        return

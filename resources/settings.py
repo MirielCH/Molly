@@ -16,7 +16,7 @@ ENV_VARIABLE_MISSING = (
 
 # Files and directories
 BOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DB_FILE = os.path.join(BOT_DIR, 'database/molly_db.db')
+DB_FILE = os.path.join(BOT_DIR, 'database/database.db')
 if os.path.isfile(DB_FILE):
     DATABASE = sqlite3.connect(DB_FILE, isolation_level=None, detect_types=sqlite3.PARSE_DECLTYPES)
 else:

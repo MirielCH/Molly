@@ -33,9 +33,9 @@ class RemindersCog(commands.Cog):
     async def reminders_list(
         self,
         ctx: discord.ApplicationContext,
-        user: Option(discord.User, 'User you want to check active reminders for', default=None),
+        user: Option(discord.User, 'User you want to check commands for', default=None),
     ) -> None:
-        """Lists all active reminders"""
+        """Lists your commands and active reminders"""
         await reminders_lists.command_list(self.bot, ctx, user)
 
     @commands.command(name='reminder', aliases=('rm','remind','add','add-reminder','rm-add','reminders-add','reminder-add'))

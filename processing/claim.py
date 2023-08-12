@@ -11,7 +11,7 @@ from database import users
 from resources import exceptions, regex, settings, views
 
 
-async def process_message(message: discord.Message, embed_data: Dict, user: Optional[discord.User] = None,
+async def process_message(bot: discord.Bot, message: discord.Message, embed_data: Dict, user: Optional[discord.User] = None,
                           user_settings: Optional[users.User] = None) -> bool:
     """Processes the message for all daily related actions.
 

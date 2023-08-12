@@ -162,7 +162,19 @@ async def command_purge_data(bot: discord.Bot, ctx: discord.ApplicationContext) 
                 interaction, content='Purging reminders...',
                 view=None
             )
-            cur.execute('DELETE FROM reminders WHERE user_id=?', (ctx.author.id,))
+            cur.execute('DELETE FROM user_reminders WHERE user_id=?', (ctx.author.id,))
+            await asyncio.sleep(1)
+            await functions.edit_interaction(
+                interaction, content='Purging worker data...',
+                view=None
+            )
+            cur.execute('DELETE FROM user_workers WHERE user_id=?', (ctx.author.id,))
+            await asyncio.sleep(1)
+            await functions.edit_interaction(
+                interaction, content='Purging upgrade data...',
+                view=None
+            )
+            cur.execute('DELETE FROM user_upgrades WHERE user_id=?', (ctx.author.id,))
             await asyncio.sleep(1)
             await functions.edit_interaction(
                 interaction, content='Purging tracking data... (this can take a while)',
@@ -179,7 +191,7 @@ async def command_purge_data(bot: discord.Bot, ctx: discord.ApplicationContext) 
             await functions.edit_interaction(
                 interaction,
                 content=(
-                    f'{emojis.ENABLED} **{ctx.author.display_name}**, you are now gone and forgotton. '
+                    f'{emojis.ENABLED} **{ctx.author.display_name}**, you are now gone and forgotten. '
                     f'Thanks for using me! Yeehaw! {emojis.LOGO}'
                 ),
                 view=None
@@ -220,7 +232,7 @@ async def command_settings_clan(bot: discord.Bot, ctx: discord.ApplicationContex
             )
             return
     if switch_view is not None: switch_view.stop()
-    view = views.SettingsClanView(ctx, bot, clan_settings, embed_settings_clan, commands_settings)
+    view = views.SettingsClanView(ctx, bot, clan_settings, user_settings, embed_settings_clan, commands_settings)
     embed = await embed_settings_clan(bot, ctx, clan_settings)
     if interaction is None:
         interaction = await ctx.respond(embed=embed, view=view)
@@ -351,6 +363,7 @@ async def command_settings_user(bot: discord.Bot, ctx: discord.ApplicationContex
 # --- Embeds ---
 async def embed_settings_clan(bot: discord.Bot, ctx: discord.ApplicationContext, clan_settings: clans.Clan) -> discord.Embed:
     """Clan settings embed"""
+    teamraid_enabled = await functions.bool_to_text(clan_settings.helper_teamraid_enabled)
     reminder_enabled = await functions.bool_to_text(clan_settings.reminder_enabled)
     if clan_settings.reminder_channel_id is not None:
         clan_channel = f'<#{clan_settings.reminder_channel_id}>'
@@ -372,6 +385,9 @@ async def embed_settings_clan(bot: discord.Bot, ctx: discord.ApplicationContext,
         f'{emojis.BP} **Guild role**: {clan_role}\n'
         f'{emojis.DETAIL} _This role will be pinged when the reminder fires._\n'
     )
+    helpers = (
+        f'{emojis.BP} **Teamraid guide**: {teamraid_enabled}\n'
+    )
     embed = discord.Embed(
         color = settings.EMBED_COLOR,
         title = f'{clan_settings.clan_name.upper()} guild settings',
@@ -382,16 +398,22 @@ async def embed_settings_clan(bot: discord.Bot, ctx: discord.ApplicationContext,
     )
     embed.add_field(name='Overview', value=overview, inline=False)
     embed.add_field(name='Reminder', value=reminder, inline=False)
+    embed.add_field(name='Helpers', value=helpers, inline=False)
     return embed
 
 
 async def embed_settings_helpers(bot: discord.Bot, ctx: discord.ApplicationContext, user_settings: users.User) -> discord.Embed:
     """Helper settings embed"""
+    raid_guide_mode = 'Compact' if user_settings.helper_raid_compact_mode_enabled else 'Full'
     helpers = (
         f'{emojis.BP} **Context commands**: {await functions.bool_to_text(user_settings.helper_context_enabled)}\n'
         f'{emojis.DETAIL} _Shows some helpful popups depending on context._\n'
         f'{emojis.BP} **Raid guide**: {await functions.bool_to_text(user_settings.helper_raid_enabled)}\n'
         f'{emojis.DETAIL} _Guides you through your raids._\n'
+    )
+    helper_settings = (
+        f'{emojis.BP} **Raid guide mode**: `{raid_guide_mode}`\n'
+        f'{emojis.DETAIL} _The compact mode only shows the guide and omits the farm lists._\n'
     )
     embed = discord.Embed(
         color = settings.EMBED_COLOR,
@@ -399,6 +421,7 @@ async def embed_settings_helpers(bot: discord.Bot, ctx: discord.ApplicationConte
         description = '_Settings to toggle some helpful little features._'
     )
     embed.add_field(name='Helpers', value=helpers, inline=False)
+    embed.add_field(name='Helper settings', value=helper_settings, inline=False)
     return embed
 
 

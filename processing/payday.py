@@ -19,7 +19,7 @@ UPGRADES_COST = {
     'payday keep': (0, 5_000, 25_000, 150_000, 1_000_000, 4_000_000, 25_000_000, 120_000_000),
     'farm life': (0, 5_000, 1_000_000, 1_000_000_000),
     'farm bundle': (0, 1, 10, 1_000),
-    'quality of life': (0, 10_000, 100_000_000),
+    'quality of life': (0, 10_000, 100_000),
 }
 
 UPGRADES_BONUSES = {
@@ -35,7 +35,7 @@ UPGRADES_BONUSES = {
 }
 
 
-async def process_message(message: discord.Message, embed_data: Dict, user: Optional[discord.User],
+async def process_message(bot: discord.Bot, message: discord.Message, embed_data: Dict, user: Optional[discord.User],
                           user_settings: Optional[users.User]) -> bool:
     """Processes the message for all /shop buy related actions.
 

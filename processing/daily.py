@@ -13,7 +13,7 @@ from database import reminders, users
 from resources import exceptions, functions, regex
 
 
-async def process_message(message: discord.Message, embed_data: Dict, user: Optional[discord.User],
+async def process_message(bot: discord.Bot, message: discord.Message, embed_data: Dict, user: Optional[discord.User],
                           user_settings: Optional[users.User]) -> bool:
     """Processes the message for all daily related actions.
 

@@ -15,6 +15,7 @@ from resources import exceptions, settings, strings
 class Clan():
     """Object that represents a record from table "clans"."""
     clan_name: str
+    helper_teamraid_enabled: bool
     leader_id: int
     member_ids: Tuple[int]
     reminder_channel_id: int
@@ -43,6 +44,7 @@ class Clan():
         All other values will stay on their old values before deletion (!).
         """
         new_settings = await get_clan_by_clan_name(self.clan_name)
+        self.helper_teamraid_enabled = new_settings.helper_teamraid_enabled
         self.leader_id = new_settings.leader_id
         self.member_ids = new_settings.member_ids
         self.reminder_channel_id = new_settings.reminder_channel_id
@@ -57,6 +59,7 @@ class Clan():
         ---------
         kwargs (column=value):
             clan_name: str
+            helper_teamraid_enabled: bool
             leader_id: int
             member_ids: Union[Tuple[int],List[int]] (up to 50)
             reminder_channel_id: int
@@ -99,6 +102,7 @@ async def _dict_to_clan(record: dict) -> Clan:
     try:
         clan = Clan(
             clan_name = clan_name,
+            helper_teamraid_enabled = bool(record['helper_teamraid_enabled']),
             leader_id = record['leader_id'],
             member_ids = clan_member_ids,
             reminder_channel_id = record['reminder_channel_id'],
@@ -304,6 +308,7 @@ async def _update_clan(clan_settings: Clan, **kwargs) -> None:
     clan_name: str
     kwargs (column=value):
         clan_name: str
+        helper_teamraid_enabled: bool
         leader_id: int
         member_ids: Union[Tuple[int],List[int]] (up to 50)
         reminder_channel_id: int

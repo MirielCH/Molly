@@ -7,7 +7,7 @@ import discord
 from database import guilds
 
 
-async def process_message(message: discord.Message, embed_data: Dict, guild_settings: guilds.Guild) -> bool:
+async def process_message(bot: discord.Bot, message: discord.Message, embed_data: Dict, guild_settings: guilds.Guild) -> bool:
     """Processes the message for all event related actions.
 
     Returns

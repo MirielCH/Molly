@@ -80,8 +80,8 @@ async def embed_reminders_list(bot: discord.Bot, user: discord.User, user_settin
         if time_produced >= timedelta(hours=24): time_produced = timedelta(hours=24)
         farms_full_in = user_settings.last_claim_time + (timedelta(hours=24) - user_settings.time_speeders_used * timedelta(hours=2))
         last_claim_time_timestamp = utils.format_dt(user_settings.last_claim_time, 'R')
-        time_produced_timespan = format_timespan(time_produced - timedelta(microseconds=time_produced.microseconds))
-        if time_produced >= timedelta(hours=24): time_produced_timespan = f'{emojis.WARNING}{time_produced_timespan}'
+        time_produced_timespan = f'`{format_timespan(time_produced - timedelta(microseconds=time_produced.microseconds))}`'
+        if time_produced >= timedelta(hours=24): time_produced_timespan = f'{emojis.WARNING}`{time_produced_timespan}`'
         if claim_reminder is not None:
             claim_reminder_end_time = utils.format_dt(claim_reminder.end_time, 'R')
         else:
@@ -115,7 +115,7 @@ async def embed_reminders_list(bot: discord.Bot, user: discord.User, user_settin
             value=(
                 f'{emojis.DETAIL2} **Last claim**: {last_claim_time_timestamp}\n'
                 f'{emojis.DETAIL2} **Time speeders used**: `{user_settings.time_speeders_used}`\n'
-                f'{emojis.DETAIL2} **Farm production time**: `{time_produced_timespan}`\n'
+                f'{emojis.DETAIL2} **Farm production time**: {time_produced_timespan}\n'
                 f'{emojis.DETAIL} **Farms at full capacity**: {farms_full_in_timestamp}\n'
             ).strip(),
             inline=False

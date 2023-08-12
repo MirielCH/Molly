@@ -1,5 +1,5 @@
 # detection.py
-"""Collects and parses Tree messages"""
+"""Collects and parses IDLE FARM messages"""
 
 import re
 from typing import Dict, Union
@@ -69,58 +69,58 @@ class DetectionCog(commands.Cog):
 
         # Raids
         if tracking_enabled:
-            add_reaction = await raid.process_message(message, embed_data, interaction_user, user_settings)
+            add_reaction = await raid.process_message(self.bot, message, embed_data, interaction_user, user_settings)
             return_values.append(add_reaction)
 
         # Claim Reminder
         if reminder_claim_enabled:
-            add_reaction = await claim.process_message(message, embed_data, interaction_user, user_settings)
+            add_reaction = await claim.process_message(self.bot, message, embed_data, interaction_user, user_settings)
             return_values.append(add_reaction)
 
         # Daily Reminder
         if reminder_daily_enabled:
-            add_reaction = await daily.process_message(message, embed_data, interaction_user, user_settings)
+            add_reaction = await daily.process_message(self.bot, message, embed_data, interaction_user, user_settings)
             return_values.append(add_reaction)
 
         # Use items
-        add_reaction = await use.process_message(message, embed_data, interaction_user, user_settings)
+        add_reaction = await use.process_message(self.bot, message, embed_data, interaction_user, user_settings)
         return_values.append(add_reaction)
         
         # Payday
         if helper_context_enabled:
-            add_reaction = await payday.process_message(message, embed_data, interaction_user, user_settings)
+            add_reaction = await payday.process_message(self.bot, message, embed_data, interaction_user, user_settings)
             return_values.append(add_reaction)
         
         # Buy items frop the shop
         if helper_context_enabled:
-            add_reaction = await buy.process_message(message, embed_data, interaction_user, user_settings)
+            add_reaction = await buy.process_message(self.bot, message, embed_data, interaction_user, user_settings)
             return_values.append(add_reaction)
 
         # Event pings
         if any([guild_settings.event_energy.enabled, guild_settings.event_hire.enabled,
                 guild_settings.event_lucky.enabled, guild_settings.event_packing.enabled]):
-            add_reaction = await events.process_message(message, embed_data, guild_settings)
+            add_reaction = await events.process_message(self.bot, message, embed_data, guild_settings)
             return_values.append(add_reaction)
             
         # Track upgrades
         if helper_context_enabled:
-            add_reaction = await upgrades.process_message(message, embed_data, interaction_user, user_settings)
+            add_reaction = await upgrades.process_message(self.bot, message, embed_data, interaction_user, user_settings)
             return_values.append(add_reaction)
             
         # Worker tracking
         if helper_raid_enabled:
-            add_reaction = await workers.process_message(message, embed_data, interaction_user, user_settings)
+            add_reaction = await workers.process_message(self.bot, message, embed_data, interaction_user, user_settings)
             return_values.append(add_reaction)
 
         # Clan reminders & updates
-        add_reaction = await clan.process_message(message, embed_data, interaction_user, user_settings)
+        add_reaction = await clan.process_message(self.bot, message, embed_data, interaction_user, user_settings)
         return_values.append(add_reaction)
-        add_reaction = await teamraid.process_message(message, embed_data, interaction_user, user_settings)
+        add_reaction = await teamraid.process_message(self.bot, message, embed_data, interaction_user, user_settings)
         return_values.append(add_reaction)
 
          # Energy Helper (testing)
         if True:
-            add_reaction = await profile.process_message(message, embed_data, interaction_user, user_settings)
+            add_reaction = await profile.process_message(self.bot, message, embed_data, interaction_user, user_settings)
             return_values.append(add_reaction)
 
         if any(return_values): await functions.add_logo_reaction(message)

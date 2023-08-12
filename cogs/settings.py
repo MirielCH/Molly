@@ -86,42 +86,12 @@ class SettingsCog(commands.Cog):
         """Turn off Navi (prefix version)"""
         await ctx.reply(f'Yeehaw! Please use {await functions.get_bot_slash_command(self.bot, "off")} to deactivate me.')
 
-    aliases_settings_user = (
-        'slashmentions','donor','donator','dnd','dnd-mode','last_rebirth','last-rebirth',
-        'lastrebirth','tracking','track'
-    )
-    @commands.command(name='slash-mentions', aliases=aliases_settings_user)
-    @commands.bot_has_permissions(send_messages=True, embed_links=True)
-    async def prefix_settings_user(self, ctx: commands.Context, *args: str) -> None:
-        """User settings (prefix version)"""
-        await ctx.reply(
-            f'Yeehaw! Please use {await functions.get_bot_slash_command(self.bot, "settings user")} '
-            f'to change user settings.'
-        )
-
-    @commands.command(name='message', aliases=('messages',))
-    @commands.bot_has_permissions(send_messages=True, embed_links=True)
-    async def prefix_settings_messages(self, ctx: commands.Context, *args: str) -> None:
-        """Message settings (prefix version)"""
-        await ctx.reply(
-            f'Yeehaw! Please use {await functions.get_bot_slash_command(self.bot, "settings messages")} '
-            f'to change your reminder messages.'
-        )
-
-    @commands.command(name='server')
-    @commands.bot_has_permissions(send_messages=True, embed_links=True)
-    async def prefix_settings_server(self, ctx: commands.Context, *args: str) -> None:
-        """Server settings (prefix version)"""
-        await ctx.reply(
-            f'Yeehaw! Please use {await functions.get_bot_slash_command(self.bot, "settings server")} '
-            f'to change server settings.'
-        )
-
     @commands.command(name='settings', aliases=('me','setting','set'))
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def prefix_settings(self, ctx: commands.Context, *args: str) -> None:
         """Settings (prefix version)"""
         await ctx.reply(
+            f'➜ {await functions.get_bot_slash_command(self.bot, "settings guild")}\n'
             f'➜ {await functions.get_bot_slash_command(self.bot, "settings helpers")}\n'
             f'➜ {await functions.get_bot_slash_command(self.bot, "settings messages")}\n'
             f'➜ {await functions.get_bot_slash_command(self.bot, "settings reminders")}\n'

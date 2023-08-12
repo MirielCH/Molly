@@ -91,7 +91,7 @@ async def embed_help(bot: discord.Bot, ctx: discord.ApplicationContext) -> disco
     """Main menu embed"""
     prefix = await guilds.get_prefix(ctx)
     commands_reminders = (
-        f'{emojis.BP} {await functions.get_bot_slash_command(bot, "list")} : Check your commands and reminders\n'
+        f'{emojis.BP} {await functions.get_bot_slash_command(bot, "reminders list")} : Check your commands and reminders\n'
         f'{emojis.DETAIL} _Aliases: `{prefix}list`, `{prefix}cd`_\n'
         f'{emojis.BP} {await functions.get_bot_slash_command(bot, "reminders add")} : Add a custom reminder\n'
         f'{emojis.DETAIL} _Aliases: `{prefix}reminder`, `{prefix}rm`_\n'
@@ -160,9 +160,6 @@ async def embed_about(bot: commands.Bot, api_latency: datetime) -> discord.Embed
         f'{emojis.BP} System CPU usage: {psutil.cpu_percent()}%\n'
         f'{emojis.BP} System RAM usage: {psutil.virtual_memory()[2]}%\n'
     )
-    thanks_to = (
-        f'{emojis.BP} [Karel Gott](https://www.youtube.com/watch?v=96tOPyuhuJs)'
-    )
     img_logo = discord.File(settings.IMG_LOGO, filename='logo.png')
     image_url = 'attachment://logo.png'
     embed = discord.Embed(
@@ -174,6 +171,5 @@ async def embed_about(bot: commands.Bot, api_latency: datetime) -> discord.Embed
     embed.add_field(name='Creator', value=creator, inline=False)
     embed.add_field(name='Avatar by', value=avatar, inline=False)
     embed.add_field(name='Dev stuff', value=dev_stuff, inline=False)
-    #embed.add_field(name='Special thanks to', value=thanks_to, inline=False)
     embed.set_thumbnail(url=image_url)
     return (img_logo, embed)

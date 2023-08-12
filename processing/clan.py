@@ -13,7 +13,7 @@ from database import clans, reminders, users
 from resources import exceptions, functions, regex, strings
 
 
-async def process_message(message: discord.Message, embed_data: Dict, user: Optional[discord.User] = None,
+async def process_message(bot: discord.Bot, message: discord.Message, embed_data: Dict, user: Optional[discord.User] = None,
                           user_settings: Optional[users.User] = None) -> bool:
     """Processes the message for all clan related actions.
 

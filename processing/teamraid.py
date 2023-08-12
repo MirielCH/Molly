@@ -15,7 +15,7 @@ from database import clans, reminders, users, workers
 from resources import emojis, exceptions, functions, regex, strings
 
 
-async def process_message(message: discord.Message, embed_data: Dict, user: Optional[discord.User],
+async def process_message(bot: discord.Bot, message: discord.Message, embed_data: Dict, user: Optional[discord.User],
                           user_settings: Optional[users.User]) -> bool:
     """Processes the message for all tracking related actions.
 
@@ -76,7 +76,7 @@ async def call_teamraid_helper(message: discord.Message, embed_data: Dict, user:
         try:
             clan_settings: clans.Clan = await clans.get_clan_by_member_id(user.id)
         except exceptions.NoDataFoundError: return add_reaction
-        #if not clan_settings.helper_teamraid_enabled: return add_reaction
+        if not clan_settings.helper_teamraid_enabled: return add_reaction
         enemy_name_match = re.search(r'\*\*(.+?) farms', embed_data['field0']['name'].lower())
         enemy_name = enemy_name_match.group(1).upper()
         enemies = {}
@@ -143,7 +143,7 @@ async def call_teamraid_helper(message: discord.Message, embed_data: Dict, user:
         embed.insert_field_at(
             index=1,
             name = clan_settings.clan_name.upper(),
-            value = '_Players not using Molly have their worker power shown as **?**._',
+            value = '_If a worker power shows as **?**, the player is not using Molly or has not shown me their workers list._',
             inline = False
         )
         await message.reply(embed=embed)

@@ -176,7 +176,7 @@ class SettingsClanView(discord.ui.View):
 
     """
     def __init__(self, ctx: discord.ApplicationContext, bot: discord.Bot, clan_settings: clans.Clan,
-                 embed_function: callable, commands_settings: Dict,
+                 user_settings: users.User, embed_function: callable, commands_settings: Dict,
                  interaction: Optional[discord.Interaction] = None):
         super().__init__(timeout=settings.INTERACTION_TIMEOUT)
         self.ctx = ctx
@@ -186,8 +186,13 @@ class SettingsClanView(discord.ui.View):
         self.interaction = interaction
         self.user = ctx.author
         self.clan_settings = clan_settings
+        self.user_settings = user_settings
+        toggled_settings = {
+            'Teamraid guide': 'helper_teamraid_enabled',
+        }
         self.add_item(components.ManageClanSettingsSelect(self))
         self.add_item(components.SetClanReminderRoleSelect(self))
+        self.add_item(components.ToggleClanSettingsSelect(self, toggled_settings, 'Toggle helpers', 'toggle_clan_helpers'))
         self.add_item(components.SwitchSettingsSelect(self, commands_settings))
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
@@ -235,6 +240,7 @@ class SettingsHelpersView(discord.ui.View):
             'Raid guide': 'helper_raid_enabled',
         }
         self.add_item(components.ToggleUserSettingsSelect(self, toggled_settings, 'Toggle helpers'))
+        self.add_item(components.ManageHelperSettingsSelect(self))
         self.add_item(components.SwitchSettingsSelect(self, commands_settings))
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
@@ -345,7 +351,6 @@ class SettingsRemindersView(discord.ui.View):
         }
 
         self.add_item(components.ManageReminderSettingsSelect(self))
-        self.add_item(components.RandomRoleSelect(self))
         self.add_item(components.ToggleUserSettingsSelect(self, toggled_settings_commands, 'Toggle reminders',
                                                           'toggle_command_reminders'))
         self.add_item(components.SwitchSettingsSelect(self, commands_settings))
@@ -499,7 +504,6 @@ class StatsView(discord.ui.View):
         else:
             await self.interaction_message.edit(view=self)
         self.stop()
-
 
 
 # --- Dev ---
