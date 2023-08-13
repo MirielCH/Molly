@@ -175,19 +175,19 @@ class MainCog(commands.Cog):
         startup_info = f'{self.bot.user.name} has connected to Discord!'
         print(startup_info)
         logs.logger.info(startup_info)
-        await self.bot.change_presence(activity=discord.Activity(type=discord.ActivityType.listening,
-                                                                 name='whatever'))
+        await self.bot.change_presence(activity=discord.Activity(type=discord.ActivityType.playing,
+                                                                 name='in your farm'))
     @commands.Cog.listener()
     async def on_guild_join(self, guild: discord.Guild) -> None:
         """Fires when bot joins a guild. Sends a welcome message to the system channel."""
         try:
             guild_settings: guilds.Guild = guilds.get_guild(guild.id)
             welcome_message = (
-                f'Yeehaw! **{guild.name}**! I\'m here to remind you to do your Tree commands!\n'
+                f'Yeehaw! **{guild.name}**! I\'m here to help you with your IDLE FARMs!\n'
                 f'Some of my commands have prefix versions. My current prefix for this server is '
                 f'`{guild_settings.prefix}`. You can change this in '
                 f'{await functions.get_bot_slash_command(self.bot, "settings server")}.\n\n'
-                f'Note that reminders are off by default. Playerst that want to get reminded, need to use '
+                f'Note that I\'m off by default. Players that want to use me, need to use '
                 f'{await functions.get_bot_slash_command(self.bot, "on")} to activate me.\n'
             )
             await guild.system_channel.send(welcome_message)

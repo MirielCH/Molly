@@ -97,17 +97,12 @@ async def track_worker_roll(message: discord.Message, embed_data: Dict, user: Op
                 user = embed_data['embed_user']
                 user_settings = embed_data['embed_user_settings']
             else:
-                user_id_match = re.search(regex.USER_ID_FROM_ICON_URL, embed_data['author']['icon_url'])
-                if user_id_match:
-                    user_id = int(user_id_match.group(1))
-                    user = message.guild.get_member(user_id)
-                else:
-                    user_name_match = re.search(regex.USERNAME_FROM_EMBED_AUTHOR, embed_data['author']['name'])
-                    user_name = user_name_match.group(1)
-                    user_command_message = (
-                        await messages.find_message(message.channel.id, regex.COMMAND_WORKER_HIRE, user_name=user_name)
-                    )
-                    user = user_command_message.author
+                user_name_match = re.search(regex.USERNAME_FROM_EMBED_AUTHOR, embed_data['author']['name'])
+                user_name = user_name_match.group(1)
+                user_command_message = (
+                    await messages.find_message(message.channel.id, regex.COMMAND_WORKER_HIRE, user_name=user_name)
+                )
+                user = user_command_message.author
         if user_settings is None:
             try:
                 user_settings: users.User = await users.get_user(user.id)
@@ -153,8 +148,9 @@ async def track_worker_roll(message: discord.Message, embed_data: Dict, user: Op
     return False
 
 
-async def track_worker_stats(message: discord.Message, embed_data: Dict, user: Optional[discord.User],
-                                  user_settings: Optional[users.User]) -> bool:
+async def track_worker_stats(message: discord.Message, embed_data: Dict,
+                             interaction_user: Optional[discord.User],
+                             user_settings: Optional[users.User]) -> bool:
     """Tacks workers from the worker stats overview embed
 
     Returns
@@ -167,28 +163,21 @@ async def track_worker_stats(message: discord.Message, embed_data: Dict, user: O
         '— workers', #English
     ]
     if any(search_string in embed_data['author']['name'].lower() for search_string in search_strings):
-        if user is None:
-            if embed_data['embed_user'] is not None:
-                user = embed_data['embed_user']
-                user_settings = embed_data['embed_user_settings']
-            else:
-                user_id_match = re.search(regex.USER_ID_FROM_ICON_URL, embed_data['author']['icon_url'])
-                if user_id_match:
-                    user_id = int(user_id_match.group(1))
-                    user = message.guild.get_member(user_id)
-                else:
-                    user_name_match = re.search(regex.USERNAME_FROM_EMBED_AUTHOR, embed_data['author']['name'])
-                    user_name = user_name_match.group(1)
-                    user_command_message = (
-                        await messages.find_message(message.channel.id, regex.COMMAND_WORKER_STATS, user_name=user_name)
-                    )
-                    user = user_command_message.author
+        if interaction_user is None:
+            user_name_match = re.search(regex.USERNAME_FROM_EMBED_AUTHOR, embed_data['author']['name'])
+            user_name = user_name_match.group(1)
+            user_command_message = (
+                await messages.find_message(message.channel.id, regex.COMMAND_WORKER_STATS, user_name=user_name)
+            )
+            if user_command_message is None: return add_reaction
+            interaction_user = user_command_message.author
+        if embed_data['embed_user'] != interaction_user: return add_reaction
         try:
-            user_settings: users.User = await users.get_user(user.id)
+            user_settings: users.User = await users.get_user(interaction_user.id)
         except exceptions.FirstTimeUserError:
             return add_reaction
         try:
-            clan_settings: clans.Clan = await clans.get_clan_by_member_id(user.id)
+            clan_settings: clans.Clan = await clans.get_clan_by_member_id(interaction_user.id)
         except exceptions.NoDataFoundError:
             clan_settings = None
         helper_teamraid_enabled = getattr(clan_settings, 'helper_teamraid_enabled', True)
@@ -202,16 +191,17 @@ async def track_worker_stats(message: discord.Message, embed_data: Dict, user: O
             amount = int(re.sub(r'\D','', worker_data_match.group(2)))
             workers_required = int(re.sub(r'\D','', worker_data_match.group(3)))
             try:
-                user_worker = await workers.get_user_worker(user.id, worker_name)
+                user_worker = await workers.get_user_worker(interaction_user.id, worker_name)
                 await user_worker.update(worker_level=level, worker_amount=amount)
             except exceptions.NoDataFoundError:
-                user_worker = await workers.insert_user_worker(user.id, worker_name, level, amount)
+                user_worker = await workers.insert_user_worker(interaction_user.id, worker_name, level, amount)
             try:
                 worker_level = await workers.get_worker_level(level + 1)
                 if worker_level.workers_required != workers_required:
                     await worker_level.update(workers_required=workers_required)
             except exceptions.NoDataFoundError:
                 worker_level = await workers.insert_worker_level(level, workers_required)
+        if user_settings.reactions_enabled: add_reaction = True
     return add_reaction
 
 

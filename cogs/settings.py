@@ -2,9 +2,10 @@
 """Contains settings commands"""
 
 import discord
-from discord.commands import SlashCommandGroup, slash_command
+from discord.commands import SlashCommandGroup, slash_command, Option
 from discord.ext import commands
 
+from database import clans
 from content import settings as settings_cmd
 from resources import functions
 

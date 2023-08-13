@@ -43,12 +43,12 @@ async def call_context_helper_on_energy_item(message: discord.Message, embed_dat
     
     if any(search_string in message.content.lower() for search_string in search_strings):
         if user is None:
-                user_name_match = re.search(regex.NAME_FROM_MESSAGE_START, message.content)
-                user_name = user_name_match.group(1)
-                user_command_message = (
-                    await messages.find_message(message.channel.id, regex.COMMAND_USE_ENERGY_ITEM, user_name=user_name)
-                )
-                user = user_command_message.author
+            user_name_match = re.search(regex.NAME_FROM_MESSAGE_START, message.content)
+            user_name = user_name_match.group(1)
+            user_command_message = (
+                await messages.find_message(message.channel.id, regex.COMMAND_USE_ENERGY_ITEM, user_name=user_name)
+            )
+            user = user_command_message.author
         if user_settings is None:
             try:
                 user_settings: users.User = await users.get_user(user.id)

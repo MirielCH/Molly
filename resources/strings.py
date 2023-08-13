@@ -175,6 +175,7 @@ SLASH_COMMANDS = {
     'guild list': '</guild list:1128414125433827348>',
     'open': '</open:1128412596131872768>',
     'payday': '</payday:1128412422437343273>',
+    'profile': '</profile:1128412334629589012>',
     'raid': '</raid:1128414124049698868>',
     'sell': '</sell:1128412513491484712>',
     'teamraid': '</teamraid:1128414207428268123>',
@@ -229,4 +230,25 @@ WORKER_STATS = {
     'wise': {'speed': 2.5, 'strength': 2, 'intelligence': 2.5},
     'expert': {'speed': 3, 'strength': 2.5, 'intelligence': 2.5},
     'masterful': {'speed': 3, 'strength': 3, 'intelligence': 3},
+}
+
+DONOR_TIER_ENERGY_MULTIPLIERS = {
+    'none': 1,
+    'common': 1.1,
+    'talented': 1.3,
+    'wise': 1.55,
+    'expert': 1.55,
+    'masterful': 1.55,
+}
+
+
+ENERGY_UPGRADE_LEVEL_MULTIPLIERS = {
+    0: 1,
+    1: 1.2,
+    2: 1.35,
+    3: 1.5,
+    4: 1.6,
+    5: 1.7,
+    6: 1.75,
+    7: 1.8,
 }

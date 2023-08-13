@@ -23,8 +23,10 @@ class User():
     dnd_mode_enabled: bool
     donor_tier: int
     helper_context_enabled: bool
+    helper_energy_enabled: bool
     helper_raid_enabled: bool
     helper_raid_compact_mode_enabled: bool
+    helper_upgrades_enabled: bool
     idlucks: int
     last_claim_time: datetime
     reactions_enabled: bool
@@ -47,8 +49,10 @@ class User():
         self.dnd_mode_enabled = new_settings.dnd_mode_enabled
         self.donor_tier = new_settings.donor_tier
         self.helper_context_enabled = new_settings.helper_context_enabled
+        self.helper_energy_enabled = new_settings.helper_energy_enabled
         self.helper_raid_enabled = new_settings.helper_raid_enabled
         self.helper_raid_compact_mode_enabled = new_settings.helper_raid_compact_mode_enabled
+        self.helper_upgrades_enabled = new_settings.helper_upgrades_enabled
         self.idlucks = new_settings.idlucks
         self.last_claim_time = new_settings.last_claim_time
         self.reactions_enabled = new_settings.reactions_enabled
@@ -74,8 +78,10 @@ class User():
             dnd_mode_enabled: bool
             donor_tier: int
             helper_context_enabled: bool
+            helper_energy_enabled: bool
             helper_raid_enabled: bool
             helper_raid_compact_mode_enabled: bool
+            helper_upgrades_enabled: bool
             idlucks: int
             last_claim_time: datetime UTC aware
             reactions_enabled: bool
@@ -121,8 +127,10 @@ async def _dict_to_user(record: dict) -> User:
             donor_tier = record['donor_tier'],
             last_claim_time = datetime.fromisoformat(record['last_claim_time']),
             helper_context_enabled = bool(record['helper_context_enabled']),
+            helper_energy_enabled = bool(record['helper_energy_enabled']),
             helper_raid_enabled = bool(record['helper_raid_enabled']),
             helper_raid_compact_mode_enabled = bool(record['helper_raid_compact_mode_enabled']),
+            helper_upgrades_enabled = bool(record['helper_upgrades_enabled']),
             idlucks = record['idlucks'],
             reactions_enabled = bool(record['reactions_enabled']),
             reminder_channel_id = record['reminder_channel_id'],
@@ -261,8 +269,10 @@ async def _update_user(user: User, **kwargs) -> None:
         dnd_mode_enabled: bool
         donor_tier: int
         helper_context_enabled: bool
+        helper_energy_enabled: bool
         helper_raid_enabled: bool
         helper_raid_compact_mode_enabled: bool
+        helper_upgrades_enabled: bool
         idlucks: int
         last_claim_time: datetime UTC aware
         reactions_enabled: bool

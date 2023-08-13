@@ -33,20 +33,22 @@ async def command_on(bot: discord.Bot, ctx: discord.ApplicationContext) -> None:
         answer = f'Yeehaw! Welcome back **{ctx.author.display_name}**!'
         await ctx.respond(answer)
     else:
+        field_first = (
+            f'Please do the following to properly use my features:\n'
+            f'{emojis.BP} Use {await functions.get_game_command(user_settings, "donate")} to set your donor tier\n'
+            f'{emojis.BP} Use {await functions.get_game_command(user_settings, "worker stats")} to update your workers\n'
+            f'{emojis.BP} Use {await functions.get_game_command(user_settings, "upgrades")} to update your upgrades\n'
+            f'{emojis.BP} Use {await functions.get_game_command(user_settings, "profile")} to update your idlucks\n'
+        )
+        field_tracking = (
+            f'I track your IDLE FARM workers, upgrades and count your rolls and raid points. Check '
+            f'{await functions.get_bot_slash_command(bot, "stats")} to see your rolls and raids.\n'
+            f'**__No personal data is processed or stored in any way!__**\n'
+            f'You can turn off features you don\'t want in the user settings.\n\n'
+        )
         field_settings = (
             f'To view and change your settings, click the button below or use '
             f'{await functions.get_bot_slash_command(bot, "settings user")}.'
-        )
-        field_tracking = (
-            f'I track some IDLE FARM commands. Check '
-            f'{await functions.get_bot_slash_command(bot, "stats")} to see what is tracked.\n'
-            f'**__No personal data is processed or stored in any way!__**\n'
-            f'You can opt-out of tracking in {await functions.get_bot_slash_command(bot, "stats")} '
-            f'or in your user settings.\n\n'
-        )
-        field_privacy = (
-            f'To read more about what data is processed and why, feel free to check the privacy policy found in '
-            f'{await functions.get_bot_slash_command(bot, "help")}.'
         )
         file_name = 'logo.png'
         img_logo = discord.File(settings.IMG_LOGO, filename=file_name)
@@ -59,9 +61,9 @@ async def command_on(bot: discord.Bot, ctx: discord.ApplicationContext) -> None:
             ),
             color =  settings.EMBED_COLOR,
         )
+        embed.add_field(name='First things first', value=field_first, inline=False)
         embed.add_field(name='Settings', value=field_settings, inline=False)
         embed.add_field(name='Command tracking', value=field_tracking, inline=False)
-        embed.add_field(name='Privacy policy', value=field_privacy, inline=False)
         embed.set_thumbnail(url=image_url)
         view = views.OneButtonView(ctx, discord.ButtonStyle.blurple, 'pressed', '➜ Settings')
         interaction = await ctx.respond(embed=embed, file=img_logo, view=view)
@@ -120,7 +122,9 @@ async def command_purge_data(bot: discord.Bot, ctx: discord.ApplicationContext) 
     answer = (
         f'{emojis.WARNING} **{ctx.author.display_name}**, this will purge your user data from Molly **completely** {emojis.WARNING}\n\n'
         f'This includes the following:\n'
-        f'{emojis.BP} All reminders\n'
+        f'{emojis.BP} Your reminders\n'
+        f'{emojis.BP} Your workers\n'
+        f'{emojis.BP} Your upgrades\n'
         f'{emojis.BP} Your complete tracking history\n'
         f'{emojis.BP} And finally, your user settings\n\n'
         f'**There is no coming back from this**.\n'
@@ -382,8 +386,9 @@ async def embed_settings_clan(bot: discord.Bot, ctx: discord.ApplicationContext,
         f'{emojis.BP} **Reminder**: {reminder_enabled}\n'
         f'{emojis.BP} **Reminder channel**: {clan_channel}\n'
         f'{emojis.DETAIL} _Reminders will always be sent to this channel._\n'
-        f'{emojis.BP} **Guild role**: {clan_role}\n'
-        f'{emojis.DETAIL} _This role will be pinged when the reminder fires._\n'
+        f'{emojis.BP} **Reminder role**: {clan_role}\n'
+        f'{emojis.DETAIL2} _This role will be pinged by the reminder._\n'
+        f'{emojis.DETAIL} _Requires `Manage Server` permission or approval._\n'
     )
     helpers = (
         f'{emojis.BP} **Teamraid guide**: {teamraid_enabled}\n'
@@ -406,8 +411,14 @@ async def embed_settings_helpers(bot: discord.Bot, ctx: discord.ApplicationConte
     """Helper settings embed"""
     raid_guide_mode = 'Compact' if user_settings.helper_raid_compact_mode_enabled else 'Full'
     helpers = (
+        f'{emojis.BP} **Affordable upgrades**: {await functions.bool_to_text(user_settings.helper_upgrades_enabled)}\n'
+        f'{emojis.DETAIL} _Shows your affordable upgrades when you use '
+        f'{await functions.get_game_command(user_settings, "payday")}._\n'
         f'{emojis.BP} **Context commands**: {await functions.bool_to_text(user_settings.helper_context_enabled)}\n'
-        f'{emojis.DETAIL} _Shows some helpful popups depending on context._\n'
+        f'{emojis.DETAIL} _Shows some helpful commands depending on context._\n'
+        f'{emojis.BP} **Energy stats**: {await functions.bool_to_text(user_settings.helper_energy_enabled)}\n'
+        f'{emojis.DETAIL} _Shows some energy stats when you open your '
+        f'{await functions.get_game_command(user_settings, "profile")}._\n'
         f'{emojis.BP} **Raid guide**: {await functions.bool_to_text(user_settings.helper_raid_enabled)}\n'
         f'{emojis.DETAIL} _Guides you through your raids._\n'
     )
@@ -557,10 +568,14 @@ async def embed_settings_user(bot: discord.Bot, ctx: discord.ApplicationContext,
     tracking = (
         f'{emojis.BP} **Command tracking**: {await functions.bool_to_text(user_settings.tracking_enabled)}\n'
     )
+    donor_tier = (
+        f'{emojis.BP} **Donor tier**: `{list(strings.DONOR_TIER_ENERGY_MULTIPLIERS)[user_settings.donor_tier].capitalize()}`\n'
+    )
     embed = discord.Embed(
         color = settings.EMBED_COLOR,
         title = f'{ctx.author.display_name}\'s user settings',
     )
     embed.add_field(name='Main', value=bot, inline=False)
     embed.add_field(name='Tracking', value=tracking, inline=False)
+    embed.add_field(name='Donor tier', value=donor_tier, inline=False)
     return embed

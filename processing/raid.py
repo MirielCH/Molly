@@ -68,7 +68,7 @@ async def call_raid_helper(bot: discord.Bot, message: discord.Message, embed_dat
                 )
                 if (enemy_power - 0.5).is_integer():
                     logs.logger.info(f'Worker {enemy_name} at level {enemy_level} has a power of {enemy_power}')
-                enemy_power = int(Decimal(enemy_power).quantize(Decimal(1), rounding=ROUND_HALF_UP))
+                #enemy_power = int(Decimal(enemy_power).quantize(Decimal(1), rounding=ROUND_HALF_UP))
                 enemies_power[enemy_name] = enemy_power
         return (empty_farms_found, enemies_power)
 
@@ -112,6 +112,7 @@ async def call_raid_helper(bot: discord.Bot, message: discord.Message, embed_dat
                 best_solution = []
                 for possible_solution in possible_solutions:
                     enemies_powers_copy = copy.deepcopy(enemies_power)
+                    used_workers = {}
                     for worker_name in possible_solution:    
                         for enemy_name, enemy_power in enemies_powers_copy.items():
                             if enemy_power == 0: continue
@@ -125,11 +126,11 @@ async def call_raid_helper(bot: discord.Bot, message: discord.Message, embed_dat
                         if killed_enemies >= len(enemies_powers_copy.keys()): break
                     if best_solution:
                         if killed_enemies > best_solution[0]:
-                            best_solution = [killed_enemies, possible_solution]
+                            best_solution = [killed_enemies, possible_solution, used_workers]
                     else:
-                        best_solution = [killed_enemies, possible_solution]
+                        best_solution = [killed_enemies, possible_solution, used_workers]
                     if killed_enemies >= len(enemies_power.keys()): break
-                killed_enemies = best_solution[0]
+                killed_enemies, _, used_workers = best_solution
             for x in range(empty_farms_found):
                 if len(used_workers) < len(workers_power):
                     for worker_name, worker_power in workers_power.items():
@@ -149,17 +150,12 @@ async def call_raid_helper(bot: discord.Bot, message: discord.Message, embed_dat
                 user = embed_data['embed_user']
                 user_settings = embed_data['embed_user_settings']
             else:
-                user_id_match = re.search(regex.USER_ID_FROM_ICON_URL, embed_data['author']['icon_url'])
-                if user_id_match:
-                    user_id = int(user_id_match.group(1))
-                    user = message.guild.get_member(user_id)
-                else:
-                    user_name_match = re.search(regex.USERNAME_FROM_EMBED_AUTHOR, embed_data['author']['name'])
-                    user_name = user_name_match.group(1)
-                    user_command_message = (
-                        await messages.find_message(message.channel.id, regex.COMMAND_RAID, user_name=user_name)
-                    )
-                    user = user_command_message.author
+                user_name_match = re.search(regex.USERNAME_FROM_EMBED_AUTHOR, embed_data['author']['name'])
+                user_name = user_name_match.group(1)
+                user_command_message = (
+                    await messages.find_message(message.channel.id, regex.COMMAND_RAID, user_name=user_name)
+                )
+                user = user_command_message.author
         if user_settings is None:
             try:
                 user_settings: users.User = await users.get_user(user.id)
@@ -169,7 +165,7 @@ async def call_raid_helper(bot: discord.Bot, message: discord.Message, embed_dat
 
         def raid_message_check(message_before: discord.Message, message_after: discord.Message):
             return message_after.id == message.id
-        embed = discord.Embed()
+        embed = discord.Embed(color=settings.EMBED_COLOR)
         msg_error_workers_outdated = (
                 f'Sorry, I can\'t provide any guidance because I don\'t know all of your workers. Please use '
                 f'{await functions.get_game_command(user_settings, "worker stats")} to update them before your next '
@@ -194,7 +190,7 @@ async def call_raid_helper(bot: discord.Bot, message: discord.Message, embed_dat
         field_workers = ''
         workers_power = {}
         for worker_name, worker_level in worker_levels_sorted.items():
-            worker_power = round(
+            worker_power = (
                 ((strings.WORKER_STATS[worker_name]['speed'] + strings.WORKER_STATS[worker_name]['strength']
                   + strings.WORKER_STATS[worker_name]['intelligence']))
                 * (1 + (strings.WORKER_TYPES.index(worker_name) + 1) / 4) * (1 + worker_level / 2.5)
@@ -202,9 +198,10 @@ async def call_raid_helper(bot: discord.Bot, message: discord.Message, embed_dat
             workers_power[worker_name] = worker_power
             if not user_settings.helper_raid_compact_mode_enabled:
                 worker_emoji = getattr(emojis, f'WORKER_{worker_name}_A'.upper(), emojis.WARNING)
+                worker_power = round(worker_power, 2)
                 field_workers = (
                     f'{field_workers}\n'
-                    f'{worker_emoji} - **{worker_power}** {emojis.WORKER_POWER}'
+                    f'{worker_emoji} - **{worker_power:,g}** {emojis.WORKER_POWER}'
                 )
         if not user_settings.helper_raid_compact_mode_enabled:
             embed.add_field(
@@ -216,9 +213,10 @@ async def call_raid_helper(bot: discord.Bot, message: discord.Message, embed_dat
             field_enemies = ''
             for enemy_name, enemy_power in enemies_power.items():
                 enemy_emoji = getattr(emojis, f'WORKER_{enemy_name}_A'.upper(), emojis.WARNING)
+                enemy_power = round(enemy_power, 2)
                 field_enemies = (
                     f'{field_enemies}\n'
-                    f'{enemy_emoji} - **{enemy_power}** {emojis.WORKER_POWER}'
+                    f'{enemy_emoji} - **{enemy_power:,g}** {emojis.WORKER_POWER}'
                 )
             embed.add_field(
                 name = 'Enemy farms',
@@ -241,6 +239,12 @@ async def call_raid_helper(bot: discord.Bot, message: discord.Message, embed_dat
         )
         embed.set_footer(text=f'You can kill {killed_enemies} enemies')
         message_helper = await message.reply(embed=embed)
+        logs.logger.info(
+            f'--- Raid guide log ---\n'
+            f'Enemies: {enemies_power}\n'
+            f'Workers: {workers_power}\n'
+            f'Solution: {worker_solution}\n'
+        )
 
         while True:
             try:

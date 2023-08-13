@@ -112,6 +112,46 @@ class OneButtonView(discord.ui.View):
             await self.interaction_message.edit(view=self)
         self.stop()
 
+        
+class ApprovalView(discord.ui.View):
+    """View with one button that returns the custom id of that button IF the user clicking on it has 
+    "Manage Server" permission.
+
+    Also needs the interaction of the response with the view, so do view.interaction = await ctx.respond('foo').
+
+    Returns
+    -------
+    None while active
+    custom id of the button when pressed
+    'timeout' on timeout.
+    """
+    def __init__(self, ctx: Union[commands.Context, discord.ApplicationContext], style: discord.ButtonStyle,
+                 custom_id: str, label: str, emoji: Optional[discord.PartialEmoji] = None,
+                 interaction_message: Optional[Union[discord.Message, discord.Interaction]] = None):
+        super().__init__(timeout=settings.INTERACTION_TIMEOUT)
+        self.value = None
+        self.interaction_message = interaction_message
+        self.ctx = ctx
+        self.user = ctx.author
+        self.add_item(components.CustomButton(style=style, custom_id=custom_id, label=label, emoji=emoji))
+        self.add_item(components.CustomButton(style=discord.ButtonStyle.grey, custom_id='abort', label='Cancel', emoji=None))
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.custom_id == 'abort' and interaction.user != self.ctx.author:
+            return False
+        if interaction.custom_id == 'approve' and not interaction.user.guild_permissions.manage_guild:
+            await interaction.response.send_message('You do not have `Manage Server` permission', ephemeral=True)
+            return False
+        return True
+
+    async def on_timeout(self) -> None:
+        self.disable_all_items()
+        if isinstance(self.ctx, discord.ApplicationContext):
+            await functions.edit_interaction(self.interaction_message, view=self)
+        else:
+            await self.interaction_message.edit(view=self)
+        self.stop()
+
 
 # --- Reminder management ---
 class RemindersListView(discord.ui.View):
@@ -236,7 +276,9 @@ class SettingsHelpersView(discord.ui.View):
         self.user_settings = user_settings
         self.embed_function = embed_function
         toggled_settings = {
+            'Affordable upgrades': 'helper_upgrades_enabled',
             'Context commands': 'helper_context_enabled',
+            'Energy stats': 'helper_energy_enabled',
             'Raid guide': 'helper_raid_enabled',
         }
         self.add_item(components.ToggleUserSettingsSelect(self, toggled_settings, 'Toggle helpers'))
@@ -446,6 +488,7 @@ class SettingsUserView(discord.ui.View):
         self.embed_function = embed_function
         self.commands_settings = commands_settings
         self.add_item(components.ManageUserSettingsSelect(self))
+        self.add_item(components.SetDonorTierSelect(self, 'Change donor tier'))
         self.add_item(components.SwitchSettingsSelect(self, commands_settings))
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:

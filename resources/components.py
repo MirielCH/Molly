@@ -230,9 +230,9 @@ class ManageClanSettingsSelect(discord.ui.Select):
             
 class SetClanReminderRoleSelect(discord.ui.Select):
     """Select to change the clan reminder role"""
-    def __init__(self, view: discord.ui.View, row: Optional[int] = None):
+    def __init__(self, view: discord.ui.View, disabled: Optional[bool] = False, row: Optional[int] = None):
         super().__init__(select_type=discord.ComponentType.role_select, placeholder='Select reminder role', min_values=1, max_values=1, row=row,
-                         custom_id='set_clan_role')
+                         custom_id='set_clan_role', disabled=disabled)
 
     async def callback(self, interaction: discord.Interaction):
         if interaction.user.id != self.view.clan_settings.leader_id:
@@ -247,7 +247,32 @@ class SetClanReminderRoleSelect(discord.ui.Select):
             await interaction.message.edit(embed=embed, view=self.view)
             return
         new_role = self.values[0]
-        await self.view.clan_settings.update(reminder_role_id=new_role.id)
+        if not interaction.user.guild_permissions.manage_guild:
+            approval_view = views.ApprovalView(self.view.ctx, discord.ButtonStyle.green, label='Approve', custom_id='approve', emoji=emojis.ENABLED)
+            approval_interaction = await interaction.response.send_message(
+                f'**Approval required**\n\n'
+                f'**{interaction.user.display_name}**, changing the guild reminder role for the '
+                f'guild `{self.view.clan_settings.clan_name.upper()}` to {new_role.mention} (ID `{new_role.id}`) '
+                f'requires approval.\n\n'
+                f'Please have someone with `Manage Server` permission click the button below to confirm this change.',
+                view=approval_view
+            )
+            approval_view.interaction_message = approval_interaction
+            await approval_view.wait()
+            if approval_view.value == 'abort':
+                await approval_interaction.edit_original_response(content = 'Aborted.', view=None)
+            elif approval_view.value == 'approve':
+                await self.view.clan_settings.update(reminder_role_id=new_role.id)
+                await approval_interaction.edit_original_response(
+                    content = (
+                        f'**Change approved**\n\n'
+                        f'The reminder role for the guild `{self.view.clan_settings.clan_name.upper()}` was changed to '
+                        f'`{new_role.name}` (ID `{new_role.id}`)'
+                    ),
+                    view=None
+                )        
+        else:
+            await self.view.clan_settings.update(reminder_role_id=new_role.id)
         for child in self.view.children.copy():
             if isinstance(child, SetClanReminderRoleSelect):
                 self.view.remove_item(child)
@@ -468,6 +493,14 @@ class SetReminderMessageButton(discord.ui.Button):
                         await followup_message.delete(delay=5)
                         return
             new_message = answer.content
+            role_match = re.search(r'<@&(\d+)>', answer.content.lower())
+            if role_match or '@here' in answer.content.lower() or '@everyone' in answer.content.lower():
+                await interaction.delete_original_response(delay=5)
+                followup_message = await interaction.followup.send(
+                    content='Aborted. Pinging roles, everyone or here is not allowed in reminders.',
+                )
+                await followup_message.delete(delay=5)
+                return
             if new_message.lower() in ('abort','cancel','stop'):
                 await interaction.delete_original_response(delay=3)
                 followup_message = await interaction.followup.send('Aborted.')
@@ -745,6 +778,17 @@ class ToggleClanSettingsSelect(discord.ui.Select):
                          custom_id=custom_id)
 
     async def callback(self, interaction: discord.Interaction):
+        if interaction.user.id != self.view.clan_settings.leader_id:
+            await interaction.response.send_message(
+                f'**{interaction.user.display_name}**, you are not registered as the guild owner. Only the guild owner can '
+                f'change these settings.\n'
+                f'If you _are_ the guild owner, run {strings.SLASH_COMMANDS["guild list"]} to update '
+                f'your guild in my database.\n',
+                ephemeral=True
+            )
+            embed = await self.view.embed_function(self.view.bot, self.view.ctx, self.view.clan_settings)
+            await interaction.message.edit(embed=embed, view=self.view)
+            return
         select_value = self.values[0]
         kwargs = {}
         if select_value in ('enable_all','disable_all'):
@@ -1030,4 +1074,21 @@ class SetClaimReminderTimeReminderList(discord.ui.Select):
             return
         embed = await self.view.embed_function(self.view.bot, self.view.user, self.view.user_settings, 
                                                self.view.custom_reminders)
+        await interaction.response.edit_message(embed=embed, view=self.view)
+
+
+class SetDonorTierSelect(discord.ui.Select):
+    """Select to set a donor tier"""
+    def __init__(self, view: discord.ui.View, placeholder: str,
+                 disabled: Optional[bool] = False, row: Optional[int] = None):
+        options = []
+        for index, donor_tier in enumerate(list(strings.DONOR_TIER_ENERGY_MULTIPLIERS.keys())):
+            options.append(discord.SelectOption(label=f'{donor_tier.capitalize()}', value=str(index)))
+        super().__init__(placeholder=placeholder, min_values=1, max_values=1, options=options, disabled=disabled,
+                         row=row, custom_id=f'set_donor_tier')
+
+    async def callback(self, interaction: discord.Interaction):
+        select_value = self.values[0]
+        await self.view.user_settings.update(donor_tier=int(select_value))
+        embed = await self.view.embed_function(self.view.bot, self.view.ctx, self.view.user_settings)
         await interaction.response.edit_message(embed=embed, view=self.view)

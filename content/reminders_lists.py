@@ -107,7 +107,7 @@ async def embed_reminders_list(bot: discord.Bot, user: discord.User, user_settin
     clan_reminder_text = '`Ready!`' if clan_reminder is None else clan_reminder_end_time
     embed = discord.Embed(
         color = settings.EMBED_COLOR,
-        title = f'{user.display_name}\'s commands'
+        title = f'{user.display_name}\'s commands',
     )
     if user_settings.reminder_claim.enabled:
         embed.add_field(

@@ -18,7 +18,7 @@ EVENT_REDUCTION_TYPES = [
     'Slash commands',
 ]
 
-MSG_NOT_DEV = 'You are not allowed to use this command.'
+MSG_NOT_DEV = 'What are ya tryin\' to do here, silly?'
 
 class DevCog(commands.Cog):
     """Cog class containing internal dev commands"""
@@ -156,10 +156,10 @@ class DevCog(commands.Cog):
             await functions.edit_interaction(interaction, content=f'**{ctx.author.display_name}**, you didn\'t answer in time.',
                                              view=None)
         elif view.value == 'confirm':
-            await functions.edit_interaction(interaction, content='Shutting down.', view=None)
+            await functions.edit_interaction(interaction, content='Byeeeee.', view=None)
             await self.bot.close()
         else:
-            await functions.edit_interaction(interaction, content='Shutdown aborted.', view=None)
+            await functions.edit_interaction(interaction, content='Phew, seriously, stop scaring me.', view=None)
 
     @dev.command()
     async def cache(self, ctx: discord.ApplicationContext):

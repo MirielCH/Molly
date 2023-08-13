@@ -12,7 +12,7 @@ from discord import utils
 
 from cache import messages
 from database import clans, reminders, users, workers
-from resources import emojis, exceptions, functions, regex, strings
+from resources import emojis, exceptions, functions, regex, settings, strings
 
 
 async def process_message(bot: discord.Bot, message: discord.Message, embed_data: Dict, user: Optional[discord.User],
@@ -61,11 +61,6 @@ async def call_teamraid_helper(message: discord.Message, embed_data: Dict, user:
             if embed_data['embed_user'] is not None:
                 user = embed_data['embed_user']
                 user_settings = embed_data['embed_user_settings']
-            else:
-                user_id_match = re.search(regex.USER_ID_FROM_ICON_URL, embed_data['author']['icon_url'])
-                if user_id_match:
-                    user_id = int(user_id_match.group(1))
-                    user = message.guild.get_member(user_id)
             user_name_match = re.search(regex.USERNAME_FROM_EMBED_AUTHOR, embed_data['author']['name'])
             user_name = user_name_match.group(1)
             user_command_message = (
@@ -89,7 +84,7 @@ async def call_teamraid_helper(message: discord.Message, embed_data: Dict, user:
             enemy_hp_max = int(enemy_data_match.group(4))
             enemy_power = (
                 (strings.WORKER_STATS[enemy_type]['speed'] + strings.WORKER_STATS[enemy_type]['strength'] + strings.WORKER_STATS[enemy_type]['intelligence'])
-                * (1 + (strings.WORKER_TYPES.index(enemy_type) + 1) / 4) * (1 + enemy_level / 2.5)
+                * (1 + (strings.WORKER_TYPES.index(enemy_type) + 1) / 4) * (1 + enemy_level / 2.5) * (enemy_hp_max / 100) / enemy_hp_max * enemy_hp_current
             )
             enemy_power = int(Decimal(enemy_power).quantize(Decimal(1), rounding=ROUND_HALF_UP))
             enemies[enemy_type] = {
@@ -103,7 +98,7 @@ async def call_teamraid_helper(message: discord.Message, embed_data: Dict, user:
                 f'{field_enemies}\n'
                 f'{enemy_emoji} - **{enemy_power}** {emojis.WORKER_POWER}'
             )
-        embed = discord.Embed()
+        embed = discord.Embed(color=settings.EMBED_COLOR)
         for teamraid_user in teamraid_users:
             user_workers_required = {}
             field_workers = ''
@@ -113,7 +108,7 @@ async def call_teamraid_helper(message: discord.Message, embed_data: Dict, user:
                 for user_worker in user_workers:
                     if user_worker.worker_name in teamraid_users_workers[teamraid_user.name]:
                         user_workers_required[user_worker.worker_name] = user_worker.worker_level
-            except exceptions.FirstTimeUserError:
+            except exceptions.NoDataFoundError:
                 user_settings = user_workers = None
             for worker_type in teamraid_users_workers[teamraid_user.name]:
                 worker_emoji = getattr(emojis, f'WORKER_{worker_type}_A'.upper(), emojis.WARNING)

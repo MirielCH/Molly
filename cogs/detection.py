@@ -8,7 +8,7 @@ import discord
 from discord.ext import commands
 
 from database import guilds, users
-from processing import buy, claim, clan, daily, events, payday, profile, raid, teamraid, upgrades, use, workers
+from processing import buy, claim, clan, daily, donate, events, payday, profile, raid, teamraid, upgrades, use, workers
 from resources import exceptions, functions, regex, settings
 
 
@@ -37,7 +37,6 @@ class DetectionCog(commands.Cog):
         embed_data = await parse_embed(message)
         embed_data['embed_user'] = None
         embed_data['embed_user_settings'] = None
-        embed = discord.Embed()
         interaction_user = await functions.get_interaction_user(message)
         user_id_match = re.search(regex.USER_ID_FROM_ICON_URL, embed_data['author']['icon_url'])
         if user_id_match:
@@ -61,7 +60,9 @@ class DetectionCog(commands.Cog):
         guild_settings = await guilds.get_guild(message.guild.id)
         return_values = []
         helper_context_enabled = getattr(user_settings, 'helper_context_enabled', True)
+        helper_energy_enabled = getattr(user_settings, 'helper_energy_enabled', True)
         helper_raid_enabled = getattr(user_settings, 'helper_raid_enabled', True)
+        helper_upgrades_enabled = getattr(user_settings, 'helper_upgrades_enabled', True)
         reminder_daily_enabled = getattr(getattr(user_settings, 'reminder_daily', None), 'enabled', True)
         reminder_claim_enabled = getattr(getattr(user_settings, 'reminder_claim', None), 'enabled', True)
         reminder_vote_enabled = getattr(getattr(user_settings, 'reminder_vote', None), 'enabled', True)
@@ -87,7 +88,7 @@ class DetectionCog(commands.Cog):
         return_values.append(add_reaction)
         
         # Payday
-        if helper_context_enabled:
+        if helper_context_enabled or helper_upgrades_enabled:
             add_reaction = await payday.process_message(self.bot, message, embed_data, interaction_user, user_settings)
             return_values.append(add_reaction)
         
@@ -118,8 +119,11 @@ class DetectionCog(commands.Cog):
         add_reaction = await teamraid.process_message(self.bot, message, embed_data, interaction_user, user_settings)
         return_values.append(add_reaction)
 
-         # Energy Helper (testing)
-        if True:
+        # Update donor tier
+        add_reaction = await donate.process_message(self.bot, message, embed_data, interaction_user, user_settings)
+
+         # Energy Helper
+        if helper_energy_enabled:
             add_reaction = await profile.process_message(self.bot, message, embed_data, interaction_user, user_settings)
             return_values.append(add_reaction)
 

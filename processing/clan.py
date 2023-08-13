@@ -58,7 +58,7 @@ async def create_clan_reminder(message: discord.Message, embed_data: Dict) -> bo
             await reminders.insert_clan_reminder(clan_settings.clan_name, time_left, reminder_message)
         )
         if reminder.record_exists: add_reaction = True
-    return False
+    return add_reaction
 
 
 async def update_clan(message: discord.Message, embed_data: Dict, user: Optional[discord.User],

@@ -69,23 +69,18 @@ async def call_context_helper(message: discord.Message, embed_data: Dict, user: 
                 user = embed_data['embed_user']
                 user_settings = embed_data['embed_user_settings']
             else:
-                user_id_match = re.search(regex.USER_ID_FROM_ICON_URL, embed_data['author']['icon_url'])
-                if user_id_match:
-                    user_id = int(user_id_match.group(1))
-                    user = message.guild.get_member(user_id)
-                else:
-                    user_name_match = re.search(regex.USERNAME_FROM_EMBED_AUTHOR, embed_data['author']['name'])
-                    user_name = user_name_match.group(1)
-                    user_command_message = (
-                        await messages.find_message(message.channel.id, regex.COMMAND_PAYDAY, user_name=user_name)
-                    )
-                    user = user_command_message.author
+                user_name_match = re.search(regex.USERNAME_FROM_EMBED_AUTHOR, embed_data['author']['name'])
+                user_name = user_name_match.group(1)
+                user_command_message = (
+                    await messages.find_message(message.channel.id, regex.COMMAND_PAYDAY, user_name=user_name)
+                )
+                user = user_command_message.author
         if user_settings is None:
             try:
                 user_settings: users.User = await users.get_user(user.id)
             except exceptions.FirstTimeUserError:
                 return add_reaction
-        if not user_settings.bot_enabled or not user_settings.helper_context_enabled: return add_reaction
+        if not user_settings.bot_enabled or not user_settings.helper_upgrades_enabled: return add_reaction
         idlucks_match = re.search(r'^• ([0-9,]+?) <', embed_data['field1']['value'].lower())
         idlucks = int(re.sub(r'\D','', idlucks_match.group(1)))
         idlucks_after_payday = user_settings.idlucks + idlucks

@@ -46,17 +46,12 @@ async def create_reminder(message: discord.Message, embed_data: Dict, user: Opti
                 user = embed_data['embed_user']
                 user_settings = embed_data['embed_user_settings']
             else:
-                user_id_match = re.search(regex.USER_ID_FROM_ICON_URL, embed_data['author']['icon_url'])
-                if user_id_match:
-                    user_id = int(user_id_match.group(1))
-                    user = message.guild.get_member(user_id)
-                else:
-                    user_name_match = re.search(regex.USERNAME_FROM_EMBED_AUTHOR, embed_data['author']['name'])
-                    user_name = user_name_match.group(1)
-                    user_command_message = (
-                        await messages.find_message(message.channel.id, regex.COMMAND_DAILY, user_name=user_name)
-                    )
-                    user = user_command_message.author
+                user_name_match = re.search(regex.USERNAME_FROM_EMBED_AUTHOR, embed_data['author']['name'])
+                user_name = user_name_match.group(1)
+                user_command_message = (
+                    await messages.find_message(message.channel.id, regex.COMMAND_DAILY, user_name=user_name)
+                )
+                user = user_command_message.author
         if user_settings is None:
             try:
                 user_settings: users.User = await users.get_user(user.id)
