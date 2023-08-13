@@ -1,6 +1,6 @@
 # Molly Privacy Policy
 
-This policy is effective as of 01 August 2023 and was last updated on 01 August 2023.  
+This policy is effective as of 01 August 2023 and was last updated on 13 August 2023.  
 
 ## User information the bot collects
 
@@ -19,7 +19,7 @@ Important things to note:
 
 ## Message content access
 
-Molly has access to the content of all messages it can see. This access is necessary to create reminders.  
+Molly has access to the content of all messages it can see. This access is necessary to provide the service Molly does.  
 Molly reads IDLE FARM messages and also reads the commands you issue to trigger said messages (e.g. if a claim message is detected, it will also read your `/claim` slash command or your `idle claim` message).  
 
 The bot caches all messages sent by users that either mention the IDLE FARM bot or start with `idle `. They are used to reduce API calls and increase performance. These messages are discarded after 6 minutes and **not** stored permanently.  
