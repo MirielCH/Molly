@@ -69,7 +69,7 @@ class DetectionCog(commands.Cog):
         tracking_enabled = getattr(user_settings, 'tracking_enabled', True)
 
         # Raids
-        if tracking_enabled:
+        if tracking_enabled or helper_context_enabled or helper_raid_enabled:
             add_reaction = await raid.process_message(self.bot, message, embed_data, interaction_user, user_settings)
             return_values.append(add_reaction)
 
@@ -88,7 +88,7 @@ class DetectionCog(commands.Cog):
         return_values.append(add_reaction)
         
         # Payday
-        if helper_context_enabled or helper_upgrades_enabled:
+        if helper_upgrades_enabled:
             add_reaction = await payday.process_message(self.bot, message, embed_data, interaction_user, user_settings)
             return_values.append(add_reaction)
         
@@ -104,12 +104,12 @@ class DetectionCog(commands.Cog):
             return_values.append(add_reaction)
             
         # Track upgrades
-        if helper_context_enabled:
+        if helper_upgrades_enabled:
             add_reaction = await upgrades.process_message(self.bot, message, embed_data, interaction_user, user_settings)
             return_values.append(add_reaction)
             
         # Worker tracking
-        if helper_raid_enabled:
+        if helper_raid_enabled or tracking_enabled:
             add_reaction = await workers.process_message(self.bot, message, embed_data, interaction_user, user_settings)
             return_values.append(add_reaction)
 
@@ -123,7 +123,7 @@ class DetectionCog(commands.Cog):
         add_reaction = await donate.process_message(self.bot, message, embed_data, interaction_user, user_settings)
 
          # Energy Helper
-        if helper_energy_enabled:
+        if helper_energy_enabled or helper_upgrades_enabled:
             add_reaction = await profile.process_message(self.bot, message, embed_data, interaction_user, user_settings)
             return_values.append(add_reaction)
 

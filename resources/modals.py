@@ -69,7 +69,7 @@ class SetLastClaimModal(Modal):
             await interaction.response.edit_message(view=self.view)
             await interaction.followup.send(msg_error, ephemeral=True)
             return
-        await self.view.user_settings.update(last_claim_time=last_claim_time)
+        await self.view.user_settings.update(last_claim_time=last_claim_time, time_speeders_used=0)
         embed = await self.view.embed_function(self.view.bot, self.view.ctx, self.view.user_settings)
         await interaction.response.edit_message(embed=embed, view=self.view)
 

@@ -45,12 +45,12 @@ async def process_message(bot: discord.Bot, message: discord.Message, embed_data
     - False otherwise
     """
     return_values = []
-    return_values.append(await call_context_helper(message, embed_data, user, user_settings))
+    return_values.append(await call_upgrades_helper(message, embed_data, user, user_settings))
     return_values.append(await update_idlucks(message, embed_data, user, user_settings))
     return any(return_values)
 
 
-async def call_context_helper(message: discord.Message, embed_data: Dict, user: Optional[discord.User],
+async def call_upgrades_helper(message: discord.Message, embed_data: Dict, user: Optional[discord.User],
                               user_settings: Optional[users.User]) -> bool:
     """Call the context helper when preparing for payday
 

@@ -88,7 +88,7 @@ INTERNAL_ERROR_DICT_TO_OBJECT = 'Error converting record into object\nFunction: 
 
 # Links
 LINK_GITHUB = 'https://github.com/Miriel-py/Molly'
-LINK_INVITE = 'https://discord.com/api/oauth2/authorize?client_id=1134478584556310569&permissions=378944&scope=bot'
+LINK_INVITE = 'https://discord.com/api/oauth2/authorize?client_id=1134478584556310569&permissions=510016&scope=bot'
 LINK_PRIVACY_POLICY = 'https://github.com/Miriel-py/Molly/blob/master/PRIVACY.md'
 LINK_SUPPORT_SERVER = 'https://discord.gg/suHhUxHGwV'
 LINK_TERMS = 'https://github.com/Miriel-py/Molly/blob/master/TERMS.md'
@@ -178,6 +178,8 @@ SLASH_COMMANDS = {
     'profile': '</profile:1128412334629589012>',
     'raid': '</raid:1128414124049698868>',
     'sell': '</sell:1128412513491484712>',
+    'shop list': '</shop list:1128414122787221596>',
+    'shop buy': '</shop buy:1128414122787221596>',
     'teamraid': '</teamraid:1128414207428268123>',
     'upgrades': '</upgrades:1130229580884619274>',
     'use': '</use:1128412597327249569>',

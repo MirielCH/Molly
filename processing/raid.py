@@ -24,9 +24,43 @@ async def process_message(bot: discord.Bot, message: discord.Message, embed_data
     - False otherwise
     """
     return_values = []
+    return_values.append(await call_context_helper_on_empty_energy(message, embed_data, user, user_settings))
     return_values.append(await call_raid_helper(bot, message, embed_data, user, user_settings))
     return_values.append(await track_raid(message, embed_data, user, user_settings))
     return any(return_values)
+
+
+async def call_context_helper_on_empty_energy(message: discord.Message, embed_data: Dict, user: Optional[discord.User],
+                                              user_settings: Optional[users.User]) -> bool:
+    """Call the context helper when a raid can't be started because not enough energy
+
+    Returns
+    -------
+    - True if a logo reaction should be added to the message
+    - False otherwise
+    """
+    add_reaction = False
+    search_strings_1 = [
+        'you need at least', #English
+    ]
+    search_strings_2 = [
+        'to start a raid!', #English
+    ]
+    if (any(search_string in message.content.lower() for search_string in search_strings_1)
+        and any(search_string in message.content.lower() for search_string in search_strings_2)):
+        if user is None:
+            user = message.mentions[0]
+        if user_settings is None:
+            try:
+                user_settings: users.User = await users.get_user(user.id)
+            except exceptions.FirstTimeUserError:
+                return add_reaction
+        if not user_settings.bot_enabled or not user_settings.helper_context_enabled: return add_reaction
+        await message.reply(
+            f"➜ {strings.SLASH_COMMANDS['shop buy']}\n"
+            f"➜ {strings.SLASH_COMMANDS['use']}\n"
+        )
+    return add_reaction
 
 
 async def call_raid_helper(bot: discord.Bot, message: discord.Message, embed_data: Dict, user: Optional[discord.User],
@@ -131,8 +165,7 @@ async def call_raid_helper(bot: discord.Bot, message: discord.Message, embed_dat
                         best_solution = [killed_enemies, possible_solution, used_workers]
                     if killed_enemies >= len(enemies_power.keys()): break
                 killed_enemies, _, used_workers = best_solution
-            for x in range(empty_farms_found):
-                if len(used_workers) < len(workers_power):
+            if empty_farms_found and len(used_workers) < len(workers_power):
                     for worker_name, worker_power in workers_power.items():
                         if worker_name not in used_workers:
                             used_workers[worker_name] = worker_power
@@ -233,11 +266,10 @@ async def call_raid_helper(bot: discord.Bot, message: discord.Message, embed_dat
         worker_solution_remaining = list(worker_solution.keys())
         embed.insert_field_at(
             0,
-            name = 'Raid guide',
-            value = f'{field_solution.strip()}\n{emojis.BLANK}',
+            name = f'Raid guide',
+            value = f'{field_solution.strip()}\n_You can kill {killed_enemies} farms._',
             inline = False
         )
-        embed.set_footer(text=f'You can kill {killed_enemies} enemies')
         message_helper = await message.reply(embed=embed)
         logs.logger.info(
             f'--- Raid guide log ---\n'
@@ -295,11 +327,10 @@ async def call_raid_helper(bot: discord.Bot, message: discord.Message, embed_dat
                     field_solution = emoji if field_solution == '' else f'{field_solution} ➜ {emoji}'
                 embed.insert_field_at(
                     0,
-                    name = 'Raid guide',
-                    value = f'{field_solution.strip()}\n{emojis.BLANK}',
+                    name = f'Raid guide',
+                    value = f'{field_solution.strip()}\n_You can kill {killed_enemies} farms._',
                     inline = False
                 )
-                embed.set_footer(text=f'You can kill {killed_enemies} enemies')
             if not active_component:
                 embed.insert_field_at(
                     0,
