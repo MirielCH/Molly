@@ -7,8 +7,9 @@ from typing import Dict, Union
 import discord
 from discord.ext import commands
 
-from database import guilds, users
-from processing import buy, claim, clan, daily, donate, events, payday, profile, raid, teamraid, upgrades, use, workers
+from database import clans, guilds, users
+from processing import buy, claim, clan, daily, donate, events, payday, profile, raid, request, teamraid, upgrades, use
+from processing import workers
 from resources import exceptions, functions, regex, settings
 
 
@@ -33,7 +34,7 @@ class DetectionCog(commands.Cog):
     async def on_message(self, message: discord.Message) -> None:
         """Runs when a message is sent in a channel."""
         if message.author.id not in [settings.GAME_ID, settings.TESTY_ID]: return
-        user_settings = None
+        user_settings = clan_settings = None
         embed_data = await parse_embed(message)
         embed_data['embed_user'] = None
         embed_data['embed_user_settings'] = None
@@ -48,6 +49,10 @@ class DetectionCog(commands.Cog):
                 return
             if user_settings is not None:
                 if not user_settings.bot_enabled: return
+            try:
+                clan_settings: clans.Clan = await clans.get_clan_by_member_id(interaction_user.id)
+            except exceptions.NoDataFoundError:
+                pass
         if embed_data['embed_user'] is not None:
             if interaction_user is not None and embed_data['embed_user'] == interaction_user:
                 embed_user_settings = user_settings
@@ -67,6 +72,7 @@ class DetectionCog(commands.Cog):
         reminder_claim_enabled = getattr(getattr(user_settings, 'reminder_claim', None), 'enabled', True)
         reminder_vote_enabled = getattr(getattr(user_settings, 'reminder_vote', None), 'enabled', True)
         tracking_enabled = getattr(user_settings, 'tracking_enabled', True)
+        helper_teamraid_enabled = getattr(clan_settings, 'helper_teamraid_enabled', False)
 
         # Raids
         if tracking_enabled or helper_context_enabled or helper_raid_enabled:
@@ -108,15 +114,24 @@ class DetectionCog(commands.Cog):
             add_reaction = await upgrades.process_message(self.bot, message, embed_data, interaction_user, user_settings)
             return_values.append(add_reaction)
             
+        # Request tracking
+        if helper_raid_enabled or helper_teamraid_enabled:
+            add_reaction = await request.process_message(self.bot, message, embed_data, interaction_user, user_settings,
+                                                         clan_settings)
+            return_values.append(add_reaction)
+            
         # Worker tracking
-        if helper_raid_enabled or tracking_enabled:
-            add_reaction = await workers.process_message(self.bot, message, embed_data, interaction_user, user_settings)
+        if helper_raid_enabled or tracking_enabled or helper_teamraid_enabled:
+            add_reaction = await workers.process_message(self.bot, message, embed_data, interaction_user, user_settings,
+                                                         clan_settings)
             return_values.append(add_reaction)
 
         # Clan reminders & updates
-        add_reaction = await clan.process_message(self.bot, message, embed_data, interaction_user, user_settings)
+        add_reaction = await clan.process_message(self.bot, message, embed_data, interaction_user, user_settings,
+                                                  clan_settings)
         return_values.append(add_reaction)
-        add_reaction = await teamraid.process_message(self.bot, message, embed_data, interaction_user, user_settings)
+        add_reaction = await teamraid.process_message(self.bot, message, embed_data, interaction_user, user_settings,
+                                                      clan_settings)
         return_values.append(add_reaction)
 
         # Update donor tier

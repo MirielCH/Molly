@@ -12,7 +12,7 @@ from resources import exceptions, functions, regex, strings
 
 
 async def process_message(bot: discord.Bot, message: discord.Message, embed_data: Dict, user: Optional[discord.User],
-                          user_settings: Optional[users.User]) -> bool:
+                          user_settings: Optional[users.User], clan_settings: Optional[clans.Clan]) -> bool:
     """Processes the message for all worker related commands and events.
 
     Returns
@@ -21,14 +21,14 @@ async def process_message(bot: discord.Bot, message: discord.Message, embed_data
     - False otherwise
     """
     return_values = []
-    return_values.append(await track_worker_hire_event(message, embed_data, user, user_settings))
-    return_values.append(await track_worker_roll(message, embed_data, user, user_settings))
-    return_values.append(await track_worker_stats(message, embed_data, user, user_settings))
+    return_values.append(await track_worker_hire_event(message, embed_data, user, user_settings, clan_settings))
+    return_values.append(await track_worker_roll(message, embed_data, user, user_settings, clan_settings))
+    return_values.append(await track_worker_stats(message, embed_data, user, user_settings, clan_settings))
     return any(return_values)
 
 
 async def track_worker_hire_event(message: discord.Message, embed_data: Dict, user: Optional[discord.User],
-                            user_settings: Optional[users.User]) -> bool:
+                            user_settings: Optional[users.User], clan_settings: Optional[clans.Clan]) -> bool:
     """Tracks worker hire
 
     Returns
@@ -54,11 +54,12 @@ async def track_worker_hire_event(message: discord.Message, embed_data: Dict, us
                 user_settings: users.User = await users.get_user(user.id)
             except exceptions.FirstTimeUserError:
                 return False
-        try:
-            clan_settings: clans.Clan = await clans.get_clan_by_member_id(user.id)
-        except exceptions.NoDataFoundError:
-            clan_settings = None
-        helper_teamraid_enabled = getattr(clan_settings, 'helper_teamraid_enabled', True)
+        if clan_settings is None:
+            try:
+                clan_settings: clans.Clan = await clans.get_clan_by_member_id(user.id)
+            except exceptions.NoDataFoundError:
+                pass
+        helper_teamraid_enabled = getattr(clan_settings, 'helper_teamraid_enabled', False)
         if (not user_settings.helper_raid_enabled and not helper_teamraid_enabled) or not user_settings.bot_enabled:
             return False
         worker_name_match = re.search(r'<a:(.+?)worker:', embed_data['field0']['name'].lower())
@@ -79,7 +80,7 @@ async def track_worker_hire_event(message: discord.Message, embed_data: Dict, us
 
 
 async def track_worker_roll(message: discord.Message, embed_data: Dict, user: Optional[discord.User],
-                            user_settings: Optional[users.User]) -> bool:
+                            user_settings: Optional[users.User], clan_settings: Optional[clans.Clan]) -> bool:
     """Tracks worker rolls
 
     Returns
@@ -108,11 +109,12 @@ async def track_worker_roll(message: discord.Message, embed_data: Dict, user: Op
                 user_settings: users.User = await users.get_user(user.id)
             except exceptions.FirstTimeUserError:
                 return False
-        try:
-            clan_settings: clans.Clan = await clans.get_clan_by_member_id(user.id)
-        except exceptions.NoDataFoundError:
-            clan_settings = None
-        helper_teamraid_enabled = getattr(clan_settings, 'helper_teamraid_enabled', True)
+        if clan_settings is None:
+            try:
+                clan_settings: clans.Clan = await clans.get_clan_by_member_id(user.id)
+            except exceptions.NoDataFoundError:
+                pass
+        helper_teamraid_enabled = getattr(clan_settings, 'helper_teamraid_enabled', False)
         if ((not user_settings.tracking_enabled and not user_settings.helper_raid_enabled and not helper_teamraid_enabled)
             or not user_settings.bot_enabled): return False
         # Update user workers
@@ -150,7 +152,7 @@ async def track_worker_roll(message: discord.Message, embed_data: Dict, user: Op
 
 async def track_worker_stats(message: discord.Message, embed_data: Dict,
                              interaction_user: Optional[discord.User],
-                             user_settings: Optional[users.User]) -> bool:
+                             user_settings: Optional[users.User], clan_settings: Optional[clans.Clan]) -> bool:
     """Tacks workers from the worker stats overview embed
 
     Returns
@@ -176,11 +178,12 @@ async def track_worker_stats(message: discord.Message, embed_data: Dict,
             user_settings: users.User = await users.get_user(interaction_user.id)
         except exceptions.FirstTimeUserError:
             return add_reaction
-        try:
-            clan_settings: clans.Clan = await clans.get_clan_by_member_id(interaction_user.id)
-        except exceptions.NoDataFoundError:
-            clan_settings = None
-        helper_teamraid_enabled = getattr(clan_settings, 'helper_teamraid_enabled', True)
+        if clan_settings is None:
+            try:
+                clan_settings: clans.Clan = await clans.get_clan_by_member_id(interaction_user.id)
+            except exceptions.NoDataFoundError:
+                pass
+        helper_teamraid_enabled = getattr(clan_settings, 'helper_teamraid_enabled', False)
         if not user_settings.bot_enabled or (not user_settings.helper_raid_enabled and not helper_teamraid_enabled):
             return add_reaction
         for field in message.embeds[0].fields:

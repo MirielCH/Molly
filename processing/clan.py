@@ -14,7 +14,7 @@ from resources import exceptions, functions, regex, strings
 
 
 async def process_message(bot: discord.Bot, message: discord.Message, embed_data: Dict, user: Optional[discord.User] = None,
-                          user_settings: Optional[users.User] = None) -> bool:
+                          user_settings: Optional[users.User] = None, clan_settings: Optional[clans.Clan] = None) -> bool:
     """Processes the message for all clan related actions.
 
     Returns
@@ -23,12 +23,12 @@ async def process_message(bot: discord.Bot, message: discord.Message, embed_data
     - False otherwise
     """
     return_values = []
-    return_values.append(await create_clan_reminder(message, embed_data))
+    return_values.append(await create_clan_reminder(message, embed_data, clan_settings))
     return_values.append(await update_clan(message, embed_data, user, user_settings))
     return any(return_values)
 
 
-async def create_clan_reminder(message: discord.Message, embed_data: Dict) -> bool:
+async def create_clan_reminder(message: discord.Message, embed_data: Dict, clan_settings: Optional[clans.Clan]) -> bool:
     """Creates clan reminder from clan overview
 
     Returns
@@ -41,10 +41,11 @@ async def create_clan_reminder(message: discord.Message, embed_data: Dict) -> bo
         'your guild was raided', #English
     ]
     if any(search_string in embed_data['footer']['text'].lower() for search_string in search_strings):
-        try:
-            clan_settings: clans.Clan = await clans.get_clan_by_clan_name(embed_data['field0']['name'])
-        except exceptions.NoDataFoundError:
-            return add_reaction
+        if clan_settings is None:
+            try:
+                clan_settings: clans.Clan = await clans.get_clan_by_clan_name(embed_data['field0']['name'])
+            except exceptions.NoDataFoundError:
+                return add_reaction
         if not clan_settings.reminder_enabled: return add_reaction
         if '✅' in embed_data['field0']['value']: return add_reaction
         clan_command = strings.SLASH_COMMANDS['teamraid']
@@ -62,7 +63,7 @@ async def create_clan_reminder(message: discord.Message, embed_data: Dict) -> bo
 
 
 async def update_clan(message: discord.Message, embed_data: Dict, user: Optional[discord.User],
-                                user_settings: Optional[users.User]) -> bool:
+                      user_settings: Optional[users.User]) -> bool:
     """Updates the guild from /guild list
 
     Returns

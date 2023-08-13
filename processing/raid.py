@@ -276,6 +276,7 @@ async def call_raid_helper(bot: discord.Bot, message: discord.Message, embed_dat
             f'Enemies: {enemies_power}\n'
             f'Workers: {workers_power}\n'
             f'Solution: {worker_solution}\n'
+            f'Kills: {killed_enemies} farms\n'
         )
 
         while True:

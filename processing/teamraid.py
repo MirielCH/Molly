@@ -16,7 +16,7 @@ from resources import emojis, exceptions, functions, regex, settings, strings
 
 
 async def process_message(bot: discord.Bot, message: discord.Message, embed_data: Dict, user: Optional[discord.User],
-                          user_settings: Optional[users.User]) -> bool:
+                          user_settings: Optional[users.User], clan_settings: Optional[clans.Clan]) -> bool:
     """Processes the message for all tracking related actions.
 
     Returns
@@ -25,13 +25,13 @@ async def process_message(bot: discord.Bot, message: discord.Message, embed_data
     - False otherwise
     """
     return_values = []
-    return_values.append(await call_teamraid_helper(message, embed_data, user, user_settings))
-    return_values.append(await create_clan_reminder(message, embed_data))
+    return_values.append(await call_teamraid_helper(message, embed_data, user, user_settings, clan_settings))
+    return_values.append(await create_clan_reminder(message, embed_data, clan_settings))
     return any(return_values)
 
 
 async def call_teamraid_helper(message: discord.Message, embed_data: Dict, user: Optional[discord.User],
-                               user_settings: Optional[users.User]) -> bool:
+                               user_settings: Optional[users.User], clan_settings: Optional[clans.Clan]) -> bool:
     """Calls the teamraid helper
 
     Returns
@@ -68,9 +68,11 @@ async def call_teamraid_helper(message: discord.Message, embed_data: Dict, user:
             )
             if user is None: user = user_command_message.author
             teamraid_users = [user,] + user_command_message.mentions
-        try:
-            clan_settings: clans.Clan = await clans.get_clan_by_member_id(user.id)
-        except exceptions.NoDataFoundError: return add_reaction
+        if clan_settings is None:
+            try:
+                clan_settings: clans.Clan = await clans.get_clan_by_member_id(user.id)
+            except exceptions.NoDataFoundError:
+                return add_reaction
         if not clan_settings.helper_teamraid_enabled: return add_reaction
         enemy_name_match = re.search(r'\*\*(.+?) farms', embed_data['field0']['name'].lower())
         enemy_name = enemy_name_match.group(1).upper()
@@ -144,7 +146,7 @@ async def call_teamraid_helper(message: discord.Message, embed_data: Dict, user:
         await message.reply(embed=embed)
 
 
-async def create_clan_reminder(message: discord.Message, embed_data: Dict) -> bool:
+async def create_clan_reminder(message: discord.Message, embed_data: Dict, clan_settings: Optional[clans.Clan]) -> bool:
     """Create clan reminder from teamraids
 
     Returns
@@ -163,10 +165,11 @@ async def create_clan_reminder(message: discord.Message, embed_data: Dict) -> bo
     if (any(search_string in embed_data['description'].lower() for search_string in search_strings_description)
         and any(search_string in embed_data['field1']['value'] for search_string in search_strings_field1)):
         clan_name_match = re.search(r'^\*\*(.+?)\*\*:', embed_data['field1']['value'])
-        try:
-            clan_settings: clans.Clan = await clans.get_clan_by_clan_name(clan_name_match.group(1))
-        except exceptions.NoDataFoundError:
-            return add_reaction
+        if clan_settings is None:
+            try:
+                clan_settings: clans.Clan = await clans.get_clan_by_clan_name(clan_name_match.group(1))
+            except exceptions.NoDataFoundError:
+                return add_reaction
         if not clan_settings.reminder_enabled: return add_reaction
         clan_command = strings.SLASH_COMMANDS['teamraid']
         current_time = utils.utcnow()
