@@ -55,7 +55,7 @@ async def update_workers_and_idlucks(message: discord.Message, embed_data: Dict,
                 user_settings: users.User = await users.get_user(user.id)
             except exceptions.FirstTimeUserError:
                 return add_reaction
-        if not user_settings.bot_enabled: return False
+        if not user_settings.bot_enabled: return add_reaction
         if clan_settings is None:
             try:
                 clan_settings: clans.Clan = await clans.get_clan_by_member_id(user.id)

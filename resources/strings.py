@@ -170,6 +170,7 @@ EVENTS = (
 
 SLASH_COMMANDS = {
     'claim': '</claim:1128412426472259625>',
+    'code': '</code:1128414218115350679>',
     'daily': '</daily:1128414211085717609>',
     'donate': '</donate:1128414301720420403>',
     'guild list': '</guild list:1128414125433827348>',

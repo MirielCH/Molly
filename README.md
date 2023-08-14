@@ -10,7 +10,7 @@ Reminder / Helper for the Discord bot IDLE FARM.
 
 ## Setup to run your own instance
 
-• Install python 3.11 or higher.
+• Install python 3.11 or higher.  
 • Install the third party libraries mentioned in `requirements.txt`.  
 • Create a Discord application with a bot user, activate the required intents and generate a bot token.  
 • Rename `default.env` to `.env` and set all required variables mentioned in the file.  

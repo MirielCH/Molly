@@ -278,7 +278,7 @@ class SettingsHelpersView(discord.ui.View):
         toggled_settings = {
             'Affordable upgrades': 'helper_upgrades_enabled',
             'Context commands': 'helper_context_enabled',
-            'Energy stats': 'helper_energy_enabled',
+            'Profile timers': 'helper_profile_enabled',
             'Raid guide': 'helper_raid_enabled',
         }
         self.add_item(components.ToggleUserSettingsSelect(self, toggled_settings, 'Toggle helpers'))

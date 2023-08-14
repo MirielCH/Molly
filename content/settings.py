@@ -392,6 +392,7 @@ async def embed_settings_clan(bot: discord.Bot, ctx: discord.ApplicationContext,
     )
     helpers = (
         f'{emojis.BP} **Teamraid guide**: {teamraid_enabled}\n'
+        f'{emojis.DETAIL} _Note: If this is on, Molly will track the workers of all guild members using Molly._\n'
     )
     embed = discord.Embed(
         color = settings.EMBED_COLOR,
@@ -416,8 +417,8 @@ async def embed_settings_helpers(bot: discord.Bot, ctx: discord.ApplicationConte
         f'{await functions.get_game_command(user_settings, "payday")}._\n'
         f'{emojis.BP} **Context commands**: {await functions.bool_to_text(user_settings.helper_context_enabled)}\n'
         f'{emojis.DETAIL} _Shows some helpful commands depending on context._\n'
-        f'{emojis.BP} **Energy stats**: {await functions.bool_to_text(user_settings.helper_energy_enabled)}\n'
-        f'{emojis.DETAIL} _Shows some energy stats when you open your '
+        f'{emojis.BP} **Profile timers*: {await functions.bool_to_text(user_settings.helper_profile_enabled)}\n'
+        f'{emojis.DETAIL} _Shows some useful timers when you open your '
         f'{await functions.get_game_command(user_settings, "profile")}._\n'
         f'{emojis.BP} **Raid guide**: {await functions.bool_to_text(user_settings.helper_raid_enabled)}\n'
         f'{emojis.DETAIL} _Guides you through your raids._\n'

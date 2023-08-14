@@ -147,4 +147,5 @@ async def update_idlucks(message: discord.Message, embed_data: Dict, user: Optio
         idlucks_match = re.search(r'got ([0-9,]+?) <', embed_data['description'].lower())
         idlucks = int(re.sub(r'\D','', idlucks_match.group(1)))
         await user_settings.update(idlucks=idlucks)
+        if user_settings.reactions_enabled: add_reaction = True
     return add_reaction

@@ -265,6 +265,42 @@ async def get_worker_level(level: Optional[int] = None, workers_required: Option
     return worker_level
 
 
+async def get_worker_levels() -> Tuple[WorkerLevel]:
+    """Gets all worker levels
+
+    Returns
+    -------
+    Tuple[WorkerLevel]
+
+    Raises
+    ------
+    sqlite3.Error if something happened within the database.
+    exceptions.NoDataFoundError if no upgrade was found.
+    LookupError if something goes wrong reading the dict.
+    Also logs all errors to the database.
+    """
+    table = 'worker_levels'
+    function_name = 'get_worker_levels'
+    sql = f'SELECT * FROM {table} ORDER BY level ASC'
+    try:
+        cur = settings.DATABASE.cursor()
+        cur.execute(sql)
+        records = cur.fetchall()
+    except sqlite3.Error as error:
+        await errors.log_error(
+            strings.INTERNAL_ERROR_SQLITE3.format(error=error, table=table, function=function_name, sql=sql)
+        )
+        raise
+    if not records:
+        error_message = f'No worker levels found in database.'
+        raise exceptions.NoDataFoundError(error_message)
+    worker_levels = []
+    for record in records:
+        worker_level = await _dict_to_worker_level(dict(record))
+        worker_levels.append(worker_level)
+    return tuple(worker_levels)
+
+
 # Write Data
 async def _update_user_worker(user_worker: UserWorker, **kwargs) -> None:
     """Updates a user worker record. Use UserWorker.update() to trigger this function.

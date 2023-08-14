@@ -8,8 +8,8 @@ import discord
 from discord.ext import commands
 
 from database import clans, guilds, users
-from processing import buy, claim, clan, daily, donate, events, payday, profile, raid, request, teamraid, upgrades, use
-from processing import workers
+from processing import buy, claim, clan, daily, donate, events, open, payday, profile, raid, request, teamraid, upgrades
+from processing import use, workers
 from resources import exceptions, functions, regex, settings
 
 
@@ -65,7 +65,7 @@ class DetectionCog(commands.Cog):
         guild_settings = await guilds.get_guild(message.guild.id)
         return_values = []
         helper_context_enabled = getattr(user_settings, 'helper_context_enabled', True)
-        helper_energy_enabled = getattr(user_settings, 'helper_energy_enabled', True)
+        helper_profile_enabled = getattr(user_settings, 'helper_profile_enabled', True)
         helper_raid_enabled = getattr(user_settings, 'helper_raid_enabled', True)
         helper_upgrades_enabled = getattr(user_settings, 'helper_upgrades_enabled', True)
         reminder_daily_enabled = getattr(getattr(user_settings, 'reminder_daily', None), 'enabled', True)
@@ -113,7 +113,13 @@ class DetectionCog(commands.Cog):
         if helper_upgrades_enabled:
             add_reaction = await upgrades.process_message(self.bot, message, embed_data, interaction_user, user_settings)
             return_values.append(add_reaction)
-            
+
+        # Open    
+        if helper_raid_enabled or helper_teamraid_enabled:
+            add_reaction = await open.process_message(self.bot, message, embed_data, interaction_user, user_settings,
+                                                      clan_settings)
+            return_values.append(add_reaction)
+
         # Request tracking
         if helper_raid_enabled or helper_teamraid_enabled:
             add_reaction = await request.process_message(self.bot, message, embed_data, interaction_user, user_settings,
@@ -138,7 +144,7 @@ class DetectionCog(commands.Cog):
         add_reaction = await donate.process_message(self.bot, message, embed_data, interaction_user, user_settings)
 
          # Energy Helper
-        if helper_energy_enabled or helper_upgrades_enabled:
+        if helper_profile_enabled or helper_upgrades_enabled:
             add_reaction = await profile.process_message(self.bot, message, embed_data, interaction_user, user_settings)
             return_values.append(add_reaction)
 

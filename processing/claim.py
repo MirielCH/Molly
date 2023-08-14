@@ -60,23 +60,13 @@ async def process_claim_message(message: discord.Message, embed_data: Dict, user
         await user_settings.update(time_speeders_used=0)
         if not user_settings.reminder_claim.enabled: return add_reaction
         view = views.SetClaimReminderTimeView(message, user, user_settings)
-        current_time = utils.utcnow()
         embed = discord.Embed(
             color = settings.EMBED_COLOR,
-            #title = f'Time to {await functions.get_game_command(user_settings, "claim")}!',
             title = 'Nice claim!',
             description = (
                 f'When would you like to be reminded for your next claim?'
             )
-            #description = (
-                #f'**Time to {await functions.get_game_command(user_settings, "claim")}!**\n'
-            #    f'• Your last claim was {utils.format_dt(user_settings.last_claim_time, "R")}\n'
-            #    f'• Your farms produced {format_timespan(current_time - user_settings.last_claim_time + user_settings.time_speeders_used * timedelta(hours=2))} of items.'
-            #)
         )
-        #img_logo = discord.File(settings.IMG_LOGO, filename='logo.png')
-        #image_url = 'attachment://logo.png'
-        #embed.set_thumbnail(url=image_url)
         interaction = await message.reply(embed=embed, view=view)
         view.interaction = interaction
         await view.wait()

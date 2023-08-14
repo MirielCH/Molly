@@ -352,6 +352,7 @@ async def track_raid(message: discord.Message, embed_data: Dict, user: Optional[
     - True if a logo reaction should be added to the message
     - False otherwise
     """
+    add_reaction = False
     search_strings = [
         'estimated raid worth', #English
     ]
@@ -373,7 +374,7 @@ async def track_raid(message: discord.Message, embed_data: Dict, user: Optional[
                 user_settings: users.User = await users.get_user(user.id)
             except exceptions.FirstTimeUserError:
                 return False
-        if not user_settings.tracking_enabled or not user_settings.bot_enabled: return False
+        if not user_settings.tracking_enabled or not user_settings.bot_enabled: return add_reaction
         current_time = utils.utcnow().replace(microsecond=0)
         amount = int(amount)
         if amount < 0:
@@ -382,4 +383,5 @@ async def track_raid(message: discord.Message, embed_data: Dict, user: Optional[
         else:
             item = 'raid-points-gained'
         await tracking.insert_log_entry(user.id, message.guild.id, item, current_time, amount)
-    return False
+        if user_settings.reactions_enabled: add_reaction = True
+    return add_reaction

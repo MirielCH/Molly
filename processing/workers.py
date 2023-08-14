@@ -53,7 +53,7 @@ async def track_worker_hire_event(message: discord.Message, embed_data: Dict, us
             try:
                 user_settings: users.User = await users.get_user(user.id)
             except exceptions.FirstTimeUserError:
-                return False
+                return add_reaction
         if clan_settings is None:
             try:
                 clan_settings: clans.Clan = await clans.get_clan_by_member_id(user.id)
@@ -61,7 +61,7 @@ async def track_worker_hire_event(message: discord.Message, embed_data: Dict, us
                 pass
         helper_teamraid_enabled = getattr(clan_settings, 'helper_teamraid_enabled', False)
         if (not user_settings.helper_raid_enabled and not helper_teamraid_enabled) or not user_settings.bot_enabled:
-            return False
+            return add_reaction
         worker_name_match = re.search(r'<a:(.+?)worker:', embed_data['field0']['name'].lower())
         worker_name = worker_name_match.group(1)
         try:
@@ -76,7 +76,8 @@ async def track_worker_hire_event(message: discord.Message, embed_data: Dict, us
                 await user_worker.update(worker_amount=user_worker.worker_amount + 1)
         except exceptions.NoDataFoundError:
             return add_reaction
-    return False
+        if user_settings.reactions_enabled: add_reaction = True
+    return add_reaction
 
 
 async def track_worker_roll(message: discord.Message, embed_data: Dict, user: Optional[discord.User],
@@ -108,7 +109,7 @@ async def track_worker_roll(message: discord.Message, embed_data: Dict, user: Op
             try:
                 user_settings: users.User = await users.get_user(user.id)
             except exceptions.FirstTimeUserError:
-                return False
+                return add_reaction
         if clan_settings is None:
             try:
                 clan_settings: clans.Clan = await clans.get_clan_by_member_id(user.id)
@@ -116,7 +117,7 @@ async def track_worker_roll(message: discord.Message, embed_data: Dict, user: Op
                 pass
         helper_teamraid_enabled = getattr(clan_settings, 'helper_teamraid_enabled', False)
         if ((not user_settings.tracking_enabled and not user_settings.helper_raid_enabled and not helper_teamraid_enabled)
-            or not user_settings.bot_enabled): return False
+            or not user_settings.bot_enabled): return add_reaction
         # Update user workers
         if user_settings.helper_raid_enabled:
             worker_name_match = re.search(r'<a:(.+?)worker:', embed_data['field0']['name'].lower())
@@ -147,7 +148,7 @@ async def track_worker_roll(message: discord.Message, embed_data: Dict, user: Op
             current_time = utils.utcnow().replace(microsecond=0)
             if item is not None:
                 await tracking.insert_log_entry(user.id, message.guild.id, item, current_time)
-    return False
+    return add_reaction
 
 
 async def track_worker_stats(message: discord.Message, embed_data: Dict,
@@ -204,37 +205,5 @@ async def track_worker_stats(message: discord.Message, embed_data: Dict,
                     await worker_level.update(workers_required=workers_required)
             except exceptions.NoDataFoundError:
                 worker_level = await workers.insert_worker_level(level, workers_required)
-        if user_settings.reactions_enabled: add_reaction = True
-    return add_reaction
-
-
-async def track_upgrade(message: discord.Message, user: Optional[discord.User]) -> bool:
-    """Tacks upgrades from the upgrade message
-
-    Returns
-    -------
-    - True if a logo reaction should be added to the message
-    - False otherwise
-    """
-    add_reaction = False
-    search_strings = [
-        '` upgraded to level ', #English
-    ]
-    if any(search_string in message.content.lower() for search_string in search_strings):
-        if user is None:
-            user = message.mentions[0]
-        try:
-            user_settings: users.User = await users.get_user(user.id)
-        except exceptions.FirstTimeUserError:
-            return add_reaction
-        if not user_settings.bot_enabled or not user_settings.helper_context_enabled: return add_reaction
-        name_level_match = re.search(r'\d+> `(.+?)` .+level\s(\d+)\s', message.content.lower())
-        name = name_level_match.group(1)
-        level = int(name_level_match.group(2))
-        try:
-            upgrade: upgrades.Upgrade = await upgrades.get_upgrade(user.id, name)
-            await upgrade.update(level=level)
-        except exceptions.NoDataFoundError:
-            return
         if user_settings.reactions_enabled: add_reaction = True
     return add_reaction

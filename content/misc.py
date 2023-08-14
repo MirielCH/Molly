@@ -4,6 +4,8 @@ from decimal import Decimal, ROUND_HALF_UP
 
 import discord
 
+from database import codes as codes_db
+from resources import emojis, settings, strings
 
 # --- Commands ---
 async def command_calculator(ctx: discord.ApplicationContext, calculation: str) -> None:
@@ -109,3 +111,36 @@ async def command_calculator(ctx: discord.ApplicationContext, calculation: str) 
         )
         return
     await ctx.respond(result)
+
+
+async def command_codes(ctx: discord.ApplicationContext) -> None:
+    """Codes command"""
+    embed = await embed_codes()
+    await ctx.respond(embed=embed)
+
+
+# --- Embeds ---
+async def embed_codes():
+    """Codes"""
+    field_no = 1
+    codes = {field_no: ''}
+    all_codes = await codes_db.get_all_codes()
+    for code in sorted(all_codes):
+        code_value = f'{emojis.BP} `{code.code}`{emojis.BLANK}{code.contents}'
+        if len(codes[field_no]) + len(code_value) > 1020:
+            field_no += 1
+            codes[field_no] = ''
+        codes[field_no] = f'{codes[field_no]}\n{code_value}'
+    if codes[field_no] == '': codes[field_no] = f'{emojis.BP} No codes currently known'
+    embed = discord.Embed(
+        color = settings.EMBED_COLOR,
+        title = 'Redeemable codes',
+        description = (
+            f'Claim these codes with {strings.SLASH_COMMANDS["code"]} to get some free goodies.\n'
+            f'Every code can be redeemed once.'
+        )
+    )
+    for field_no, field in codes.items():
+        field_name = f'Codes {field_no}' if field_no > 1 else 'Codes'
+        embed.add_field(name=field_name, value=field.strip(), inline=False)
+    return embed

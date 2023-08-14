@@ -21,6 +21,11 @@ class MiscCog(commands.Cog):
         ) -> None:
         """Basic calculator"""
         await misc.command_calculator(ctx, calculation)
+        
+    @slash_command(description='Shows all currently redeemable codes in IDLE FARM')
+    async def codes(self, ctx: discord.ApplicationContext) -> None:
+        """Codes"""
+        await misc.command_codes(ctx)
 
 
 # Initialization
