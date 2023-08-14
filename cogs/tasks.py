@@ -95,7 +95,7 @@ class TasksCog(commands.Cog):
                 clan_settings = await clans.get_clan_by_clan_name(reminder.clan_name)
                 channel = await functions.get_discord_channel(self.bot, clan_settings.reminder_channel_id)
                 if channel is None: return
-                reminder_message = reminder.message.replace('{guild_role}', f'<#{clan_settings.reminder_role_id}>')
+                reminder_message = reminder.message.replace('{guild_role}', f'<@&{clan_settings.reminder_role_id}>')
                 time_left = get_time_left()
                 try:
                     await asyncio.sleep(time_left.total_seconds())
