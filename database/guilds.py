@@ -127,26 +127,6 @@ async def _get_mixed_case_prefixes(prefix: str) -> List[str]:
 
 
 # Read data
-async def get_prefix(ctx_or_message: Union[commands.Context, discord.Message]) -> str:
-    """Check database for stored prefix. If no prefix is found, the default prefix is used"""
-    table = 'guilds'
-    function_name = 'get_prefix'
-    sql = f'SELECT prefix FROM {table} WHERE guild_id=?'
-    guild_id = ctx_or_message.guild.id
-    try:
-        cur=settings.DATABASE.cursor()
-        cur.execute(sql, (guild_id,))
-        record = cur.fetchone()
-        prefix = record['prefix'].replace('"','') if record else settings.DEFAULT_PREFIX
-    except sqlite3.Error as error:
-        await errors.log_error(
-            strings.INTERNAL_ERROR_SQLITE3.format(error=error, table=table, function=function_name, sql=sql),
-            ctx_or_message
-        )
-
-    return prefix
-
-
 async def get_all_prefixes(bot: commands.Bot, ctx: commands.Context) -> Tuple:
     """Gets all prefixes. If no prefix is found, a record for the guild is created with the
     default prefix.

@@ -10,7 +10,7 @@ from discord.ui import InputText, Modal
 from humanfriendly import format_timespan
 
 from database import reminders
-from resources import functions
+from resources import exceptions, functions
 
 
 # --- Settings: Server ---
@@ -69,10 +69,28 @@ class SetLastClaimModal(Modal):
             await interaction.response.edit_message(view=self.view)
             await interaction.followup.send(msg_error, ephemeral=True)
             return
+        last_claim_time_old = self.view.user_settings.last_claim_time
         await self.view.user_settings.update(last_claim_time=last_claim_time, time_speeders_used=0)
+        try:
+            reminder: reminders.Reminder = await reminders.get_user_reminder(self.view.user.id, 'claim')
+        except exceptions.NoDataFoundError:
+            reminder = None
+        if reminder is not None:
+            original_reminder_time_left = reminder.end_time - last_claim_time_old
+            new_end_time = self.view.user_settings.last_claim_time + original_reminder_time_left
+            current_time = utils.utcnow()
+            if new_end_time <= current_time: new_end_time = current_time + timedelta(seconds=1)
+            await reminder.update(end_time=new_end_time)
         embed = await self.view.embed_function(self.view.bot, self.view.ctx, self.view.user_settings)
         await interaction.response.edit_message(embed=embed, view=self.view)
-
+        await interaction.followup.send(
+            content = (
+                'Updated last claim time.\n'
+                f'Note that if you had a claim reminder active, this also updated the reminder.'
+            ),
+            ephemeral =  True
+        )
+        
 
 # -- Dev ---
 class SetEventReductionModal(Modal):
@@ -236,3 +254,62 @@ class SetClaimReminderTimeReminderListModal(Modal):
         embed = await self.view.embed_function(self.view.bot, self.view.user, self.view.user_settings, 
                                                self.view.custom_reminders)
         await interaction.response.edit_message(embed=embed, view=self.view)
+
+
+# -- Energy reminder --
+class SetEnergyReminderModal(Modal):
+    def __init__(self, view: discord.ui.View, energy_current: int, energy_regen_time: timedelta) -> None:
+        super().__init__(title='Set a custom energy reminder')
+        self.view = view
+        self.energy_current = energy_current
+        self.energy_regen_time = energy_regen_time
+        self.add_item(
+            InputText(
+                label='Energy to remind at:',
+                placeholder='Example: 75',
+            )
+        )
+
+    async def callback(self, interaction: discord.Interaction):
+        energy = self.children[0].value
+        try:
+            energy = int(energy)
+        except ValueError:
+            await interaction.response.edit_message(view=self.view)
+            await interaction.followup.send('That is not a valid number.', ephemeral=True)
+            return
+        
+        if not self.energy_current < energy <= self.view.user_settings.energy_max:
+            await interaction.response.edit_message(view=self.view)
+            await interaction.followup.send(
+                (
+                    f'I can\'t remind you at an energy level you already reached.\n'
+                    f'Please enter a number between **{self.energy_current + 1}** and **{self.view.user_settings.energy_max}**'
+                ),
+                ephemeral=True
+            )
+            return
+        energy_left = energy - self.energy_current
+        time_left = timedelta(seconds=energy_left * self.energy_regen_time.total_seconds())
+        reminder: reminders.Reminder = (
+            await reminders.insert_user_reminder(self.view.user_settings.user_id, f'energy-{energy}',
+                                                 time_left, self.view.message.channel.id,
+                                                 self.view.user_settings.reminder_energy.message)
+        )
+        await self.view.user_settings.update(reminder_energy_last_selection=energy)
+        await interaction.response.send_message(
+            (
+                f'Reminder set for `{energy}` energy {utils.format_dt(reminder.end_time, "R")}.\n\n'
+                f'Please note that energy gained from `OHMMM` events is **not** tracked!\n'
+                f'If you join such an event, use {await functions.get_game_command(self.view.user_settings, "profile")} '
+                f'to update the reminder.\n'
+            ),
+            ephemeral=True
+        )
+        custom_reminders = getattr(self.view, 'custom_reminders', None)
+        if custom_reminders is not None:
+            embed = await self.view.embed_function(self.view.bot, self.view.user, self.view.user_settings,
+                                                   self.view.custom_reminders)
+            await interaction.message.edit(embed=embed, view=self.view)
+        else:
+            await interaction.message.edit(view=self.view)

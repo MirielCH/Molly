@@ -192,7 +192,11 @@ async def get_user_reminder(user_id: int, activity: str, custom_id: Optional[int
     function_name = 'get_user_reminder'
     if activity == 'custom' and custom_id is None:
         raise ValueError('Activity "custom" given but custom_id is None.')
-    sql = f'SELECT * FROM {table} WHERE user_id=? AND activity=?'
+    if activity.startswith('energy'):
+        activity = 'energy%'
+        sql = f'SELECT * FROM {table} WHERE user_id=? AND activity LIKE ?'
+    else:
+        sql = f'SELECT * FROM {table} WHERE user_id=? AND activity=?'
     if custom_id is not None: sql = f'{sql} AND custom_id=?'
     try:
         cur = settings.DATABASE.cursor()
@@ -591,7 +595,7 @@ async def _update_reminder(reminder: Reminder, **kwargs) -> None:
 
 
 async def insert_user_reminder(user_id: int, activity: str, time_left: timedelta,
-                          channel_id: int, message: str, overwrite_message: Optional[bool] = True) -> Reminder:
+                               channel_id: int, message: str, overwrite_message: Optional[bool] = True) -> Reminder:
     """Inserts a reminder record.
     This function first checks if a reminder exists. If yes, the existing reminder will be updated instead and
     no new record is inserted.
@@ -653,9 +657,9 @@ async def insert_user_reminder(user_id: int, activity: str, time_left: timedelta
             pass
     if reminder is not None:
         if overwrite_message:
-            await reminder.update(end_time=end_time, channel_id=channel_id, message=message)
+            await reminder.update(activity=activity, end_time=end_time, channel_id=channel_id, message=message)
         else:
-            await reminder.update(end_time=end_time, channel_id=channel_id)
+            await reminder.update(activity=activity, end_time=end_time, channel_id=channel_id)
     else:
         sql = (
             f'INSERT INTO {table} (user_id, activity, end_time, channel_id, message, custom_id, triggered) '

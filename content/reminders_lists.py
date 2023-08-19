@@ -63,18 +63,24 @@ async def embed_reminders_list(bot: discord.Bot, user: discord.User, user_settin
             pass
     clan_reminder_enabled = getattr(clan_settings, 'reminder_enabled', False)
     current_time = utils.utcnow()
-    claim_reminder = daily_reminder = vote_reminder = None
+    claim_reminder = daily_reminder = energy_reminder = vote_reminder = None
+    claim_reminder_end_time = daily_reminder_end_time = clan_reminder_end_time = vote_reminder_end_time = ''
+    shop_reminders = []
     for reminder in user_reminders:
         if reminder.activity == 'daily':
             daily_reminder = reminder
         elif reminder.activity == 'claim':
             claim_reminder = reminder
+        elif reminder.activity.startswith('energy'):
+            energy_reminder = reminder
+        elif reminder.activity.startswith('shop-'):
+            shop_reminders.append(reminder)
         elif reminder.activity == 'vote':
-            claim_reminder = reminder
+            vote_reminder = reminder
 
     last_claim_time_timestamp = farms_full_in_timestamp = 'Never'
     time_produced_timespan = 'None'
-    if user_settings.reminder_claim.enabled and user_settings.last_claim_time > datetime(year=1970, month=1, day=1, tzinfo=timezone.utc):
+    if user_settings.reminder_claim.enabled and user_settings.last_claim_time is not None:
         time_since_last_claim = current_time - user_settings.last_claim_time
         time_produced = time_since_last_claim + user_settings.time_speeders_used * timedelta(hours=2)
         if time_produced >= timedelta(hours=24): time_produced = timedelta(hours=24)
@@ -92,14 +98,8 @@ async def embed_reminders_list(bot: discord.Bot, user: discord.User, user_settin
         farms_full_in_timestamp = utils.format_dt(farms_full_in, 'R')
         if farms_full_in <= current_time:
             farms_full_in_timestamp = f'{emojis.WARNING}{farms_full_in_timestamp}'
-    if daily_reminder is not None:
-        daily_reminder_end_time = utils.format_dt(daily_reminder.end_time, 'R')
-    else:
-        daily_reminder_end_time = ''
-    if clan_reminder is not None:
-        clan_reminder_end_time = utils.format_dt(clan_reminder.end_time, 'R')
-    else:
-        clan_reminder_end_time = ''
+    if daily_reminder is not None: daily_reminder_end_time = utils.format_dt(daily_reminder.end_time, 'R')
+    if clan_reminder is not None: clan_reminder_end_time = utils.format_dt(clan_reminder.end_time, 'R')
     claim_reminder_emoji = emojis.ENABLED_LARGE if claim_reminder is None else emojis.COOLDOWN
     claim_reminder_text = '`Ready!`' if claim_reminder is None else claim_reminder_end_time
     daily_reminder_emoji = emojis.ENABLED_LARGE if daily_reminder is None else emojis.COOLDOWN
@@ -110,8 +110,19 @@ async def embed_reminders_list(bot: discord.Bot, user: discord.User, user_settin
     clan_reminder_text = '`Ready!`' if clan_reminder is None else clan_reminder_end_time
     embed = discord.Embed(
         color = settings.EMBED_COLOR,
-        title = f'{user.display_name}\'s commands',
+        title = f'{user.display_name}\'s reminders',
     )
+    if user_settings.reminder_energy.enabled and energy_reminder is not None:
+        embed.add_field(
+            name=(
+                f'{emojis.COOLDOWN} Reaching `{energy_reminder.activity[7:]}` energy '
+                f'{utils.format_dt(energy_reminder.end_time, "R")}'
+            ),
+            value=(
+                f'{emojis.DETAIL} _Use {strings.SLASH_COMMANDS["profile"]} to update your current energy._'
+            ),
+            inline=False
+        )
     if user_settings.reminder_claim.enabled:
         embed.add_field(
             name=f'{claim_reminder_emoji} {strings.SLASH_COMMANDS["claim"]} {claim_reminder_text}',
@@ -126,7 +137,7 @@ async def embed_reminders_list(bot: discord.Bot, user: discord.User, user_settin
     if user_settings.reminder_daily.enabled:
         embed.add_field(
             name=f'{daily_reminder_emoji} {strings.SLASH_COMMANDS["daily"]} {daily_reminder_text}',
-            value=f'{emojis.DETAIL} _The daily rewards reset at midnight UTC._',
+            value=f'{emojis.DETAIL} _Daily rewards reset at midnight UTC._',
             inline=False
         )
     """
@@ -144,6 +155,20 @@ async def embed_reminders_list(bot: discord.Bot, user: discord.User, user_settin
                 f'{emojis.DETAIL2} **Guild name**: `{clan_settings.clan_name.upper()}`\n'
                 f'{emojis.DETAIL} **Guild channel**: <#{clan_settings.reminder_channel_id}>\n'
             ),
+            inline=False
+        )
+    if user_settings.reminder_shop.enabled and shop_reminders:
+        shop_field_value = ''
+        for reminder in shop_reminders:
+            emoji = emojis.DETAIL if reminder == shop_reminders[-1] else emojis.DETAIL2
+            item_name = reminder.activity[5:].replace('-',' ').strip().capitalize()
+            shop_field_value = (
+                f'{shop_field_value}\n'
+                f'{emoji} **{item_name}**: {utils.format_dt(reminder.end_time, "R")}'
+            )
+        embed.add_field(
+            name=f'{emojis.COOLDOWN} {strings.SLASH_COMMANDS["shop list"]} restocks',
+            value=shop_field_value.strip(),
             inline=False
         )
     if custom_reminders:

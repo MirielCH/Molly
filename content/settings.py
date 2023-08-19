@@ -417,7 +417,7 @@ async def embed_settings_helpers(bot: discord.Bot, ctx: discord.ApplicationConte
         f'{await functions.get_game_command(user_settings, "payday")}._\n'
         f'{emojis.BP} **Context commands**: {await functions.bool_to_text(user_settings.helper_context_enabled)}\n'
         f'{emojis.DETAIL} _Shows some helpful commands depending on context._\n'
-        f'{emojis.BP} **Profile timers*: {await functions.bool_to_text(user_settings.helper_profile_enabled)}\n'
+        f'{emojis.BP} **Profile timers**: {await functions.bool_to_text(user_settings.helper_profile_enabled)}\n'
         f'{emojis.DETAIL} _Shows some useful timers when you open your '
         f'{await functions.get_game_command(user_settings, "profile")}._\n'
         f'{emojis.BP} **Raid guide**: {await functions.bool_to_text(user_settings.helper_raid_enabled)}\n'
@@ -499,6 +499,8 @@ async def embed_settings_reminders(bot: discord.Bot, ctx: discord.ApplicationCon
     reminder_channel = '`Last channel the reminder was updated in`'
     if user_settings.reminder_channel_id is not None:
         reminder_channel = f'<#{user_settings.reminder_channel_id}>'
+    guild_settings: guilds.Guild = await guilds.get_guild(ctx.guild.id)
+    prefix = guild_settings.prefix
     behaviour = (
         f'{emojis.BP} **DND mode**: {await functions.bool_to_text(user_settings.dnd_mode_enabled)}\n'
         f'{emojis.DETAIL} _If DND mode is enabled, Molly\'s reminders won\'t ping you._\n'
@@ -508,13 +510,18 @@ async def embed_settings_reminders(bot: discord.Bot, ctx: discord.ApplicationCon
         f'{emojis.BP} **Reminder channel**: {reminder_channel}\n'
         f'{emojis.DETAIL} _If a channel is set, all reminders are sent to that channel._'
     )
-    if user_settings.last_claim_time > datetime(year=1970, month=1, day=1, tzinfo=timezone.utc):
+    if user_settings.last_claim_time is not None:
         last_claim_time = utils.format_dt(user_settings.last_claim_time, "R")
     else:
         last_claim_time = '`Never`'
     command_reminders = (
         f'{emojis.BP} **Claim**: {await functions.bool_to_text(user_settings.reminder_claim.enabled)}\n'
         f'{emojis.BP} **Daily**: {await functions.bool_to_text(user_settings.reminder_daily.enabled)}\n'
+        f'{emojis.BP} **Energy**: {await functions.bool_to_text(user_settings.reminder_energy.enabled)}\n'
+        f'{emojis.DETAIL} _You can create a reminder from `{prefix}list` or the profile timers (if enabled)._\n'
+        f'{emojis.BP} **Shop items**: {await functions.bool_to_text(user_settings.reminder_shop.enabled)}\n'
+        f'{emojis.DETAIL2} _Shows when sold out items are restocked in the {strings.SLASH_COMMANDS["shop list"]}._\n'
+        f'{emojis.DETAIL} _Note that you need to open the shop to create reminders._\n'
         f'{emojis.BP} **Vote**: {await functions.bool_to_text(user_settings.reminder_vote.enabled)}\n'
     )
     claim_time = (

@@ -89,7 +89,8 @@ async def embed_event_reductions(bot: discord.Bot, all_cooldowns: List[cooldowns
 
 async def embed_help(bot: discord.Bot, ctx: discord.ApplicationContext) -> discord.Embed:
     """Main menu embed"""
-    prefix = await guilds.get_prefix(ctx)
+    guild_settings: guilds.Guild = await guilds.get_guild(ctx.guild.id)
+    prefix = guild_settings.prefix
     commands_reminders = (
         f'{emojis.BP} {await functions.get_bot_slash_command(bot, "reminders list")} : Check your commands and reminders\n'
         f'{emojis.DETAIL} _Aliases: `{prefix}list`, `{prefix}cd`_\n'

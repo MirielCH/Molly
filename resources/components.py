@@ -11,7 +11,7 @@ from discord import utils
 from humanfriendly import format_timespan
 
 from database import cooldowns, guilds, reminders, users
-from resources import emojis, functions, modals, strings, views
+from resources import emojis, exceptions, functions, modals, strings, views
 
 
 # --- Miscellaneous ---
@@ -33,27 +33,41 @@ class CustomButton(discord.ui.Button):
 # --- Reminder list ---
 class DeleteCustomRemindersButton(discord.ui.Button):
     """Button to activate the select to delete custom reminders"""
-    def __init__(self):
+    def __init__(self, row: Optional[int] = 0):
         super().__init__(style=discord.ButtonStyle.grey, custom_id='activate_select_custom', label='Delete custom reminders',
-                         emoji=None, row=2)
+                         emoji=None, row=row)
 
     async def callback(self, interaction: discord.Interaction) -> None:
         self.view.remove_item(self)
-        self.view.add_item(DeleteCustomReminderSelect(self.view, self.view.custom_reminders, row=1))
+        self.view.add_item(DeleteCustomReminderSelect(self.view, self.view.custom_reminders, row=2))
         embed = await self.view.embed_function(self.view.bot, self.view.user, self.view.user_settings,
                                                self.view.custom_reminders)
         await interaction.response.edit_message(embed=embed, view=self.view)
 
-        
+
 class SetClaimReminderTimeButton(discord.ui.Button):
     """Button to activate the select to change the claim reminder time"""
-    def __init__(self):
-        super().__init__(style=discord.ButtonStyle.grey, custom_id='activate_select_claim', label='Change claim reminder',
-                         emoji=None, row=2)
+    def __init__(self, row: Optional[int] = 0):
+        super().__init__(style=discord.ButtonStyle.grey, custom_id='activate_select_claim', label='Set claim reminder',
+                         emoji=None, row=row)
 
     async def callback(self, interaction: discord.Interaction) -> None:
         self.view.remove_item(self)
         self.view.add_item(SetClaimReminderTimeReminderList(self.view, row=0))
+        embed = await self.view.embed_function(self.view.bot, self.view.user, self.view.user_settings,
+                                               self.view.custom_reminders)
+        await interaction.response.edit_message(embed=embed, view=self.view)
+
+
+class SetEnergyReminderButton(discord.ui.Button):
+    """Button to activate the select to set an energy reminder"""
+    def __init__(self, row: Optional[int] = 0):
+        super().__init__(style=discord.ButtonStyle.grey, custom_id='activate_select_energy', label='Set energy reminder',
+                         emoji=None, row=row)
+
+    async def callback(self, interaction: discord.Interaction) -> None:
+        self.view.remove_item(self)
+        self.view.add_item(SetEnergyReminder(self.view, row=1))
         embed = await self.view.embed_function(self.view.bot, self.view.user, self.view.user_settings,
                                                self.view.custom_reminders)
         await interaction.response.edit_message(embed=embed, view=self.view)
@@ -85,7 +99,7 @@ class DeleteCustomReminderSelect(discord.ui.Select):
                                                self.view.custom_reminders)
         self.view.remove_item(self)
         if self.custom_reminders:
-            self.view.add_item(DeleteCustomReminderSelect(self.view, self.view.custom_reminders, row=1))
+            self.view.add_item(DeleteCustomReminderSelect(self.view, self.view.custom_reminders, row=2))
         await interaction.response.edit_message(embed=embed, view=self.view)
 
 
@@ -227,7 +241,7 @@ class ManageClanSettingsSelect(discord.ui.Select):
         else:
             await interaction.response.edit_message(embed=embed, view=self.view)
 
-            
+
 class SetClanReminderRoleSelect(discord.ui.Select):
     """Select to change the clan reminder role"""
     def __init__(self, view: discord.ui.View, disabled: Optional[bool] = False, row: Optional[int] = None):
@@ -270,7 +284,7 @@ class SetClanReminderRoleSelect(discord.ui.Select):
                         f'`{new_role.name}` (ID `{new_role.id}`)'
                     ),
                     view=None
-                )        
+                )
         else:
             await self.view.clan_settings.update(reminder_role_id=new_role.id)
         for child in self.view.children.copy():
@@ -311,7 +325,7 @@ class ManageHelperSettingsSelect(discord.ui.Select):
         if interaction.response.is_done():
             await interaction.message.edit(embed=embed, view=self.view)
         else:
-            await interaction.response.edit_message(embed=embed, view=self.view)   
+            await interaction.response.edit_message(embed=embed, view=self.view)
 
 # --- Settings: Reminders ---
 class ManageReminderSettingsSelect(discord.ui.Select):
@@ -338,7 +352,7 @@ class ManageReminderSettingsSelect(discord.ui.Select):
                          custom_id='manage_user_settings')
 
     async def callback(self, interaction: discord.Interaction):
-        select_value = self.values[0]   
+        select_value = self.values[0]
         if select_value == 'toggle_dnd':
             await self.view.user_settings.update(dnd_mode_enabled=not self.view.user_settings.dnd_mode_enabled)
         elif select_value == 'toggle_slash':
@@ -601,7 +615,7 @@ class ManageEventPingMessagesSelect(discord.ui.Select):
     async def callback(self, interaction: discord.Interaction):
         def check(m: discord.Message) -> bool:
             return m.author == interaction.user and m.channel == interaction.channel
-        
+
         select_value = self.values[0]
         if select_value == 'reset_messages':
             confirm_view = views.ConfirmCancelView(self.view.ctx, styles=[discord.ButtonStyle.red, discord.ButtonStyle.grey])
@@ -681,7 +695,7 @@ class ManageEventPingMessagesSelect(discord.ui.Select):
         else:
             await interaction.response.edit_message(embed=embed, view=self.view)
 
-            
+
 # --- Settings: User ---
 class ManageUserSettingsSelect(discord.ui.Select):
     """Select to change user settings"""
@@ -760,7 +774,7 @@ class ToggleServerSettingsSelect(discord.ui.Select):
         embed = await self.view.embed_function(self.view.bot, self.view.ctx, self.view.guild_settings)
         await interaction.response.edit_message(embed=embed, view=self.view)
 
-        
+
 class ToggleClanSettingsSelect(discord.ui.Select):
     """Toggle select that shows and toggles the status of clan settings."""
     def __init__(self, view: discord.ui.View, toggled_settings: Dict[str, str], placeholder: str,
@@ -819,7 +833,7 @@ class ToggleClanSettingsSelect(discord.ui.Select):
                 ephemeral=True
             )
 
-            
+
 class ToggleUserSettingsSelect(discord.ui.Select):
     """Toggle select that shows and toggles the status of user settings (except alerts)."""
     def __init__(self, view: discord.ui.View, toggled_settings: Dict[str, str], placeholder: str,
@@ -843,15 +857,32 @@ class ToggleUserSettingsSelect(discord.ui.Select):
         kwargs = {}
         if select_value in ('enable_all','disable_all'):
             new_setting_value = True if select_value == 'enable_all' else False
+            reminder_settings = False
             for setting in self.toggled_settings.values():
                 if not setting.endswith('_enabled'):
                     setting = f'{setting}_enabled'
                 kwargs[setting] = new_setting_value
+                if setting.startswith('reminder_'):
+                    reminder_settings = True
+            if not new_setting_value and reminder_settings:
+                try:
+                    user_reminders = await reminders.get_active_user_reminders(self.view.user.id)
+                    for reminder in user_reminders:
+                        await reminder.delete()
+                except exceptions.NoDataFoundError:
+                    pass
         else:
             setting_value = getattr(self.view.user_settings, select_value)
-            new_setting_value = not setting_value
             if isinstance(setting_value, users.UserReminder):
                 setting_value = getattr(setting_value, 'enabled')
+                if setting_value:
+                    try:
+                        reminder: reminders.Reminder = await reminders.get_user_reminder(self.view.user.id,
+                                                                                         select_value.replace('reminder_',''))
+                        await reminder.delete()
+                    except exceptions.NoDataFoundError:
+                        pass
+            new_setting_value = not setting_value
             if not select_value.endswith('_enabled'):
                 select_value = f'{select_value}_enabled'
             kwargs[select_value] = new_setting_value
@@ -981,6 +1012,17 @@ class SetClaimReminderTime(discord.ui.Select):
             user_command = await functions.get_game_command(self.view.user_settings, 'claim')
             time_left = timedelta(hours=select_value)
             current_time = utils.utcnow()
+            if self.view.user_settings.last_claim_time is None:
+                await interaction.response.send_message(
+                    (
+                        f'I haven\'t recorded any claims yet. Please claim here I can see it next time.\n'
+                        f'You can also manually set a claim time in '
+                        f'{await functions.get_bot_slash_command(self.view.bot, "settings reminders")}.'
+                    ),
+                    ephemeral=True
+                )
+                await interaction.message.edit(view=self.view)
+                return
             time_since_last_claim = current_time - self.view.user_settings.last_claim_time
             time_produced = time_since_last_claim + self.view.user_settings.time_speeders_used * timedelta(hours=2)
             if time_left <= time_produced:
@@ -1013,7 +1055,7 @@ class SetClaimReminderTime(discord.ui.Select):
             return
         await interaction.message.edit(view=self.view)
 
-        
+
 class SetClaimReminderTimeReminderList(discord.ui.Select):
     """Select to set the time of a claim reminder in the reminder list"""
     def __init__(self, view: discord.ui.View, disabled: Optional[bool] = False, row: Optional[int] = None):
@@ -1035,8 +1077,8 @@ class SetClaimReminderTimeReminderList(discord.ui.Select):
                 0,
                 discord.SelectOption(label=f'{last_selection:g}h of production time', value=str(last_selection),
                                      emoji=emojis.REPEAT),
-            )    
-        super().__init__(placeholder='Change claim reminder to...', min_values=1, max_values=1, options=options, disabled=disabled,
+            )
+        super().__init__(placeholder='Set claim reminder', min_values=1, max_values=1, options=options, disabled=disabled,
                          row=row, custom_id='set_claim_reminder_time')
 
     async def callback(self, interaction: discord.Interaction):
@@ -1072,7 +1114,7 @@ class SetClaimReminderTimeReminderList(discord.ui.Select):
             modal = modals.SetClaimReminderTimeReminderListModal(self.view)
             await interaction.response.send_modal(modal)
             return
-        embed = await self.view.embed_function(self.view.bot, self.view.user, self.view.user_settings, 
+        embed = await self.view.embed_function(self.view.bot, self.view.user, self.view.user_settings,
                                                self.view.custom_reminders)
         await interaction.response.edit_message(embed=embed, view=self.view)
 
@@ -1092,3 +1134,124 @@ class SetDonorTierSelect(discord.ui.Select):
         await self.view.user_settings.update(donor_tier=int(select_value))
         embed = await self.view.embed_function(self.view.bot, self.view.ctx, self.view.user_settings)
         await interaction.response.edit_message(embed=embed, view=self.view)
+
+
+class SetEnergyReminder(discord.ui.Select):
+    """Select to set the an energy reminder"""
+    def __init__(self, view: discord.ui.View, disabled: Optional[bool] = False, row: Optional[int] = None):
+        options = [
+            discord.SelectOption(label='Claim level (5)', value='5'),
+            discord.SelectOption(label='Raid level (40)', value='40'),
+            discord.SelectOption(label='Teamraid level (80)', value='80'),
+            discord.SelectOption(label=f'Full energy ({view.user_settings.energy_max})',
+                                 value=str(view.user_settings.energy_max)),
+            discord.SelectOption(label='Custom amount', value='custom'),
+            discord.SelectOption(label='Delete reminder', value='delete'),
+        ]
+        last_selection = view.user_settings.reminder_energy_last_selection
+        if last_selection > 0:
+            options.insert(
+                0,
+                discord.SelectOption(label=f'Last selected amount ({last_selection:g})', value=f'custom-{last_selection}',
+                                     emoji=emojis.REPEAT),
+            )
+        super().__init__(placeholder='Set energy reminder', min_values=1, max_values=1, options=options, disabled=disabled,
+                         row=row, custom_id='set_energy_reminder')
+
+    async def callback(self, interaction: discord.Interaction):
+        select_value = self.values[0]
+        energy_regen_time = await functions.get_energy_regen_time(self.view.user_settings)
+        try:
+            energy_current = await functions.get_current_energy_amount(self.view.user_settings, energy_regen_time)
+        except exceptions.EnergyFullTimeNoneError:
+            await interaction.response.send_message(
+                (
+                    f'I can\'t set an energy reminder yet as you have never updated your energy.\n'
+                    f'Please use {await functions.get_game_command(self.view.user_settings, "profile")} first.'
+                ),
+                ephemeral=True
+            )
+            await interaction.message.edit(view=self.view)
+            return
+        except exceptions.EnergyFullTimeOutdatedError:
+            await interaction.response.send_message(
+                (
+                    f'You haven\'t updated your energy for too long.\n'
+                    f'Please use {await functions.get_game_command(self.view.user_settings, "profile")} first.'
+                ),
+                ephemeral=True
+            )
+            await interaction.message.edit(view=self.view)
+            return
+        try:
+            select_value = int(select_value.lstrip('custom-'))
+        except ValueError:
+            pass
+        custom_reminders = getattr(self.view, 'custom_reminders', None)
+        reminders_list_view = True if custom_reminders is not None else False
+        if isinstance(select_value, int):
+            if select_value <= energy_current:
+                await interaction.response.send_message(
+                    (
+                        f'I can\'t remind you at an energy level you already reached.\n'
+                        f'Please enter a number between **{energy_current + 1}** and **{self.view.user_settings.energy_max}**'
+                    ),
+                    ephemeral=True
+                )
+                await interaction.message.edit(view=self.view)
+                return
+            energy_left = select_value - energy_current
+            time_left = timedelta(seconds=energy_left * energy_regen_time.total_seconds())
+            reminder: reminders.Reminder = (
+                await reminders.insert_user_reminder(self.view.user_settings.user_id, f'energy-{select_value}',
+                                                     time_left, self.view.message.channel.id,
+                                                     self.view.user_settings.reminder_energy.message)
+            )
+            await self.view.user_settings.update(reminder_energy_last_selection=select_value)
+            await interaction.response.send_message(
+                (
+                    f'Reminder set for `{select_value}` energy {utils.format_dt(reminder.end_time, "R")}.\n\n'
+                    f'Please note that energy gained from `OHMMM` events is **not** tracked!\n'
+                    f'If you join such an event, use {await functions.get_game_command(self.view.user_settings, "profile")} '
+                    f'to update the reminder.\n'
+                ),
+                ephemeral=True
+            )
+        else:
+            if select_value == 'custom':
+                modal = modals.SetEnergyReminderModal(self.view, energy_current, energy_regen_time)
+                await interaction.response.send_modal(modal)
+                return
+            if select_value == 'delete':
+                try:
+                    reminder: reminders.Reminder = await reminders.get_user_reminder(self.view.user.id, 'energy')
+                    await reminder.delete()
+                    if not reminders_list_view:
+                        await interaction.response.send_message('Energy reminder deleted.', ephemeral=True)
+                except exceptions.NoDataFoundError:
+                    await interaction.response.send_message('No active energy reminder found.', ephemeral=True)
+                    await interaction.message.edit(view=self.view)
+                    return
+            else:
+                await interaction.response.send_message(
+                    (
+                        f'This is not a valid energy energy amount.\n'
+                        f'Please enter a number between **{energy_current + 1}** and **{self.view.user_settings.energy_max}**'
+                    ),
+                    ephemeral=True
+                )
+                await interaction.message.edit(view=self.view)
+                return
+        custom_reminders = getattr(self.view, 'custom_reminders', None)
+        if custom_reminders is not None:
+            embed = await self.view.embed_function(self.view.bot, self.view.user, self.view.user_settings,
+                                                   self.view.custom_reminders)
+            if interaction.response.is_done():
+                await interaction.message.edit(embed=embed, view=self.view)
+            else:
+                await interaction.response.edit_message(embed=embed, view=self.view)
+        else:
+            if interaction.response.is_done():
+                await interaction.message.edit(view=self.view)
+            else:
+                await interaction.response.edit_message(view=self.view)

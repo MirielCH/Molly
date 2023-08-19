@@ -9,7 +9,7 @@ import discord
 from discord.ext import commands
 from discord import utils
 
-from database import cooldowns, errors, reminders, users
+from database import cooldowns, errors, reminders, upgrades, users
 from resources import emojis, exceptions, functions, regex, settings, strings, views
 
 
@@ -96,15 +96,17 @@ async def get_match_from_patterns(patterns: List[str], string: str) -> re.Match:
 
 
 # --- Time calculations ---
-async def get_guild_member_by_name(guild: discord.Guild, user_name: str) -> List[discord.Member]:
+async def get_guild_member_by_name(guild: discord.Guild, user_name: str,
+                                   bot_users_only: Optional[bool] = True) -> List[discord.Member]:
     """Returns all guild members found by the given name"""
     members = []
     for member in guild.members:
         if await encode_text(member.name) == await encode_text(user_name) and not member.bot:
-            try:
-                await users.get_user(member.id)
-            except exceptions.FirstTimeUserError:
-                continue
+            if bot_users_only:
+                try:
+                    await users.get_user(member.id)
+                except exceptions.FirstTimeUserError:
+                    continue
             members.append(member)
     return members
 
@@ -333,9 +335,14 @@ async def parse_timedelta_to_timestring(time_left: timedelta) -> str:
         timestring = f'{timestring}{days}d '
     if not hours == 0:
         timestring = f'{timestring}{hours}h '
-    timestring = f'{timestring}{minutes}m {seconds}s'
+    if not minutes == 0:
+        timestring = f'{timestring}{minutes}m '
+    if not seconds == 0:
+        timestring = f'{timestring}{seconds}s '
+    if timestring == '':
+        timestring = '0m 0s'
 
-    return timestring
+    return timestring.strip()
 
 
 # --- Message processing ---
@@ -639,3 +646,76 @@ async def wait_for_inventory_message(bot: commands.Bot, ctx: discord.Application
                                                            timeout = settings.ABORT_TIMEOUT))
     result = await get_result_from_tasks(ctx, [message_task, message_edit_task])
     return result[1] if isinstance(result, tuple) else result
+
+
+async def get_energy_regen_time(user_settings: users.User) -> timedelta:
+    """Returns the time it takes to generate 1 energy"""
+    try:
+        energy_upgrade: upgrades.Upgrade = await upgrades.get_upgrade(user_settings.user_id, 'energy regeneration')
+        multiplier_upgrade = strings.ENERGY_UPGRADE_LEVEL_MULTIPLIERS[energy_upgrade.level]
+    except exceptions.NoDataFoundError:
+        multiplier_upgrade = 1
+    multiplier_donor = list(strings.DONOR_TIER_ENERGY_MULTIPLIERS.values())[user_settings.donor_tier]
+    energy_regen = 6 / (multiplier_donor * multiplier_upgrade)
+    return timedelta(minutes=energy_regen)
+
+
+async def get_current_energy_amount(user_settings: users.User, energy_regen_time: Optional[timedelta] = None) -> int:
+    """Returns the energy amount the user currently has based on energy_max and energy_full_time
+    The amount is NOT rounded.
+    """
+    current_time = utils.utcnow()
+    if user_settings.energy_full_time is None:
+        raise exceptions.EnergyFullTimeNoneError
+    if user_settings.energy_full_time <= current_time:
+        raise exceptions.EnergyFullTimeOutdatedError
+    if energy_regen_time is None:
+        energy_regen_time = await get_energy_regen_time(user_settings)
+    energy_until_max = (user_settings.energy_full_time - current_time).total_seconds() / energy_regen_time.total_seconds()
+    return int(user_settings.energy_max - energy_until_max)
+
+
+async def change_user_energy(user_settings: users.User, energy_amount: int) -> None:
+    """Recalculates and updates energy_full_time for a user object based on an energy amount. The time it takes
+    to generate the provided energy amount is added to the current energy_full_time.
+    The energy amount can be negative which will shorten energy_full_time accordingly.
+
+    If an energy reminder is active, this also updates the reminder end time.
+    """
+    if user_settings.energy_full_time is None: return
+    energy_regen_time = await get_energy_regen_time(user_settings)
+    amount_negative = False
+    if energy_amount < 0:
+        energy_amount *= -1
+        amount_negative = True
+    energy_current = await get_current_energy_amount(user_settings, energy_regen_time)
+    current_time = utils.utcnow()
+    if energy_amount > (user_settings.energy_max - energy_current):
+        energy_full_time_new = current_time
+    else:
+        energy_amount_time = timedelta(seconds=energy_amount * energy_regen_time.total_seconds())
+        if amount_negative:
+            energy_full_time_new = user_settings.energy_full_time + energy_amount_time
+        else:
+            energy_full_time_new = user_settings.energy_full_time - energy_amount_time
+    await user_settings.update(energy_full_time=energy_full_time_new)
+    await recalculate_energy_reminder(user_settings, energy_regen_time)
+
+
+async def recalculate_energy_reminder(user_settings: users.User, energy_regen_time: Optional[timedelta] = None) -> None:
+    """Recalculates the end time of an energy reminder based on energy_max and energy_full_time in the user settings."""
+    try:
+        reminder: reminders.Reminder = await reminders.get_user_reminder(user_settings.user_id, 'energy')
+        if energy_regen_time is None:
+            energy_regen_time = await get_energy_regen_time(user_settings)
+        energy_current = await get_current_energy_amount(user_settings, energy_regen_time)
+        energy_amount_reminder = int(reminder.activity[7:])
+        current_time = utils.utcnow()
+        reminder_end_time_new = (
+            current_time
+            + timedelta(seconds=(energy_amount_reminder - energy_current) * energy_regen_time.total_seconds())
+        )
+        if reminder_end_time_new <= current_time: reminder_end_time_new = current_time + timedelta(seconds=1)
+        await reminder.update(end_time=reminder_end_time_new)
+    except exceptions.NoDataFoundError:
+        return

@@ -8,8 +8,8 @@ import discord
 from discord.ext import commands
 
 from database import clans, guilds, users
-from processing import buy, claim, clan, daily, donate, events, open, payday, profile, raid, request, teamraid, upgrades
-from processing import use, workers
+from processing import buy, claim, clan, daily, donate, events, open, payday, profile, raid, request, shop, teamraid
+from processing import upgrades, use, workers
 from resources import exceptions, functions, regex, settings
 
 
@@ -70,23 +70,30 @@ class DetectionCog(commands.Cog):
         helper_upgrades_enabled = getattr(user_settings, 'helper_upgrades_enabled', True)
         reminder_daily_enabled = getattr(getattr(user_settings, 'reminder_daily', None), 'enabled', True)
         reminder_claim_enabled = getattr(getattr(user_settings, 'reminder_claim', None), 'enabled', True)
+        reminder_energy_enabled = getattr(getattr(user_settings, 'reminder_energy', None), 'enabled', True)
+        reminder_shop_enabled = getattr(getattr(user_settings, 'reminder_shop', None), 'enabled', True)
         reminder_vote_enabled = getattr(getattr(user_settings, 'reminder_vote', None), 'enabled', True)
         tracking_enabled = getattr(user_settings, 'tracking_enabled', True)
         helper_teamraid_enabled = getattr(clan_settings, 'helper_teamraid_enabled', False)
 
         # Raids
-        if tracking_enabled or helper_context_enabled or helper_raid_enabled:
+        if tracking_enabled or helper_context_enabled or helper_raid_enabled or reminder_energy_enabled:
             add_reaction = await raid.process_message(self.bot, message, embed_data, interaction_user, user_settings)
             return_values.append(add_reaction)
 
         # Claim Reminder
-        if reminder_claim_enabled:
+        if reminder_claim_enabled or reminder_energy_enabled:
             add_reaction = await claim.process_message(self.bot, message, embed_data, interaction_user, user_settings)
             return_values.append(add_reaction)
 
         # Daily Reminder
         if reminder_daily_enabled:
             add_reaction = await daily.process_message(self.bot, message, embed_data, interaction_user, user_settings)
+            return_values.append(add_reaction)
+            
+        # Shop Reminder
+        if reminder_shop_enabled:
+            add_reaction = await shop.process_message(self.bot, message, embed_data, interaction_user, user_settings)
             return_values.append(add_reaction)
 
         # Use items
@@ -127,7 +134,7 @@ class DetectionCog(commands.Cog):
             return_values.append(add_reaction)
             
         # Worker tracking
-        if helper_raid_enabled or tracking_enabled or helper_teamraid_enabled:
+        if helper_raid_enabled or tracking_enabled or helper_teamraid_enabled or reminder_energy_enabled:
             add_reaction = await workers.process_message(self.bot, message, embed_data, interaction_user, user_settings,
                                                          clan_settings)
             return_values.append(add_reaction)
@@ -144,7 +151,7 @@ class DetectionCog(commands.Cog):
         add_reaction = await donate.process_message(self.bot, message, embed_data, interaction_user, user_settings)
 
          # Energy Helper
-        if helper_profile_enabled or helper_upgrades_enabled:
+        if helper_profile_enabled or helper_upgrades_enabled or reminder_energy_enabled:
             add_reaction = await profile.process_message(self.bot, message, embed_data, interaction_user, user_settings)
             return_values.append(add_reaction)
 

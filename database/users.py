@@ -21,6 +21,8 @@ class User():
     """Object that represents a record from table "user"."""
     bot_enabled: bool
     dnd_mode_enabled: bool
+    energy_full_time: datetime
+    energy_max: int
     donor_tier: int
     helper_context_enabled: bool
     helper_profile_enabled: bool
@@ -35,6 +37,9 @@ class User():
     reminder_claim_last_selection: float
     reminder_custom: UserReminder
     reminder_daily: UserReminder
+    reminder_energy: UserReminder
+    reminder_energy_last_selection: int
+    reminder_shop: UserReminder
     reminder_vote: UserReminder
     reminders_as_embed: bool
     reminders_slash_enabled: bool
@@ -48,6 +53,8 @@ class User():
         self.bot_enabled = new_settings.bot_enabled
         self.dnd_mode_enabled = new_settings.dnd_mode_enabled
         self.donor_tier = new_settings.donor_tier
+        self.energy_full_time = new_settings.energy_full_time
+        self.energy_max = new_settings.energy_max
         self.helper_context_enabled = new_settings.helper_context_enabled
         self.helper_profile_enabled = new_settings.helper_profile_enabled
         self.helper_raid_enabled = new_settings.helper_raid_enabled
@@ -61,6 +68,9 @@ class User():
         self.reminder_claim_last_selection = new_settings.reminder_claim_last_selection
         self.reminder_custom = new_settings.reminder_custom
         self.reminder_daily = new_settings.reminder_daily
+        self.reminder_energy = new_settings.reminder_energy
+        self.reminder_energy_last_selection = new_settings.reminder_energy_last_selection
+        self.reminder_shop = new_settings.reminder_shop
         self.reminder_vote = new_settings.reminder_vote
         self.reminders_as_embed = new_settings.reminders_as_embed
         self.reminders_slash_enabled = new_settings.reminders_slash_enabled
@@ -77,6 +87,8 @@ class User():
             bot_enabled: bool
             dnd_mode_enabled: bool
             donor_tier: int
+            energy_full_time: datetime UTC aware
+            energy_max: int
             helper_context_enabled: bool
             helper_profile_enabled: bool
             helper_raid_enabled: bool
@@ -92,6 +104,11 @@ class User():
             reminder_custom_message: str
             reminder_daily_enabled: bool
             reminder_daily_message: str
+            reminder_energy_enabled: bool
+            reminder_energy_last_selection: int
+            reminder_energy_message: str
+            reminder_shop_enabled: bool
+            reminder_shop_message: str
             reminder_vote_enabled: bool
             reminder_vote_message: str
             reminders_as_embed: bool
@@ -120,18 +137,25 @@ async def _dict_to_user(record: dict) -> User:
     LookupError if something goes wrong reading the dict. Also logs this error to the database.
     """
     function_name = '_dict_to_user'
+    energy_full_time = last_claim_time = None
+    if record['energy_full_time'] is not None:
+        energy_full_time = datetime.fromisoformat(record['energy_full_time'])
+    if record['last_claim_time'] is not None:
+        last_claim_time = datetime.fromisoformat(record['last_claim_time'])
     try:
         user = User(
             bot_enabled = bool(record['bot_enabled']),
             dnd_mode_enabled = bool(record['dnd_mode_enabled']),
             donor_tier = record['donor_tier'],
-            last_claim_time = datetime.fromisoformat(record['last_claim_time']),
+            energy_full_time = energy_full_time,
+            energy_max = record['energy_max'],
             helper_context_enabled = bool(record['helper_context_enabled']),
             helper_profile_enabled = bool(record['helper_profile_enabled']),
             helper_raid_enabled = bool(record['helper_raid_enabled']),
             helper_raid_compact_mode_enabled = bool(record['helper_raid_compact_mode_enabled']),
             helper_upgrades_enabled = bool(record['helper_upgrades_enabled']),
             idlucks = record['idlucks'],
+            last_claim_time = last_claim_time,
             reactions_enabled = bool(record['reactions_enabled']),
             reminder_channel_id = record['reminder_channel_id'],
             reminder_claim = UserReminder(enabled=bool(record['reminder_claim_enabled']),
@@ -141,6 +165,11 @@ async def _dict_to_user(record: dict) -> User:
                                            message=record['reminder_custom_message']),
             reminder_daily = UserReminder(enabled=bool(record['reminder_daily_enabled']),
                                           message=record['reminder_daily_message']),
+            reminder_energy = UserReminder(enabled=bool(record['reminder_energy_enabled']),
+                                          message=record['reminder_energy_message']),
+            reminder_energy_last_selection = record['reminder_energy_last_selection'],
+            reminder_shop = UserReminder(enabled=bool(record['reminder_shop_enabled']),
+                                          message=record['reminder_shop_message']),
             reminder_vote = UserReminder(enabled=bool(record['reminder_vote_enabled']),
                                          message=record['reminder_vote_message']),
             reminders_as_embed = bool(record['reminders_as_embed']),
@@ -268,6 +297,8 @@ async def _update_user(user: User, **kwargs) -> None:
         bot_enabled: bool
         dnd_mode_enabled: bool
         donor_tier: int
+        energy_full_time: datetime UTC aware
+        energy_max: int
         helper_context_enabled: bool
         helper_profile_enabled: bool
         helper_raid_enabled: bool
@@ -283,6 +314,11 @@ async def _update_user(user: User, **kwargs) -> None:
         reminder_custom_message: str
         reminder_daily_enabled: bool
         reminder_daily_message: str
+        reminder_energy_enabled: bool
+        reminder_energy_last_selection: int
+        reminder_energy_message: str
+        reminder_shop_enabled: bool
+        reminder_shop_message: str
         reminder_vote_enabled: bool
         reminder_vote_message: str
         reminders_as_embed: bool

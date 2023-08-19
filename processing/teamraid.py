@@ -112,9 +112,15 @@ async def call_teamraid_helper(message: discord.Message, embed_data: Dict, user:
                         user_workers_required[user_worker.worker_name] = user_worker.worker_level
             except exceptions.NoDataFoundError:
                 user_settings = user_workers = None
+            if user_settings is not None:
+                if user_settings.reminder_energy.enabled:
+                    await functions.change_user_energy(user_settings, -80)
+                    if user_settings.reactions_enabled: add_reaction = True
             for worker_type in teamraid_users_workers[teamraid_user.name]:
                 worker_emoji = getattr(emojis, f'WORKER_{worker_type}_A'.upper(), emojis.WARNING)
-                if user_workers is None:
+                if user_workers is None or user_settings is None:
+                    current_worker = f'{worker_emoji} - **?** {emojis.WORKER_POWER}'    
+                elif not user_settings.bot_enabled:
                     current_worker = f'{worker_emoji} - **?** {emojis.WORKER_POWER}'    
                 else:
                     worker_power = round(
@@ -164,7 +170,7 @@ async def create_clan_reminder(message: discord.Message, embed_data: Dict, clan_
     ]
     if (any(search_string in embed_data['description'].lower() for search_string in search_strings_description)
         and any(search_string in embed_data['field1']['value'] for search_string in search_strings_field1)):
-        clan_name_match = re.search(r'^\*\*(.+?)\*\*:', embed_data['field1']['value'])
+        clan_name_match = re.search(r"^\*\*(.+?)\*\*'s", embed_data['field1']['value'])
         if clan_settings is None:
             try:
                 clan_settings: clans.Clan = await clans.get_clan_by_clan_name(clan_name_match.group(1))

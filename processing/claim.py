@@ -1,5 +1,6 @@
 # claim.py
 
+from datetime import timedelta
 import re
 from typing import Dict, Optional
 
@@ -8,7 +9,7 @@ from discord import utils
 
 from cache import messages
 from database import users
-from resources import exceptions, regex, settings, views
+from resources import exceptions, functions, regex, settings, views
 
 
 async def process_message(bot: discord.Bot, message: discord.Message, embed_data: Dict, user: Optional[discord.User] = None,
@@ -21,13 +22,13 @@ async def process_message(bot: discord.Bot, message: discord.Message, embed_data
     - False otherwise
     """
     return_values = []
-    return_values.append(await process_claim_message(message, embed_data, user, user_settings))
+    return_values.append(await process_claim_message(bot, message, embed_data, user, user_settings))
     return any(return_values)
 
 
-async def process_claim_message(message: discord.Message, embed_data: Dict, user: Optional[discord.User],
+async def process_claim_message(bot: discord.Bot, message: discord.Message, embed_data: Dict, user: Optional[discord.User],
                                 user_settings: Optional[users.User]) -> bool:
-    """Tracks last claim time and creates a claim reminder if the user so desires
+    """Tracks last claim time, updates energy loss and creates a claim reminder if the user so desires
 
     Returns
     -------
@@ -56,18 +57,20 @@ async def process_claim_message(message: discord.Message, embed_data: Dict, user
             except exceptions.FirstTimeUserError:
                 return add_reaction
         if not user_settings.bot_enabled: return add_reaction
-        await user_settings.update(last_claim_time=message.created_at)
-        await user_settings.update(time_speeders_used=0)
-        if not user_settings.reminder_claim.enabled: return add_reaction
-        view = views.SetClaimReminderTimeView(message, user, user_settings)
-        embed = discord.Embed(
-            color = settings.EMBED_COLOR,
-            title = 'Nice claim!',
-            description = (
-                f'When would you like to be reminded for your next claim?'
+        await user_settings.update(last_claim_time=message.created_at, time_speeders_used=0)
+        if user_settings.reminder_energy.enabled:
+            await functions.change_user_energy(user_settings, -5)
+            if not user_settings.reminder_claim.enabled and user_settings.reactions_enabled: add_reaction = True
+        if user_settings.reminder_claim.enabled:
+            view = views.SetClaimReminderTimeView(bot, message, user, user_settings)
+            embed = discord.Embed(
+                color = settings.EMBED_COLOR,
+                title = 'Nice claim!',
+                description = (
+                    f'When would you like to be reminded for your next claim?'
+                )
             )
-        )
-        interaction = await message.reply(embed=embed, view=view)
-        view.interaction = interaction
-        await view.wait()
+            interaction = await message.reply(embed=embed, view=view)
+            view.interaction = interaction
+            await view.wait()
     return add_reaction

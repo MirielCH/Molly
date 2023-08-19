@@ -177,9 +177,11 @@ class RemindersListView(discord.ui.View):
         self.user = user
         self.user_settings = user_settings
         if user_settings.reminder_claim.enabled:
-            self.add_item(components.SetClaimReminderTimeButton())
+            self.add_item(components.SetClaimReminderTimeButton(row=3))
+        if user_settings.reminder_energy.enabled:
+            self.add_item(components.SetEnergyReminderButton(row=3))
         if custom_reminders:
-            self.add_item(components.DeleteCustomRemindersButton())
+            self.add_item(components.DeleteCustomRemindersButton(row=3))
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         if interaction.user != self.user:
@@ -389,6 +391,8 @@ class SettingsRemindersView(discord.ui.View):
         toggled_settings_commands = {
             'Claim': 'reminder_claim',
             'Daily': 'reminder_daily',
+            'Energy': 'reminder_energy',
+            'Shop items': 'reminder_shop',
             'Vote': 'reminder_vote',
         }
 
@@ -611,15 +615,55 @@ class SetClaimReminderTimeView(discord.ui.View):
     None
 
     """
-    def __init__(self, message: discord.Message, user: discord.User, user_settings: users.User,
+    def __init__(self, bot: discord.Bot, message: discord.Message, user: discord.User, user_settings: users.User,
                  interaction: Optional[discord.Interaction] = None):
         super().__init__(timeout=settings.INTERACTION_TIMEOUT)
+        self.bot = bot
         self.message = message
         self.value = None
         self.interaction = interaction
         self.user = user
         self.user_settings = user_settings
         self.add_item(components.SetClaimReminderTime(self))
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user != self.user:
+            await interaction.response.send_message(random.choice(strings.MSG_INTERACTION_ERRORS), ephemeral=True)
+            return False
+        return True
+
+    async def on_timeout(self) -> None:
+        self.disable_all_items()
+        await self.message.edit(view=self)
+        self.stop()
+
+
+# --- Profile timers ---
+class ProfileTimersView(discord.ui.View):
+    """View with a all components to set an energy reminder in the profile timers helper.
+    Also needs the interaction of the response with the view, so do view.interaction = await ctx.respond('foo').
+
+    Arguments
+    ---------
+    ctx: Context.
+    bot: Bot.
+    user_settings: User object with the settings of the user.
+
+    Returns
+    -------
+    None
+
+    """
+    def __init__(self, bot: discord.Bot, message: discord.Message, user: discord.User, user_settings: users.User,
+                 interaction: Optional[discord.Interaction] = None):
+        super().__init__(timeout=settings.INTERACTION_TIMEOUT)
+        self.bot = bot
+        self.message = message
+        self.value = None
+        self.interaction = interaction
+        self.user = user
+        self.user_settings = user_settings
+        self.add_item(components.SetEnergyReminder(self))
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         if interaction.user != self.user:

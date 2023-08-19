@@ -1,7 +1,6 @@
 # raid.py
 
 import copy
-from decimal import Decimal, ROUND_HALF_UP
 import itertools
 import re
 from typing import Dict, Optional, Tuple
@@ -345,7 +344,7 @@ async def call_raid_helper(bot: discord.Bot, message: discord.Message, embed_dat
 
 async def track_raid(message: discord.Message, embed_data: Dict, user: Optional[discord.User],
                      user_settings: Optional[users.User]) -> bool:
-    """Tracks raids
+    """Tracks raids and updates energy loss
 
     Returns
     -------
@@ -374,14 +373,19 @@ async def track_raid(message: discord.Message, embed_data: Dict, user: Optional[
                 user_settings: users.User = await users.get_user(user.id)
             except exceptions.FirstTimeUserError:
                 return False
-        if not user_settings.tracking_enabled or not user_settings.bot_enabled: return add_reaction
-        current_time = utils.utcnow().replace(microsecond=0)
-        amount = int(amount)
-        if amount < 0:
-            amount *= -1
-            item = 'raid-points-lost'
-        else:
-            item = 'raid-points-gained'
-        await tracking.insert_log_entry(user.id, message.guild.id, item, current_time, amount)
-        if user_settings.reactions_enabled: add_reaction = True
+        if not user_settings.tracking_enabled or not user_settings.bot_enabled or not user_settings.reminder_energy.enabled:
+            return add_reaction
+        if user_settings.reminder_energy.enabled:
+            await functions.change_user_energy(user_settings, -40)
+            if user_settings.reactions_enabled: add_reaction = True
+        if user_settings.tracking_enabled:
+            current_time = utils.utcnow().replace(microsecond=0)
+            amount = int(amount)
+            if amount < 0:
+                amount *= -1
+                item = 'raid-points-lost'
+            else:
+                item = 'raid-points-gained'
+            await tracking.insert_log_entry(user.id, message.guild.id, item, current_time, amount)
+            if user_settings.reactions_enabled: add_reaction = True
     return add_reaction

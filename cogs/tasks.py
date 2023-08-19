@@ -65,9 +65,16 @@ class TasksCog(commands.Cog):
                         - user_settings.last_claim_time
                         + (user_settings.time_speeders_used * timedelta(hours=2))
                     )
+                    microseconds = production_time.microseconds
                     production_time = production_time - timedelta(microseconds=production_time.microseconds)
+                    if microseconds >= 500_000: production_time += timedelta(seconds=1)
                     reminder_message = reminder_message.replace('{production_time}', format_timespan(production_time))
-                
+                if reminder.activity.startswith('energy'):
+                    reminder_message = (
+                        reminder_message
+                        .replace('{energy_amount}', reminder.activity[7:])
+                        .replace('{energy_full_time}', utils.format_dt(user_settings.energy_full_time, 'R'))
+                    )
                 if user_settings.reminders_as_embed:
                     description = ''
                     for index, line in enumerate(reminder_message.split('\n'), 1):

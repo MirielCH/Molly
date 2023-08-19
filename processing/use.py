@@ -54,12 +54,19 @@ async def call_context_helper_on_energy_item(message: discord.Message, embed_dat
                 user_settings: users.User = await users.get_user(user.id)
             except exceptions.FirstTimeUserError:
                 return add_reaction
-        if not user_settings.bot_enabled or not user_settings.helper_context_enabled: return add_reaction
-        await message.reply(
-            f"➜ {strings.SLASH_COMMANDS['claim']}\n"
-            f"➜ {strings.SLASH_COMMANDS['raid']}\n"
-            f"➜ {strings.SLASH_COMMANDS['worker hire']}"
-        )
+        if not user_settings.bot_enabled: return add_reaction
+        if user_settings.helper_context_enabled:
+            await message.reply(
+                f"➜ {strings.SLASH_COMMANDS['claim']}\n"
+                f"➜ {strings.SLASH_COMMANDS['raid']}\n"
+                f"➜ {strings.SLASH_COMMANDS['worker hire']}"
+            )
+        if user_settings.reminder_energy.enabled:
+            energy_amount_match = re.search(r'>\s([0-9,]+)\s\*\*', message.content.lower())
+            energy_amount = int(re.sub('\D','', energy_amount_match.group(1)))
+            if user_settings.reminder_energy.enabled:
+                await functions.change_user_energy(user_settings, energy_amount)
+                if user_settings.reactions_enabled: add_reaction = True
     return add_reaction
 
 

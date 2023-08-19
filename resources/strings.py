@@ -102,15 +102,22 @@ DEFAULT_MESSAGE_CLAN = (
 DEFAULT_MESSAGES_REMINDERS = {
     'claim': (
         '{name}, time to {command}!\n'
-        '• Your last claim was {last_claim_time}\n'
+        '• Your last claim was {last_claim_time}.\n'
         '• Your farms produced {production_time} of items.'
     ),
     'custom': (
         '{name}, {custom_reminder_text}'
     ),
     'daily': (
-        '{name}, your {command} rewards are ready!\n'
-        '• The daily will reset {daily_reset_time}'
+        '{name}, your {command} rewards are ready!'
+    ),
+    'energy': (
+        '{name}, you just reached `{energy_amount}` energy!\n'
+        '• Energy full {energy_full_time}.'
+    ),
+    'shop': (
+        '{name}, __**{shop_item}**__ is back in the shop!\n'
+        '• Use {command} to treat yourself.'
     ),
     'vote': (
         '{name}, you can {command} for the bot again!\n'
@@ -129,10 +136,13 @@ PLACEHOLDER_DESCRIPTIONS = {
     'command': 'The command you get reminded for',
     'custom_reminder_text': 'The text you set when creating a custom reminder',
     'daily_reset_time': 'Time of the next daily reset',
+    'energy_amount': 'The amount of energy the reminder was set for',
+    'energy_full_time': 'Time until your energy is full',
     'guild_role': 'The role that gets pinged for your guild reminder',
     'last_claim_time': 'Time of your last claim',
     'name': 'Embed: Your user name\nNormal message: Your name or mention depending on DND mode',
     'production_time': 'The acual amount of time your farms spent producing including time speeders',
+    'shop_item': 'Name of the shop item that is back in store',
 }
 
 MSG_ERROR = 'Whoops, something went wrong here. You should probably tell miriel.ch about this.'
@@ -141,6 +151,8 @@ ACTIVITIES = (
     'claim',
     'custom',
     'daily',
+    'energy',
+    'shop',
     'vote',
 )
 
@@ -148,16 +160,12 @@ ACTIVITIES_ALL = list(ACTIVITIES[:])
 ACTIVITIES_ALL.sort()
 ACTIVITIES_ALL.insert(0, 'all')
 
-ACTIVITIES_COMMANDS = (
-    'claim',
-    'daily',
-    'vote',
-)
-
 ACTIVITIES_COLUMNS = {
     'claim': 'reminder_claim',
     'custom': 'reminder_custom',
     'daily': 'reminder_daily',
+    'energy': 'reminder_energy',
+    'shop': 'reminder_shop',
     'vote': 'reminder_vote',
 }
 

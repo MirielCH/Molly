@@ -1,5 +1,6 @@
 # workers.py
 
+from datetime import timedelta
 import re
 from typing import Dict, Optional
 
@@ -46,7 +47,7 @@ async def track_worker_hire_event(message: discord.Message, embed_data: Dict, us
     if (any(search_string in embed_data['field0']['name'].lower() for search_string in search_strings_1)
         and any(search_string in embed_data['field0']['name'].lower() for search_string in search_strings_2)):
         user_name_match = re.search(r'^(.+?) hired', embed_data['field0']['name'].lower())
-        guild_members = await functions.get_guild_member_by_name(message.guild, user_name_match.group(1))
+        guild_members = await functions.get_guild_member_by_name(message.guild, user_name_match.group(1), False)
         if len(guild_members) > 1: return add_reaction
         user = guild_members[0]
         if user_settings is None:
@@ -148,6 +149,17 @@ async def track_worker_roll(message: discord.Message, embed_data: Dict, user: Op
             current_time = utils.utcnow().replace(microsecond=0)
             if item is not None:
                 await tracking.insert_log_entry(user.id, message.guild.id, item, current_time)
+        # Update energy time until full
+        if user_settings.reminder_energy.enabled:
+            energy_match = re.search(r':\s([0-9,]+)/([0-9,]+)$', embed_data['footer']['text'])
+            energy_current = int(re.sub('\D','',energy_match.group(1)))
+            energy_max = int(re.sub('\D','',energy_match.group(2)))
+            energy_regen_time = await functions.get_energy_regen_time(user_settings)
+            seconds_until_max = (int(energy_max) - int(energy_current)) * energy_regen_time.total_seconds()
+            current_time = utils.utcnow()
+            energy_full_time = current_time + timedelta(seconds=seconds_until_max)
+            await user_settings.update(energy_max=energy_max, energy_full_time=energy_full_time)
+            await functions.recalculate_energy_reminder(user_settings, energy_regen_time)
     return add_reaction
 
 

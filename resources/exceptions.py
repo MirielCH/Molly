@@ -25,3 +25,13 @@ class FirstTimeUserError(Exception):
 class InvalidTimestringError(ValueError):
     """Custom exception for when a timestring is not valid."""
     pass
+
+
+class EnergyFullTimeOutdatedError(ValueError):
+    """Custom exception for when user_settings.energy_full_time lies in the past."""
+    pass
+
+
+class EnergyFullTimeNoneError(ValueError):
+    """Custom exception for when user_settings.energy_full_time is None."""
+    pass

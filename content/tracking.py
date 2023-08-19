@@ -58,13 +58,17 @@ async def command_stats(
         embed = await embed_stats_timeframe(ctx, user, time_left)
         embeds = (embed,)
         image = None
-    view = views.StatsView(ctx, user, user_settings)
+    if user == ctx.author:
+        view = views.StatsView(ctx, user, user_settings)
+    else:
+        view = None
     if isinstance(ctx, discord.ApplicationContext):
         interaction_message = await ctx.respond(embeds=embeds, view=view, file=image)
     else:
         interaction_message = await ctx.reply(embeds=embeds, view=view, file=image)
-    view.interaction_message = interaction_message
-    await view.wait()
+    if view is not None:
+        view.interaction_message = interaction_message
+        await view.wait()
 
 
 # --- Embeds ---
