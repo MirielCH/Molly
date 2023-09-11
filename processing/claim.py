@@ -9,7 +9,7 @@ from discord import utils
 
 from cache import messages
 from database import users
-from resources import exceptions, functions, regex, settings, views
+from resources import exceptions, functions, regex, settings, strings, views
 
 
 async def process_message(bot: discord.Bot, message: discord.Message, embed_data: Dict, user: Optional[discord.User] = None,
@@ -59,8 +59,14 @@ async def process_claim_message(bot: discord.Bot, message: discord.Message, embe
         if not user_settings.bot_enabled: return add_reaction
         await user_settings.update(last_claim_time=message.created_at, time_speeders_used=0)
         if user_settings.reminder_energy.enabled:
-            await functions.change_user_energy(user_settings, -5)
-            if not user_settings.reminder_claim.enabled and user_settings.reactions_enabled: add_reaction = True
+            try:
+                await functions.change_user_energy(user_settings, -5)
+                if not user_settings.reminder_claim.enabled and user_settings.reactions_enabled: add_reaction = True
+            except exceptions.EnergyFullTimeOutdatedError:
+                await message.reply(strings.MSG_ENERGY_OUTDATED.format(user=user.display_name,
+                                                                        cmd_profile=strings.SLASH_COMMANDS["profile"]))
+            except exceptions.EnergyFullTimeNoneError:
+                pass
         if user_settings.reminder_claim.enabled:
             view = views.SetClaimReminderTimeView(bot, message, user, user_settings)
             embed = discord.Embed(

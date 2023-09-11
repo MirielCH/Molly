@@ -8,6 +8,7 @@ from resources import emojis
 MSG_ABORTED = 'Aborted.'
 MSG_BOT_MESSAGE_NOT_FOUND = '**{user}**, couldn\'t find your {information}.'
 MSG_WAIT_FOR_INPUT = '**{user}**, please use {command}'
+MSG_ENERGY_OUTDATED = '**{user}**, my record of your energy is outdated. Please use {cmd_profile} to update it.'
 
 # --- Error messages ---
 MSG_INTERACTION_ERRORS =  [

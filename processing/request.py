@@ -38,6 +38,7 @@ async def update_workers_and_idlucks(message: discord.Message, embed_data: Dict,
         r'\*\* got .+/.+worker\*\*', #English
     ]
     if await functions.get_match_from_patterns(search_patterns, embed_data['description']) is not None:
+        supplier_settings = None
         user_name_match = re.search(regex.NAME_FROM_MESSAGE_START, embed_data['description'])
         worker_amount_name_match = re.search(r'got (\d+)/.+<a:(.+?)worker:', embed_data['description'].lower())
         supplier_idlucks_match = re.search(r'^(.+?) —.+\(\+(\d+) <', embed_data['description'].split('\n')[1].lower())
@@ -46,10 +47,11 @@ async def update_workers_and_idlucks(message: discord.Message, embed_data: Dict,
         worker_name = worker_amount_name_match.group(2)
         supplier_name = supplier_idlucks_match.group(1)
         idlucks = int(supplier_idlucks_match.group(2))
-        user_command_message = (
-            await messages.find_message(message.channel.id, regex.COMMAND_REQUEST, user_name=user_name)
-        )
-        user = user_command_message.author
+        if user is None:
+            user_command_message = (
+                await messages.find_message(message.channel.id, regex.COMMAND_REQUEST, user_name=user_name)
+            )
+            user = user_command_message.author
         if user_settings is None:
             try:
                 user_settings: users.User = await users.get_user(user.id)

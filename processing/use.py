@@ -65,8 +65,14 @@ async def call_context_helper_on_energy_item(message: discord.Message, embed_dat
             energy_amount_match = re.search(r'>\s([0-9,]+)\s\*\*', message.content.lower())
             energy_amount = int(re.sub('\D','', energy_amount_match.group(1)))
             if user_settings.reminder_energy.enabled:
-                await functions.change_user_energy(user_settings, energy_amount)
-                if user_settings.reactions_enabled: add_reaction = True
+                try:
+                    await functions.change_user_energy(user_settings, energy_amount)
+                    if user_settings.reactions_enabled: add_reaction = True
+                except exceptions.EnergyFullTimeOutdatedError:
+                    await message.reply(strings.MSG_ENERGY_OUTDATED.format(user=user.display_name,
+                                                                           cmd_profile=strings.SLASH_COMMANDS["profile"]))
+                except exceptions.EnergyFullTimeNoneError:
+                    pass
     return add_reaction
 
 

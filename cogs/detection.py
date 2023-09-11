@@ -26,9 +26,11 @@ class DetectionCog(commands.Cog):
         if await check_edited_message_never_allowed(message_before, message_after, embed_data): return
         if await check_edited_message_always_allowed(message_before, message_after, embed_data):
             await self.on_message(message_after)
+            return
         if message_before.components and not message_after.components: return
         if await check_message_for_active_components(message_after):
             await self.on_message(message_after)
+            return
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message) -> None:
@@ -149,6 +151,7 @@ class DetectionCog(commands.Cog):
 
         # Update donor tier
         add_reaction = await donate.process_message(self.bot, message, embed_data, interaction_user, user_settings)
+        return_values.append(add_reaction)
 
          # Energy Helper
         if helper_profile_enabled or helper_upgrades_enabled or reminder_energy_enabled:
@@ -256,6 +259,12 @@ async def check_edited_message_always_allowed(message_before: discord.Message,
     - True if allowed
     - False if not affected by this check
     """
+    search_strings =  [
+        '— worker roll', #All languages
+    ]
+    if any(search_string in embed_data['author']['name'].lower() for search_string in search_strings):
+        if message_before.embeds[0].footer is not None:
+            if message_before.embeds[0].footer.text != embed_data['footer']['text']: return True
     return False
 
 

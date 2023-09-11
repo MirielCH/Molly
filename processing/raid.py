@@ -121,8 +121,7 @@ async def call_raid_helper(bot: discord.Bot, message: discord.Message, embed_dat
             Tuple with the amount of killed enemies (int) and the solution (Dict[worker_name: worker_power])
 
             """
-            workers_by_power = dict(sorted(workers_power.items(), key=lambda x:x[1]))
-            remaining_workers = copy.deepcopy(workers_by_power)
+            remaining_workers = copy.deepcopy(workers_power)
             used_workers = {}
             possible_solutions = []
             killed_enemies = 0
@@ -141,15 +140,15 @@ async def call_raid_helper(bot: discord.Bot, message: discord.Message, embed_dat
                 for permutation in permutations:
                     possible_solutions.append(list(used_workers.keys()) + list(permutation))
                 break
-            if possible_solutions:    
+            if possible_solutions:
                 best_solution = []
                 for possible_solution in possible_solutions:
                     enemies_powers_copy = copy.deepcopy(enemies_power)
                     used_workers = {}
-                    for worker_name in possible_solution:    
+                    for worker_name in possible_solution:
                         for enemy_name, enemy_power in enemies_powers_copy.items():
                             if enemy_power == 0: continue
-                            worker_power = workers_by_power[worker_name]
+                            worker_power = workers_power[worker_name]
                             power_remaining = enemies_powers_copy[enemy_name] - worker_power
                             used_workers[worker_name] = worker_power
                             if power_remaining < 0: power_remaining = 0
@@ -170,7 +169,7 @@ async def call_raid_helper(bot: discord.Bot, message: discord.Message, embed_dat
                             used_workers[worker_name] = worker_power
                             break
             return (killed_enemies, used_workers)
-    
+
     add_reaction = False
     search_strings = [
         'farms will be raided in order', #English
@@ -219,27 +218,34 @@ async def call_raid_helper(bot: discord.Bot, message: discord.Message, embed_dat
                 if worker_name_match.group(1) not in worker_levels_sorted:
                     await message.reply(msg_error_workers_outdated)
                     return add_reaction
-        field_workers = ''
         workers_power = {}
         for worker_name, worker_level in worker_levels_sorted.items():
             worker_power = (
                 ((strings.WORKER_STATS[worker_name]['speed'] + strings.WORKER_STATS[worker_name]['strength']
                   + strings.WORKER_STATS[worker_name]['intelligence']))
-                * (1 + (strings.WORKER_TYPES.index(worker_name) + 1) / 4) * (1 + worker_level / 2.5)
+                * (1 + (strings.WORKER_TYPES.index(worker_name) + 1) / 4) * (1 + worker_level / 1.5) * 0.8
             )
             workers_power[worker_name] = worker_power
-            if not user_settings.helper_raid_compact_mode_enabled:
+        workers_power = dict(sorted(workers_power.items(), key=lambda x:x[1]))
+        workers_power_copy = copy.deepcopy(workers_power)
+        if len(workers_power) > 6:
+            workers_power = {}
+            for worker_name in list(workers_power_copy.keys())[-6:]:
+                workers_power[worker_name] = workers_power_copy[worker_name]
+        field_workers = ''
+        if not user_settings.helper_raid_compact_mode_enabled:
+            for worker_name, worker_power in workers_power.items():
                 worker_emoji = getattr(emojis, f'WORKER_{worker_name}_A'.upper(), emojis.WARNING)
                 worker_power = round(worker_power, 2)
                 field_workers = (
                     f'{field_workers}\n'
                     f'{worker_emoji} - **{worker_power:,g}** {emojis.WORKER_POWER}'
                 )
-        if not user_settings.helper_raid_compact_mode_enabled:
+            field_workers = '\n'.join(reversed(field_workers.split('\n')))
             embed.add_field(
-                name = 'Your workers',
+                name = 'Your top workers',
                 value = field_workers.strip()
-            )   
+            )
         empty_farms_found, enemies_power = await read_enemy_farms(message)
         if not user_settings.helper_raid_compact_mode_enabled:
             field_enemies = ''
@@ -376,8 +382,20 @@ async def track_raid(message: discord.Message, embed_data: Dict, user: Optional[
         if not user_settings.tracking_enabled or not user_settings.bot_enabled or not user_settings.reminder_energy.enabled:
             return add_reaction
         if user_settings.reminder_energy.enabled:
-            await functions.change_user_energy(user_settings, -40)
-            if user_settings.reactions_enabled: add_reaction = True
+            try:
+                logs.logger.info(
+                    f'Energy full time before error: {user_settings.energy_full_time}\n'
+                )
+                await functions.change_user_energy(user_settings, -40)
+                if user_settings.reactions_enabled: add_reaction = True
+            except exceptions.EnergyFullTimeOutdatedError:
+                await message.reply(strings.MSG_ENERGY_OUTDATED.format(user=user.display_name,
+                                                                       cmd_profile=strings.SLASH_COMMANDS["profile"]))
+                logs.logger.info(
+                    f'Energy full time after error: {user_settings.energy_full_time}\n'
+                )
+            except exceptions.EnergyFullTimeNoneError:
+                pass
         if user_settings.tracking_enabled:
             current_time = utils.utcnow().replace(microsecond=0)
             amount = int(amount)

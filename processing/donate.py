@@ -53,7 +53,7 @@ async def update_donor_tier(message: discord.Message, embed_data: Dict, user: Op
         if embed_data['field0']['name'] == '':
             donor_tier = 0
         else:
-            donor_tier_match = re.search(r'| (.+?) donator', embed_data['field0']['name'].lower())
+            donor_tier_match = re.search(r'\| (.+?) donator', embed_data['field0']['name'].lower())
             donor_tier = list(strings.DONOR_TIER_ENERGY_MULTIPLIERS.keys()).index(donor_tier_match.group(1).lower())
         await user_settings.update(donor_tier=donor_tier)
         if user_settings.reactions_enabled: add_reaction = True

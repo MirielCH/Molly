@@ -685,12 +685,13 @@ async def change_user_energy(user_settings: users.User, energy_amount: int) -> N
     if user_settings.energy_full_time is None: return
     energy_regen_time = await get_energy_regen_time(user_settings)
     amount_negative = False
+    energy_amount_original = energy_amount
     if energy_amount < 0:
         energy_amount *= -1
         amount_negative = True
     energy_current = await get_current_energy_amount(user_settings, energy_regen_time)
     current_time = utils.utcnow()
-    if energy_amount > (user_settings.energy_max - energy_current):
+    if energy_amount_original > (user_settings.energy_max - energy_current):
         energy_full_time_new = current_time
     else:
         energy_amount_time = timedelta(seconds=energy_amount * energy_regen_time.total_seconds())

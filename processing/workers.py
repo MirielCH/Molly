@@ -29,7 +29,7 @@ async def process_message(bot: discord.Bot, message: discord.Message, embed_data
 
 
 async def track_worker_hire_event(message: discord.Message, embed_data: Dict, user: Optional[discord.User],
-                            user_settings: Optional[users.User], clan_settings: Optional[clans.Clan]) -> bool:
+                                  user_settings: Optional[users.User], clan_settings: Optional[clans.Clan]) -> bool:
     """Tracks worker hire
 
     Returns
@@ -48,7 +48,7 @@ async def track_worker_hire_event(message: discord.Message, embed_data: Dict, us
         and any(search_string in embed_data['field0']['name'].lower() for search_string in search_strings_2)):
         user_name_match = re.search(r'^(.+?) hired', embed_data['field0']['name'].lower())
         guild_members = await functions.get_guild_member_by_name(message.guild, user_name_match.group(1), False)
-        if len(guild_members) > 1: return add_reaction
+        if len(guild_members) != 1: return add_reaction
         user = guild_members[0]
         if user_settings is None:
             try:

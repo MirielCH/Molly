@@ -1,8 +1,9 @@
 # teamraid.py
 """Contains commands related to teamraids"""
 
+import copy
 from datetime import timedelta
-from decimal import Decimal, ROUND_HALF_UP
+from itertools import combinations
 import random
 import re
 from typing import Dict, Optional
@@ -12,7 +13,7 @@ from discord import utils
 
 from cache import messages
 from database import clans, reminders, users, workers
-from resources import emojis, exceptions, functions, regex, settings, strings
+from resources import emojis, exceptions, functions, logs, regex, settings, strings
 
 
 async def process_message(bot: discord.Bot, message: discord.Message, embed_data: Dict, user: Optional[discord.User],
@@ -25,12 +26,12 @@ async def process_message(bot: discord.Bot, message: discord.Message, embed_data
     - False otherwise
     """
     return_values = []
-    return_values.append(await call_teamraid_helper(message, embed_data, user, user_settings, clan_settings))
+    return_values.append(await call_teamraid_helper(bot, message, embed_data, user, user_settings, clan_settings))
     return_values.append(await create_clan_reminder(message, embed_data, clan_settings))
     return any(return_values)
 
 
-async def call_teamraid_helper(message: discord.Message, embed_data: Dict, user: Optional[discord.User],
+async def call_teamraid_helper(bot: discord.Bot, message: discord.Message, embed_data: Dict, user: Optional[discord.User],
                                user_settings: Optional[users.User], clan_settings: Optional[clans.Clan]) -> bool:
     """Calls the teamraid helper
 
@@ -39,6 +40,82 @@ async def call_teamraid_helper(message: discord.Message, embed_data: Dict, user:
     - True if a logo reaction should be added to the message
     - False otherwise
     """
+    async def read_enemy_farms(message: discord.Message) -> Dict[str, int]:
+        """Returns the name and power of the enemy farms found in the teamraid embed.
+
+        Arguments
+        ---------
+        message: The message with the enemy farms
+
+        Returns
+        -------
+        Tuple with the enemies (Dict[enemy_name: enemy_power])
+        """
+        enemies_power = {}
+        for field_index, field in enumerate(message.embeds[0].fields):
+            if not 'farm' in field.name.lower() and field.name != '': continue
+            for line in field.value.split('\n'):
+                enemy_data_match = re.search(r'<a:(.+?)worker.+lv(\d+) \|.+`(\d+)/(\d+)`', line.lower())
+                if not enemy_data_match and 'none' in line.lower(): continue
+                enemy_type = enemy_data_match.group(1)
+                enemy_level = int(re.sub('\D','',enemy_data_match.group(2)))
+                enemy_hp_current = int(enemy_data_match.group(3))
+                enemy_hp_max = int(enemy_data_match.group(4))
+                enemy_power = (
+                    (strings.WORKER_STATS[enemy_type]['speed'] + strings.WORKER_STATS[enemy_type]['strength']
+                     + strings.WORKER_STATS[enemy_type]['intelligence'])
+                    * (1 + (strings.WORKER_TYPES.index(enemy_type) + 1) / 4) * (1 + enemy_level / 2.5)
+                    * (enemy_hp_max / 100) / enemy_hp_max * enemy_hp_current
+                )
+                enemies_power[f'{enemy_type}{field_index}'] = enemy_power
+        return enemies_power
+
+    async def get_recommended_worker(next_enemy_power: int,
+                                     workers_still_alive: Dict[str, Dict[str, int]]) -> Dict[str, Dict[str, int]]:
+        """Returns the next recommended worker.
+
+        Returns
+        -------
+        Dict with the next recommended worker (Dict[user_name: Dict[enemy_name: enemy_power]])
+        """
+        recommended_worker = {}
+        if len(list(workers_still_alive.keys())) == 1:
+            teamraid_user = list(workers_still_alive.keys())[0]
+            if len(list(workers_still_alive[teamraid_user].keys())) == 1:
+                return workers_still_alive[teamraid_user]
+        for teamraid_user, worker_data in workers_still_alive.items():
+            for worker_type, worker_power in worker_data.items():
+                if worker_power > next_enemy_power:
+                    if not recommended_worker:
+                        recommended_worker[teamraid_user] = {}
+                        recommended_worker[teamraid_user][worker_type] = worker_power
+                        continue
+                    recommended_worker_user = list(recommended_worker.keys())[0]
+                    recommended_worker_type = list(recommended_worker[recommended_worker_user].keys())[0]
+                    recommended_worker_power = recommended_worker[recommended_worker_user][recommended_worker_type]
+                    if worker_power < recommended_worker_power and worker_power > next_enemy_power:
+                        recommended_worker = {}
+                        recommended_worker[teamraid_user] = {}
+                        recommended_worker[teamraid_user][worker_type] = worker_power
+        if not recommended_worker:
+            all_worker_powers = []
+            for teamraid_user, worker_data in workers_still_alive.items():
+                for worker_type, worker_power in worker_data.items():
+                    all_worker_powers.append(worker_power)
+            best_combination = []
+            for combination in combinations(all_worker_powers, 2):
+                if sum(combination) >= next_enemy_power:
+                    if not best_combination:
+                        best_combination = combination
+                    elif sum(combination) < sum(best_combination):
+                        best_combination = combination
+            for teamraid_user, worker_data in workers_still_alive.items():
+                for worker_type, worker_power in worker_data.items():
+                    if worker_power in best_combination:
+                        recommended_worker[teamraid_user] = {}
+                        recommended_worker[teamraid_user][worker_type] = worker_power
+        return recommended_worker
+
     add_reaction = False
     search_strings = [
         'farms will be raided in order', #English
@@ -46,6 +123,7 @@ async def call_teamraid_helper(message: discord.Message, embed_data: Dict, user:
     if (any(search_string in embed_data['footer']['text'].lower() for search_string in search_strings)
         and not 'raidpoints' in embed_data['field0']['name']):
         teamraid_users_workers = {}
+        workers_incomplete = False
         for row in message.components:
             found_workers = []
             for button in row.children:
@@ -74,35 +152,17 @@ async def call_teamraid_helper(message: discord.Message, embed_data: Dict, user:
             except exceptions.NoDataFoundError:
                 return add_reaction
         if not clan_settings.helper_teamraid_enabled: return add_reaction
+
+        def raid_message_check(message_before: discord.Message, message_after: discord.Message):
+            return message_after.id == message.id
+
         enemy_name_match = re.search(r'\*\*(.+?) farms', embed_data['field0']['name'].lower())
         enemy_name = enemy_name_match.group(1).upper()
-        enemies = {}
-        field_enemies = ''
-        for line in embed_data['field0']['value'].split('\n'):
-            enemy_data_match = re.search(r'<a:(.+?)worker.+lv(\d+) \|.+`(\d+)/(\d+)`', line.lower())
-            enemy_type = enemy_data_match.group(1)
-            enemy_level = int(re.sub('\D','',enemy_data_match.group(2)))
-            enemy_hp_current = int(enemy_data_match.group(3))
-            enemy_hp_max = int(enemy_data_match.group(4))
-            enemy_power = (
-                (strings.WORKER_STATS[enemy_type]['speed'] + strings.WORKER_STATS[enemy_type]['strength'] + strings.WORKER_STATS[enemy_type]['intelligence'])
-                * (1 + (strings.WORKER_TYPES.index(enemy_type) + 1) / 4) * (1 + enemy_level / 2.5) * (enemy_hp_max / 100) / enemy_hp_max * enemy_hp_current
-            )
-            enemy_power = int(Decimal(enemy_power).quantize(Decimal(1), rounding=ROUND_HALF_UP))
-            enemies[enemy_type] = {
-                'level': enemy_level,
-                'power': enemy_power,
-                'hp_current': enemy_hp_current,
-                'hp_max': enemy_hp_max
-            }
-            enemy_emoji = getattr(emojis, f'WORKER_{enemy_type}_A'.upper(), emojis.WARNING)
-            field_enemies = (
-                f'{field_enemies}\n'
-                f'{enemy_emoji} - **{enemy_power}** {emojis.WORKER_POWER}'
-            )
         embed = discord.Embed(color=settings.EMBED_COLOR)
+        user_workers_power = {}
         for teamraid_user in teamraid_users:
             user_workers_required = {}
+            user_workers_power[teamraid_user.name] = {}
             field_workers = ''
             try:
                 user_settings: users.User = await users.get_user(teamraid_user.id)
@@ -114,21 +174,30 @@ async def call_teamraid_helper(message: discord.Message, embed_data: Dict, user:
                 user_settings = user_workers = None
             if user_settings is not None:
                 if user_settings.reminder_energy.enabled:
-                    await functions.change_user_energy(user_settings, -80)
-                    if user_settings.reactions_enabled: add_reaction = True
+                    try:
+                        await functions.change_user_energy(user_settings, -80)
+                        if user_settings.reactions_enabled: add_reaction = True
+                    except exceptions.EnergyFullTimeOutdatedError:
+                        pass
+                    except exceptions.EnergyFullTimeNoneError:
+                        pass
             for worker_type in teamraid_users_workers[teamraid_user.name]:
                 worker_emoji = getattr(emojis, f'WORKER_{worker_type}_A'.upper(), emojis.WARNING)
                 if user_workers is None or user_settings is None:
-                    current_worker = f'{worker_emoji} - **?** {emojis.WORKER_POWER}'    
+                    workers_incomplete = True
+                    current_worker = f'{worker_emoji} - **?** {emojis.WORKER_POWER}'
                 elif not user_settings.bot_enabled:
-                    current_worker = f'{worker_emoji} - **?** {emojis.WORKER_POWER}'    
+                    workers_incomplete = True
+                    current_worker = f'{worker_emoji} - **?** {emojis.WORKER_POWER}'
                 else:
-                    worker_power = round(
+                    worker_power = (
                         ((strings.WORKER_STATS[worker_type]['speed'] + strings.WORKER_STATS[worker_type]['strength']
                         + strings.WORKER_STATS[worker_type]['intelligence']))
                         * (1 + (strings.WORKER_TYPES.index(worker_type) + 1) / 4) * (1 + user_workers_required[worker_type] / 2.5)
                     )
-                    current_worker = f'{worker_emoji} - **{worker_power}** {emojis.WORKER_POWER}'            
+                    user_workers_power[teamraid_user.name][worker_type] = worker_power
+                    worker_power = round(worker_power, 2)
+                    current_worker = f'{worker_emoji} - **{worker_power:,g}** {emojis.WORKER_POWER}'
                 field_workers = (
                     f'{field_workers}\n'
                     f'{current_worker}'
@@ -137,19 +206,159 @@ async def call_teamraid_helper(message: discord.Message, embed_data: Dict, user:
                 name = teamraid_user.name,
                 value = field_workers.strip()
             )
+        enemies_power = await read_enemy_farms(message)
+        logs.logger.info(
+            f'--- Teamraid guide log ---\n'
+            f'Enemy name: {enemy_name}\n'
+            f'Enemy farms: {enemies_power}\n'
+            f'Workers: {user_workers_power}'
+        )
+        field_enemies = ''
+        for enemy_type, enemy_power in enemies_power.items():
+            enemy_type = enemy_type[:-1]
+            enemy_emoji = getattr(emojis, f'WORKER_{enemy_type}_A'.upper(), emojis.WARNING)
+            enemy_power = round(enemy_power, 2)
+            field_enemies = (
+                f'{field_enemies}\n'
+                f'{enemy_emoji} - **{enemy_power:,g}** {emojis.WORKER_POWER}'
+            )
+        if workers_incomplete:
+            embed.insert_field_at(
+                0,
+                name = 'Next worker recommendation',
+                value = '_I don\'t have the data of all teamraid users, sorry._',
+                inline = False
+            )
+        else:
+            next_enemy_power = enemies_power[list(enemies_power.keys())[0]]
+            workers_still_alive = copy.deepcopy(user_workers_power)
+            recommended_worker = await get_recommended_worker(next_enemy_power, workers_still_alive)
+            if recommended_worker:
+                recommended_worker_user = list(recommended_worker.keys())[0]
+                recommended_worker_type = list(recommended_worker[recommended_worker_user].keys())[0]
+                recommended_worker_emoji = getattr(emojis, f'WORKER_{recommended_worker_type}_A'.upper(), emojis.WARNING)
+                recommended_worker_power = round(recommended_worker[recommended_worker_user][recommended_worker_type], 2)
+                field_workers = (
+                    f'{field_workers}\n'
+                    f'{worker_emoji} - **{worker_power:,g}** {emojis.WORKER_POWER}'
+                )
+                embed.insert_field_at(
+                    0,
+                    name = 'Next worker recommendation',
+                    value = (
+                        f'{recommended_worker_emoji} **{recommended_worker_user}** - '
+                        f'**{recommended_worker_power:,g}** {emojis.WORKER_POWER}\n'
+                        f'{emojis.BLANK}'
+                    ),
+                    inline = False
+                )
+                logs.logger.info(
+                    f'Enemies: {enemies_power}\n'
+                    f'Workers left: {workers_still_alive}\n'
+                    f'Recommendation: {recommended_worker}'
+                )
+            else:
+                embed.insert_field_at(
+                    0,
+                    name = 'Next worker recommendation',
+                    value = f'_No recommendation found, sorry._\n{emojis.BLANK}',
+                    inline = False
+                )
+                logs.logger.info(
+                    f'Enemies: {enemies_power}\n'
+                    f'Workers left: {workers_still_alive}\n'
+                    f'Recommendation: None'
+                )
         embed.insert_field_at(
-            index=0,
+            index=1,
             name = enemy_name,
             value = f'{field_enemies.strip()}\n{emojis.BLANK}',
             inline = False
         )
         embed.insert_field_at(
-            index=1,
+            index=2,
             name = clan_settings.clan_name.upper(),
             value = '_If a worker power shows as **?**, the player is not using Molly or has not shown me their workers list._',
             inline = False
         )
-        await message.reply(embed=embed)
+        message_helper = await message.reply(embed=embed)
+
+        if not workers_incomplete:
+            while True:
+                try:
+                    _, updated_message = await bot.wait_for('message_edit', check=raid_message_check,
+                                                            timeout=settings.INTERACTION_TIMEOUT)
+                except TimeoutError:
+                    embed.remove_field(0)
+                    embed.insert_field_at(
+                        0,
+                        name = 'Next worker recommendation',
+                        value = f'_Helper timed out._\n{emojis.BLANK}',
+                        inline = False
+                    )
+                    await message_helper.edit(embed=embed)
+                    break
+                active_component = False
+                for row in updated_message.components:
+                    for button in row.children:
+                        if button.disabled:
+                            worker_name_match = re.search(r'^(.+?)worker', button.emoji.name.lower())
+                            try:
+                                del workers_still_alive[button.label][worker_name_match.group(1)]
+                            except KeyError:
+                                pass
+                        else:
+                            active_component = True
+
+                embed.remove_field(0)
+                if active_component:
+                    enemies_power = await read_enemy_farms(message)
+                    for enemy_type, enemy_power in enemies_power.copy().items():
+                        if enemy_power == 0: del enemies_power[enemy_type]
+                    next_enemy_power = enemies_power[list(enemies_power.keys())[0]]
+                    recommended_worker = await get_recommended_worker(next_enemy_power, workers_still_alive)
+                    if recommended_worker:
+                        recommended_worker_user = list(recommended_worker.keys())[0]
+                        recommended_worker_type = list(recommended_worker[recommended_worker_user].keys())[0]
+                        recommended_worker_emoji = getattr(emojis, f'WORKER_{recommended_worker_type}_A'.upper(), emojis.WARNING)
+                        recommended_worker_power = round(recommended_worker[recommended_worker_user][recommended_worker_type], 2)
+                        embed.insert_field_at(
+                            0,
+                            name = 'Next worker recommendation',
+                            value = (
+                                f'{recommended_worker_emoji} **{recommended_worker_user}** - '
+                                f'**{recommended_worker_power:,g}** {emojis.WORKER_POWER}\n'
+                                f'{emojis.BLANK}'
+                            ),
+                            inline = False
+                        )
+                        logs.logger.info(
+                            f'Enemies: {enemies_power}\n'
+                            f'Workers left: {workers_still_alive}\n'
+                            f'Recommendation: {recommended_worker}'
+                        )
+                    else:
+                        embed.insert_field_at(
+                            0,
+                            name = 'Next worker recommendation',
+                            value = f'_No recommendation found, sorry._\n{emojis.BLANK}',
+                            inline = False
+                        )
+                        logs.logger.info(
+                           f'Enemies: {enemies_power}\n'
+                           f'Workers left: {workers_still_alive}\n'
+                           f'Recommendation: None'
+                        )
+                if not active_component:
+                    embed.insert_field_at(
+                        0,
+                        name = 'Next worker recommendation',
+                        value = f'_Teamraid completed._\n{emojis.BLANK}',
+                        inline = False
+                    )
+                await message_helper.edit(embed=embed)
+                if not active_component: break
+
 
 
 async def create_clan_reminder(message: discord.Message, embed_data: Dict, clan_settings: Optional[clans.Clan]) -> bool:

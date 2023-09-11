@@ -45,7 +45,7 @@ async def on_error(event: str, *args, **kwargs) -> None:
         if message.channel.type.name == 'private': return
         embed = discord.Embed(title='An error occured')
         error = sys.exc_info()
-        if isinstance(error, discord.errors.Forbidden): return
+        if isinstance(error[1], discord.errors.Forbidden): return
         traceback_str = "".join(traceback.format_tb(error[2]))
         traceback_message = f'{error[1]}\n{traceback_str}'
         embed.add_field(name='Event', value=f'`{event}`', inline=False)
@@ -56,12 +56,12 @@ async def on_error(event: str, *args, **kwargs) -> None:
             await functions.add_warning_reaction(message)
     else:
         try:
-            message, = args
+            message, _ = args
         except:
             return
         embed = discord.Embed(title='An error occured')
         error = sys.exc_info()
-        if isinstance(error, discord.errors.Forbidden): return
+        if isinstance(error[1], discord.errors.Forbidden): return
         traceback_str = "".join(traceback.format_tb(error[2]))
         traceback_message = f'{error[1]}\n{traceback_str}'
         embed.add_field(name='Error', value=f'```py\n{traceback_message[:1015]}```', inline=False)
@@ -77,7 +77,6 @@ async def on_error(event: str, *args, **kwargs) -> None:
             raise
         else:
             return
-
 
 EXTENSIONS = [
     'cogs.cache',
