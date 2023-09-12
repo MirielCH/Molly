@@ -24,6 +24,11 @@ Molly reads IDLE FARM messages and also reads the commands you issue to trigger 
 
 The bot caches all messages sent by users that either mention the IDLE FARM bot or start with `idle `. They are used to reduce API calls and increase performance. These messages are discarded after 6 minutes and **not** stored permanently.  
 
+## Account deletion
+
+If you want to delete your data, you can use the command `/purge data` to do so.  
+Please note that this will **permanently** delete all of your data in the bot, it is not possible to restore any of it.  
+
 ## Limits of this policy
 
 Please be aware that I have no control over the code and policies of forks and other projects that use Molly's source code and cannot accept responsibility or liability for their respective privacy practices.  
