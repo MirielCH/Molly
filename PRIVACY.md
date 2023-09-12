@@ -1,6 +1,6 @@
 # Molly Privacy Policy
 
-This policy is effective as of 01 August 2023 and was last updated on 13 August 2023.  
+This policy is effective as of 01 August 2023 and was last updated on 12 September 2023.  
 
 ## User information the bot collects
 
