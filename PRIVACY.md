@@ -1,6 +1,6 @@
 # Molly Privacy Policy
 
-This policy is effective as of 01 August 2023 and was last updated on 13 August 2023.  
+This policy is effective as of 01 August 2023 and was last updated on 12 September 2023.  
 
 ## User information the bot collects
 
@@ -23,6 +23,11 @@ Molly has access to the content of all messages it can see. This access is neces
 Molly reads IDLE FARM messages and also reads the commands you issue to trigger said messages (e.g. if a claim message is detected, it will also read your `/claim` slash command or your `idle claim` message).  
 
 The bot caches all messages sent by users that either mention the IDLE FARM bot or start with `idle `. They are used to reduce API calls and increase performance. These messages are discarded after 6 minutes and **not** stored permanently.  
+
+## Account deletion
+
+If you want to delete your data, you can use the command `/purge data` to do so.  
+Please note that this will **permanently** delete all of your data in the bot, it is not possible to restore any of it.  
 
 ## Limits of this policy
 
