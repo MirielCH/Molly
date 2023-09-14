@@ -41,14 +41,15 @@ async def command_workers_list(bot: discord.Bot, ctx: Union[discord.ApplicationC
         else:
             await ctx.respond(msg_error)
         return
-    embed = await embed_workers_list(user_workers)
+    embed = await embed_workers_list(ctx, user_workers)
     if isinstance(ctx, commands.Context):
         await ctx.reply(embed=embed)
     else:
         await ctx.respond(embed=embed)
 
 # --- Embeds ---
-async def embed_workers_list(user_workers: List[workers.UserWorker]) -> discord.Embed:
+async def embed_workers_list(ctx: Union[discord.ApplicationContext, commands.Context],
+                             user_workers: List[workers.UserWorker]) -> discord.Embed:
     """Workers list embed"""
     worker_levels = {user_worker.worker_name: user_worker.worker_level for user_worker in user_workers}
     workers_power = {}
@@ -56,7 +57,7 @@ async def embed_workers_list(user_workers: List[workers.UserWorker]) -> discord.
         worker_power = (
             ((strings.WORKER_STATS[worker_name]['speed'] + strings.WORKER_STATS[worker_name]['strength']
                 + strings.WORKER_STATS[worker_name]['intelligence']))
-            * (1 + (strings.WORKER_TYPES.index(worker_name) + 1) / 4) * (1 + worker_level / 1.5) * 0.8
+            * (1 + (strings.WORKER_TYPES.index(worker_name) + 1) / 4) * (1 + worker_level / 2.5)
         )
         workers_power[worker_name] = worker_power
     workers_by_type = {}
@@ -85,7 +86,7 @@ async def embed_workers_list(user_workers: List[workers.UserWorker]) -> discord.
             f'{worker_emoji} - {worker_power:,g} {emojis.WORKER_POWER}'
         )
     embed = discord.Embed(
-        title = 'Worker power',
+        title = f'{ctx.author.display_name}\'s workers',
         description = f'Top 3 power: **{round(top_3_power, 2)}** {emojis.WORKER_POWER}',
         color = settings.EMBED_COLOR,
     )

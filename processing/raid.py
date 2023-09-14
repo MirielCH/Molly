@@ -223,7 +223,7 @@ async def call_raid_helper(bot: discord.Bot, message: discord.Message, embed_dat
             worker_power = (
                 ((strings.WORKER_STATS[worker_name]['speed'] + strings.WORKER_STATS[worker_name]['strength']
                   + strings.WORKER_STATS[worker_name]['intelligence']))
-                * (1 + (strings.WORKER_TYPES.index(worker_name) + 1) / 4) * (1 + worker_level / 1.5) * 0.8
+                * (1 + (strings.WORKER_TYPES.index(worker_name) + 1) / 4) * (1 + worker_level / 2.5) * 0.8
             )
             workers_power[worker_name] = worker_power
         workers_power = dict(sorted(workers_power.items(), key=lambda x:x[1]))
