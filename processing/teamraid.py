@@ -82,7 +82,7 @@ async def call_teamraid_helper(bot: discord.Bot, message: discord.Message, embed
         if len(list(workers_still_alive.keys())) == 1:
             teamraid_user = list(workers_still_alive.keys())[0]
             if len(list(workers_still_alive[teamraid_user].keys())) == 1:
-                return workers_still_alive[teamraid_user]
+                return workers_still_alive
         for teamraid_user, worker_data in workers_still_alive.items():
             for worker_type, worker_power in worker_data.items():
                 if worker_power > next_enemy_power:
@@ -153,8 +153,13 @@ async def call_teamraid_helper(bot: discord.Bot, message: discord.Message, embed
                 return add_reaction
         if not clan_settings.helper_teamraid_enabled: return add_reaction
 
-        def raid_message_check(message_before: discord.Message, message_after: discord.Message):
-            return message_after.id == message.id
+        def raid_message_check(payload: discord.RawMessageUpdateEvent):
+            #return message_after.id == message.id
+            try:
+                author_name = payload.data['embeds'][0]['author']['name']
+                return author_name == message.embeds[0].author.name # Temporary workaround for that weird issue
+            except:
+                return False
 
         enemy_name_match = re.search(r'\*\*(.+?) farms', embed_data['field0']['name'].lower())
         enemy_name = enemy_name_match.group(1).upper()
@@ -286,8 +291,8 @@ async def call_teamraid_helper(bot: discord.Bot, message: discord.Message, embed
         if not workers_incomplete:
             while True:
                 try:
-                    _, updated_message = await bot.wait_for('message_edit', check=raid_message_check,
-                                                            timeout=settings.INTERACTION_TIMEOUT)
+                    payload = await bot.wait_for('raw_message_edit', check=raid_message_check,
+                                                 timeout=settings.INTERACTION_TIMEOUT)
                 except TimeoutError:
                     embed.remove_field(0)
                     embed.insert_field_at(
@@ -299,12 +304,15 @@ async def call_teamraid_helper(bot: discord.Bot, message: discord.Message, embed
                     await message_helper.edit(embed=embed)
                     break
                 active_component = False
-                for row in updated_message.components:
-                    for button in row.children:
-                        if button.disabled:
-                            worker_name_match = re.search(r'^(.+?)worker', button.emoji.name.lower())
+                message_components = payload.data['components']
+                for row in message_components:
+                    for component in row['components']:
+                        disabled = component.get('disabled', False)
+                        if disabled:
+                            worker_name_match = re.search(r'^(.+?)worker', component['emoji']['name'].lower())
                             try:
-                                del workers_still_alive[button.label][worker_name_match.group(1)]
+                                del workers_still_alive[component['label']][worker_name_match.group(1)]
+                                if not workers_still_alive[component['label']]: del workers_still_alive[component['label']]
                             except KeyError:
                                 pass
                         else:

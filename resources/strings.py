@@ -142,7 +142,7 @@ PLACEHOLDER_DESCRIPTIONS = {
     'guild_role': 'The role that gets pinged for your guild reminder',
     'last_claim_time': 'Time of your last claim',
     'name': 'Embed: Your user name\nNormal message: Your name or mention depending on DND mode',
-    'production_time': 'The acual amount of time your farms spent producing including time speeders',
+    'production_time': 'The acual amount of time your farms spent producing including time speeders and compressors',
     'shop_item': 'Name of the shop item that is back in store',
 }
 
@@ -256,11 +256,11 @@ DONOR_TIER_ENERGY_MULTIPLIERS = {
 
 ENERGY_UPGRADE_LEVEL_MULTIPLIERS = {
     0: 1,
-    1: 1.2,
-    2: 1.35,
-    3: 1.5,
-    4: 1.6,
-    5: 1.7,
-    6: 1.75,
-    7: 1.8,
+    1: 1.3,
+    2: 1.5,
+    3: 1.7,
+    4: 1.85,
+    5: 2,
+    6: 2.1,
+    7: 2.2, # Unconfirmed value
 }

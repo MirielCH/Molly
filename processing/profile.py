@@ -73,14 +73,17 @@ async def call_profile_timers_and_update_idlucks(bot: discord.Bot, message: disc
         except exceptions.NoDataFoundError:
             multiplier_upgrade = 1
         multiplier_donor = list(strings.DONOR_TIER_ENERGY_MULTIPLIERS.values())[user_settings.donor_tier]
-        energy_regen = 6 / (multiplier_donor * multiplier_upgrade)
+        energy_regen = 5 / (multiplier_donor * multiplier_upgrade)
         minutes_until_max = (int(energy_max) - int(energy_current)) * energy_regen
         current_time = utils.utcnow()
         level_full_time = current_time + timedelta(minutes=minutes_until_max)
         energy_regen_time = timedelta(minutes=energy_regen)
         if user_settings.reminder_energy.enabled:
             await user_settings.update(energy_max=energy_max, energy_full_time=level_full_time)
-            await functions.recalculate_energy_reminder(user_settings, energy_regen_time)
+            try:
+                await functions.recalculate_energy_reminder(user_settings, energy_regen_time)
+            except exceptions.EnergyFullTimeOutdatedError:
+                pass
             if user_settings.reactions_enabled and not user_settings.helper_profile_enabled:
                 add_reaction = True
         
@@ -126,12 +129,16 @@ async def call_profile_timers_and_update_idlucks(bot: discord.Bot, message: disc
                 current_time = utils.utcnow()
                 time_since_last_claim = current_time - user_settings.last_claim_time
                 last_claim_time_timestamp = utils.format_dt(user_settings.last_claim_time, 'R')
-                time_produced = time_since_last_claim + user_settings.time_speeders_used * timedelta(hours=2)
+                time_produced = (time_since_last_claim + user_settings.time_speeders_used * timedelta(hours=2)
+                                 + user_settings.time_compressors_used * timedelta(hours=4))
                 if time_produced >= timedelta(hours=24): time_produced = timedelta(hours=24)
                 time_produced_timestring = (
                     await functions.parse_timedelta_to_timestring(time_produced - timedelta(microseconds=time_produced.microseconds))
                 )
-                time_produced_timespan = f'`{time_produced_timestring}` ({user_settings.time_speeders_used}{emojis.TIME_SPEEDER} used)'
+                time_produced_timespan = (
+                    f'`{time_produced_timestring}` ({user_settings.time_speeders_used}{emojis.TIME_SPEEDER} '
+                    f'| {user_settings.time_compressors_used}{emojis.TIME_COMPRESSOR})'
+                )
                 
             embed = discord.Embed(
                 color=settings.EMBED_COLOR,

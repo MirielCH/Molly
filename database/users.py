@@ -44,6 +44,7 @@ class User():
     reminders_as_embed: bool
     reminders_slash_enabled: bool
     tracking_enabled: bool
+    time_compressors_used: int
     time_speeders_used: int
     user_id: int
 
@@ -74,6 +75,7 @@ class User():
         self.reminder_vote = new_settings.reminder_vote
         self.reminders_as_embed = new_settings.reminders_as_embed
         self.reminders_slash_enabled = new_settings.reminders_slash_enabled
+        self.time_compressors_used = new_settings.time_compressors_used
         self.time_speeders_used = new_settings.time_speeders_used
         self.tracking_enabled = new_settings.tracking_enabled
 
@@ -113,6 +115,7 @@ class User():
             reminder_vote_message: str
             reminders_as_embed: bool
             reminders_slash_enabled: bool
+            time_compressors_used: int
             time_speeders_used: int
             tracking_enabled: bool
         """
@@ -174,6 +177,7 @@ async def _dict_to_user(record: dict) -> User:
                                          message=record['reminder_vote_message']),
             reminders_as_embed = bool(record['reminders_as_embed']),
             reminders_slash_enabled = bool(record['reminders_slash_enabled']),
+            time_compressors_used = record['time_compressors_used'],
             time_speeders_used = record['time_speeders_used'],
             tracking_enabled = bool(record['tracking_enabled']),            
             user_id = record['user_id'],
@@ -323,6 +327,7 @@ async def _update_user(user: User, **kwargs) -> None:
         reminder_vote_message: str
         reminders_as_embed: bool
         reminders_slash_enabled: bool
+        time_compressors_used: int
         time_speeders_used: int
         tracking_enabled: bool
 

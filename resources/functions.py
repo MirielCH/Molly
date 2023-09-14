@@ -656,7 +656,7 @@ async def get_energy_regen_time(user_settings: users.User) -> timedelta:
     except exceptions.NoDataFoundError:
         multiplier_upgrade = 1
     multiplier_donor = list(strings.DONOR_TIER_ENERGY_MULTIPLIERS.values())[user_settings.donor_tier]
-    energy_regen = 6 / (multiplier_donor * multiplier_upgrade)
+    energy_regen = 5 / (multiplier_donor * multiplier_upgrade)
     return timedelta(minutes=energy_regen)
 
 

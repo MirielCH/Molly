@@ -1025,7 +1025,8 @@ class SetClaimReminderTime(discord.ui.Select):
                 await interaction.message.edit(view=self.view)
                 return
             time_since_last_claim = current_time - self.view.user_settings.last_claim_time
-            time_produced = time_since_last_claim + self.view.user_settings.time_speeders_used * timedelta(hours=2)
+            time_produced = (time_since_last_claim + (self.view.user_settings.time_speeders_used * timedelta(hours=2))
+                             + (self.view.user_settings.time_compressors_used * timedelta(hours=4)))
             if time_left <= time_produced:
                 await interaction.response.send_message(
                     (
@@ -1046,7 +1047,7 @@ class SetClaimReminderTime(discord.ui.Select):
                 (
                     f'Done. I will remind you when your farms have produced '
                     f'**{format_timespan(time_left)}** worth of materials.\n\n'
-                    f'Time speeders will produce 2 hours instantly and reduce reminder time accordingly.'
+                    f'Time speeders and compressors will produce instantly and reduce reminder time accordingly.'
                 ),
                 ephemeral=True
             )
@@ -1094,7 +1095,8 @@ class SetClaimReminderTimeReminderList(discord.ui.Select):
             time_left = timedelta(hours=select_value)
             current_time = utils.utcnow()
             time_since_last_claim = current_time - self.view.user_settings.last_claim_time
-            time_produced = time_since_last_claim + self.view.user_settings.time_speeders_used * timedelta(hours=2)
+            time_produced = (time_since_last_claim + (self.view.user_settings.time_speeders_used * timedelta(hours=2))
+                             + (self.view.user_settings.time_compressors_used * timedelta(hours=4)))
             if time_left <= time_produced:
                 await interaction.response.send_message(
                     (

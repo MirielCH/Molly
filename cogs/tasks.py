@@ -64,6 +64,7 @@ class TasksCog(commands.Cog):
                         reminder.end_time
                         - user_settings.last_claim_time
                         + (user_settings.time_speeders_used * timedelta(hours=2))
+                        + (user_settings.time_compressors_used * timedelta(hours=4))
                     )
                     microseconds = production_time.microseconds
                     production_time = production_time - timedelta(microseconds=production_time.microseconds)
@@ -214,10 +215,10 @@ class TasksCog(commands.Cog):
             time_passed = end_time - start_time
             logs.logger.info(f'Consolidated {log_entry_count:,} log entries in {format_timespan(time_passed)}.')
 
-    @tasks.loop(minutes=6)
+    @tasks.loop(minutes=10)
     async def delete_old_messages_from_cache(self) -> None:
-        """Task that deletes messages from the message cache that are older than 6 minutes"""
-        deleted_messages_count = await messages.delete_old_messages(timedelta(minutes=6))
+        """Task that deletes messages from the message cache that are older than 10 minutes"""
+        deleted_messages_count = await messages.delete_old_messages(timedelta(minutes=10))
         if settings.DEBUG_MODE:
             logs.logger.debug(f'Deleted {deleted_messages_count} messages from message cache.')
 

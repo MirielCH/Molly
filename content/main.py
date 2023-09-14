@@ -101,6 +101,8 @@ async def embed_help(bot: discord.Bot, ctx: discord.ApplicationContext) -> disco
     commands_tracking = (
         f'{emojis.BP} {await functions.get_bot_slash_command(bot, "stats")} : Check your command stats\n'
         f'{emojis.DETAIL} _Aliases: `{prefix}stats`, `{prefix}st`_\n'
+        f'{emojis.BP} {await functions.get_bot_slash_command(bot, "workers")} : Check your worker power\n'
+        f'{emojis.DETAIL} _Aliases: `{prefix}workers`, `{prefix}wo`_\n'
     )
     commands_settings = (
         f'{emojis.BP} {await functions.get_bot_slash_command(bot, "on")} : Turn on Molly\n'
@@ -132,7 +134,7 @@ async def embed_help(bot: discord.Bot, ctx: discord.ApplicationContext) -> disco
         description = '_Let\'s manage your farms together!_',
     )
     embed.add_field(name='Reminders', value=commands_reminders, inline=False)
-    embed.add_field(name='User sttings', value=commands_settings, inline=False)
+    embed.add_field(name='User settings', value=commands_settings, inline=False)
     embed.add_field(name='Guild settings', value=guild_settings, inline=False)
     embed.add_field(name='Server settings', value=server_settings, inline=False)
     embed.add_field(name='Tracking', value=commands_tracking, inline=False)

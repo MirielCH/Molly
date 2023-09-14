@@ -63,10 +63,6 @@ async def update_workers_and_idlucks(message: discord.Message, embed_data: Dict,
                 clan_settings: clans.Clan = await clans.get_clan_by_member_id(user.id)
             except exceptions.NoDataFoundError:
                 pass
-        helper_teamraid_enabled = getattr(clan_settings, 'helper_teamraid_enabled', False)
-        if (not user_settings.helper_upgrades_enabled and not user_settings.helper_raid_enabled
-            and not helper_teamraid_enabled):
-            return add_reaction
         guild_members = await functions.get_guild_member_by_name(message.guild, supplier_name)
         if len(guild_members) == 1:
             supplier = guild_members[0]

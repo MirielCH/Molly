@@ -23,7 +23,7 @@ async def process_message(bot: discord.Bot, message: discord.Message, embed_data
     """
     return_values = []
     return_values.append(await call_context_helper_on_energy_item(message, embed_data, user, user_settings))
-    return_values.append(await track_time_speeders(message, user))
+    return_values.append(await track_time_items(message, user))
     return any(return_values)
 
 
@@ -40,7 +40,7 @@ async def call_context_helper_on_energy_item(message: discord.Message, embed_dat
     search_strings = [
         '**energy** was recovered!', #English
     ]
-    
+
     if any(search_string in message.content.lower() for search_string in search_strings):
         if user is None:
             user_name_match = re.search(regex.NAME_FROM_MESSAGE_START, message.content)
@@ -76,8 +76,8 @@ async def call_context_helper_on_energy_item(message: discord.Message, embed_dat
     return add_reaction
 
 
-async def track_time_speeders(message: discord.Message, user: discord.User) -> bool:
-    """Tacks time speeders used
+async def track_time_items(message: discord.Message, user: discord.User) -> bool:
+    """Tacks time speeders and compressors used
 
     Returns
     -------
@@ -85,7 +85,11 @@ async def track_time_speeders(message: discord.Message, user: discord.User) -> b
     - False otherwise
     """
     add_reaction = False
-    if 'timespeeder' in message.content.lower() and '🕓' in message.content.lower():
+    search_strings = [
+        'timespeeder',
+        'timecompressor',
+    ]
+    if any(search_string in message.content.lower() for search_string in search_strings) and '🕓' in message.content.lower():
         if user is None:
             user_name_match = re.search(regex.NAME_FROM_MESSAGE_START, message.content.lower())
             user_name = user_name_match.group(1)
@@ -99,9 +103,15 @@ async def track_time_speeders(message: discord.Message, user: discord.User) -> b
             return add_reaction
         if not user_settings.bot_enabled: return add_reaction
         timestring_match = re.search(r'🕓 \*\*(.+?)\*\*', message.content.lower())
-        time_speeder_time_left = await functions.parse_timestring_to_timedelta(timestring_match.group(1))
-        time_speeders_used = time_speeder_time_left.total_seconds() // 7200
-        await user_settings.update(time_speeders_used=user_settings.time_speeders_used+time_speeders_used)        
+        item_time_left = await functions.parse_timestring_to_timedelta(timestring_match.group(1))
+        kwargs = {}
+        if 'timespeeder' in message.content.lower():
+            items_used = item_time_left.total_seconds() // 7200
+            kwargs['time_speeders_used'] = user_settings.time_speeders_used + items_used
+        else:
+            items_used = item_time_left.total_seconds() // 14400
+            kwargs['time_compressors_used'] = user_settings.time_compressors_used + items_used
+        await user_settings.update(**kwargs)
         try:
             claim_reminder: reminders.Reminder = await reminders.get_user_reminder(user.id, 'claim')
         except exceptions.NoDataFoundError:
@@ -109,7 +119,7 @@ async def track_time_speeders(message: discord.Message, user: discord.User) -> b
         if claim_reminder:
             current_time = utils.utcnow()
             time_left = claim_reminder.end_time - current_time
-            if time_left <= time_speeder_time_left: time_left = timedelta(seconds=1)
-            await claim_reminder.update(end_time=current_time+time_left-time_speeder_time_left)
+            if time_left <= item_time_left: time_left = timedelta(seconds=1)
+            await claim_reminder.update(end_time=current_time+time_left-item_time_left)
             if user_settings.reactions_enabled: add_reaction = True
     return add_reaction

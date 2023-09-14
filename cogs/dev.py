@@ -192,10 +192,10 @@ class DevCog(commands.Cog):
         guilds = sorted(self.bot.guilds, key=lambda guild: guild.name)
         for guild in guilds:
             if len(description) > 4000:
-                description = f'{description}\n{emojis.BP} ... and more'
+                description = f'{description}\n- ... and more'
                 break
             else:
-                description = f'{description}\n{emojis.BP} {guild.name}'
+                description = f'{description}\n- {guild.name}'
 
         embed = discord.Embed(
             color = settings.EMBED_COLOR,

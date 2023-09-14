@@ -88,6 +88,7 @@ EXTENSIONS = [
     'cogs.settings',
     'cogs.tracking',
     'cogs.tasks',
+    'cogs.workers',
 ]
 
 if __name__ == '__main__':

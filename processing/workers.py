@@ -8,7 +8,7 @@ import discord
 from discord import utils
 
 from cache import messages
-from database import clans, upgrades, users, workers, tracking, workers
+from database import clans, users, workers, tracking, workers
 from resources import exceptions, functions, regex, strings
 
 
@@ -60,9 +60,7 @@ async def track_worker_hire_event(message: discord.Message, embed_data: Dict, us
                 clan_settings: clans.Clan = await clans.get_clan_by_member_id(user.id)
             except exceptions.NoDataFoundError:
                 pass
-        helper_teamraid_enabled = getattr(clan_settings, 'helper_teamraid_enabled', False)
-        if (not user_settings.helper_raid_enabled and not helper_teamraid_enabled) or not user_settings.bot_enabled:
-            return add_reaction
+        if not user_settings.bot_enabled: return add_reaction
         worker_name_match = re.search(r'<a:(.+?)worker:', embed_data['field0']['name'].lower())
         worker_name = worker_name_match.group(1)
         try:
@@ -116,39 +114,26 @@ async def track_worker_roll(message: discord.Message, embed_data: Dict, user: Op
                 clan_settings: clans.Clan = await clans.get_clan_by_member_id(user.id)
             except exceptions.NoDataFoundError:
                 pass
-        helper_teamraid_enabled = getattr(clan_settings, 'helper_teamraid_enabled', False)
-        if ((not user_settings.tracking_enabled and not user_settings.helper_raid_enabled and not helper_teamraid_enabled)
-            or not user_settings.bot_enabled): return add_reaction
-        # Update user workers
-        if user_settings.helper_raid_enabled:
-            worker_name_match = re.search(r'<a:(.+?)worker:', embed_data['field0']['name'].lower())
-            worker_data_match = re.search(r'`\[([0-9,]+)/([0-9,]+)]`', embed_data['field0']['name'].lower())
-            worker_name = worker_name_match.group(1)
-            amount = int(re.sub(r'\D','', worker_data_match.group(1)))
-            workers_required = int(re.sub(r'\D','', worker_data_match.group(2)))
-            try:
-                user_worker: workers.UserWorker = await workers.get_user_worker(user.id, worker_name)
-            except exceptions.NoDataFoundError:
-                user_worker = None
-            if user_worker is not None:
-                if amount > 0:
-                    await user_worker.update(worker_amount=amount)
-                else:
-                    try:
-                        worker_level: workers.WorkerLevel = await workers.get_worker_level(workers_required=workers_required)
-                        level = worker_level.level - 1
-                        await user_worker.update(worker_level=level, worker_amount=0)
-                    except exceptions.NoDataFoundError:
-                        pass
-        # Update worker roll tracking log
+        if not user_settings.bot_enabled: return add_reaction
+        workers_found = {}
         if user_settings.tracking_enabled:
-            item = None
-            for worker_type in strings.WORKER_TYPES:
-                if worker_type in embed_data['field0']['name'].lower():
-                    item = f'worker-{worker_type}'
-            current_time = utils.utcnow().replace(microsecond=0)
-            if item is not None:
-                await tracking.insert_log_entry(user.id, message.guild.id, item, current_time)
+            # Update worker roll tracking log
+            for field in message.embeds[0].fields:
+                worker_type_match = re.search(r'<a:(.+?)worker:', field.name.lower())
+                worker_type = worker_type_match.group(1)
+                worker_amount = 1
+                amount_match = re.search(r'\(\+([0-9,]+)\)', field.value.lower())
+                worker_data_match = re.search(r'`\[([0-9,]+)/([0-9,]+)]`', field.name.lower())
+                if not worker_data_match:
+                    worker_data_match = re.search(r'`\[([0-9,]+)/([0-9,]+)]`', field.value.lower())
+                if amount_match: worker_amount = int(re.sub('\D','', amount_match.group(1)))
+                workers_total = int(re.sub(r'\D','', worker_data_match.group(1)))
+                workers_required = int(re.sub(r'\D','', worker_data_match.group(2)))
+                workers_found[worker_type] = (worker_amount, workers_total, workers_required)
+            if user_settings.tracking_enabled:
+                for worker_type, worker_amounts in workers_found.items():
+                    await tracking.insert_log_entry(user.id, message.guild.id, f'worker-{worker_type}',
+                                                    utils.utcnow().replace(microsecond=0), worker_amounts[0])
         # Update energy time until full
         if user_settings.reminder_energy.enabled:
             energy_match = re.search(r':\s([0-9,]+)/([0-9,]+)$', embed_data['footer']['text'])
@@ -156,10 +141,26 @@ async def track_worker_roll(message: discord.Message, embed_data: Dict, user: Op
             energy_max = int(re.sub('\D','',energy_match.group(2)))
             energy_regen_time = await functions.get_energy_regen_time(user_settings)
             seconds_until_max = (int(energy_max) - int(energy_current)) * energy_regen_time.total_seconds()
-            current_time = utils.utcnow()
-            energy_full_time = current_time + timedelta(seconds=seconds_until_max)
+            energy_full_time = utils.utcnow() + timedelta(seconds=seconds_until_max)
             await user_settings.update(energy_max=energy_max, energy_full_time=energy_full_time)
             await functions.recalculate_energy_reminder(user_settings, energy_regen_time)
+        # Update user workers
+        for worker_type, worker_amounts in workers_found.items():
+            _, workers_total, workers_required = worker_amounts
+            try:
+                user_worker: workers.UserWorker = await workers.get_user_worker(user.id, worker_type)
+            except exceptions.NoDataFoundError:
+                user_worker = None
+            if user_worker is not None:
+                if workers_total > 0:
+                    await user_worker.update(worker_amount=workers_total)
+                else:
+                    try:
+                        worker_level: workers.WorkerLevel = await workers.get_worker_level(workers_required=workers_required)
+                        level = worker_level.level - 1
+                        await user_worker.update(worker_level=level, worker_amount=0)
+                    except exceptions.NoDataFoundError:
+                        pass
     return add_reaction
 
 
@@ -196,9 +197,7 @@ async def track_worker_stats(message: discord.Message, embed_data: Dict,
                 clan_settings: clans.Clan = await clans.get_clan_by_member_id(interaction_user.id)
             except exceptions.NoDataFoundError:
                 pass
-        helper_teamraid_enabled = getattr(clan_settings, 'helper_teamraid_enabled', False)
-        if not user_settings.bot_enabled or (not user_settings.helper_raid_enabled and not helper_teamraid_enabled):
-            return add_reaction
+        if not user_settings.bot_enabled: return add_reaction
         for field in message.embeds[0].fields:
             worker_name_match = re.search(r'<a:(.+?)worker:', field.name.lower())
             worker_data_match = re.search(r'level\*\*: ([0-9,]+) `\[([0-9,]+)/([0-9,]+)]`', field.value.lower())

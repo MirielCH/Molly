@@ -53,6 +53,7 @@ async def call_context_helper(message: discord.Message, embed_data: Dict, user: 
             'common lootbox': f"➜ {strings.SLASH_COMMANDS['open']}\n",
             'mythic lootbox': f"➜ {strings.SLASH_COMMANDS['open']}\n",
             'time speeder': f"➜ {strings.SLASH_COMMANDS['use']}\n",
+            'time compressor': f"➜ {strings.SLASH_COMMANDS['use']}\n",
         }
         item_name = item_name_match.group(1)
         if item_name not in items_commands: return add_reaction

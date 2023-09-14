@@ -70,7 +70,7 @@ class SetLastClaimModal(Modal):
             await interaction.followup.send(msg_error, ephemeral=True)
             return
         last_claim_time_old = self.view.user_settings.last_claim_time
-        await self.view.user_settings.update(last_claim_time=last_claim_time, time_speeders_used=0)
+        await self.view.user_settings.update(last_claim_time=last_claim_time, time_speeders_used=0, time_compressors_used=0)
         try:
             reminder: reminders.Reminder = await reminders.get_user_reminder(self.view.user.id, 'claim')
         except exceptions.NoDataFoundError:
@@ -175,7 +175,8 @@ class SetClaimReminderTimeModal(Modal):
         time_left = timedelta(hours=hours)
         current_time = utils.utcnow()
         time_since_last_claim = current_time - self.view.user_settings.last_claim_time
-        time_produced = time_since_last_claim + self.view.user_settings.time_speeders_used * timedelta(hours=2)
+        time_produced = (time_since_last_claim + (self.view.user_settings.time_speeders_used * timedelta(hours=2))
+                         + (self.view.user_settings.time_compressors_used * timedelta(hours=4)))
         if time_left <= time_produced:
             await interaction.response.edit_message(view=self.view)
             await interaction.followup.send(
@@ -198,7 +199,7 @@ class SetClaimReminderTimeModal(Modal):
             (
                 f'Done! I will remind you when your farms have produced '
                 f'**{format_timespan(time_left)}** worth of materials.\n\n'
-                f'Time speeders will produce 2 hours instantly and reduce reminder time accordingly.'
+                f'Time speeders and compressors will produce instantly and reduce reminder time accordingly.'
             ),
             ephemeral=True
         )
@@ -232,7 +233,8 @@ class SetClaimReminderTimeReminderListModal(Modal):
         time_left = timedelta(hours=hours)
         current_time = utils.utcnow()
         time_since_last_claim = current_time - self.view.user_settings.last_claim_time
-        time_produced = time_since_last_claim + self.view.user_settings.time_speeders_used * timedelta(hours=2)
+        time_produced = (time_since_last_claim + (self.view.user_settings.time_speeders_used * timedelta(hours=2))
+                         + (self.view.user_settings.time_compressors_used * timedelta(hours=4)))
         if time_left <= time_produced:
             await interaction.response.edit_message(view=self.view)
             await interaction.followup.send(

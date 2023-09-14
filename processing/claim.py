@@ -57,14 +57,14 @@ async def process_claim_message(bot: discord.Bot, message: discord.Message, embe
             except exceptions.FirstTimeUserError:
                 return add_reaction
         if not user_settings.bot_enabled: return add_reaction
-        await user_settings.update(last_claim_time=message.created_at, time_speeders_used=0)
+        await user_settings.update(last_claim_time=message.created_at, time_speeders_used=0, time_compressors_used=0)
         if user_settings.reminder_energy.enabled:
             try:
                 await functions.change_user_energy(user_settings, -5)
                 if not user_settings.reminder_claim.enabled and user_settings.reactions_enabled: add_reaction = True
             except exceptions.EnergyFullTimeOutdatedError:
                 await message.reply(strings.MSG_ENERGY_OUTDATED.format(user=user.display_name,
-                                                                        cmd_profile=strings.SLASH_COMMANDS["profile"]))
+                                                                       cmd_profile=strings.SLASH_COMMANDS["profile"]))
             except exceptions.EnergyFullTimeNoneError:
                 pass
         if user_settings.reminder_claim.enabled:

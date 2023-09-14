@@ -10,13 +10,14 @@ from discord.ext import commands
 from database import clans, guilds, users
 from processing import buy, claim, clan, daily, donate, events, open, payday, profile, raid, request, shop, teamraid
 from processing import upgrades, use, workers
-from resources import exceptions, functions, regex, settings
+from resources import exceptions, functions, logs, regex, settings
 
 
 class DetectionCog(commands.Cog):
     """Cog that contains the detection events"""
     def __init__(self, bot):
         self.bot = bot
+    
 
     @commands.Cog.listener()
     async def on_message_edit(self, message_before: discord.Message, message_after: discord.Message) -> None:
@@ -184,12 +185,12 @@ async def parse_embed(message: discord.Message) -> Dict[str, str]:
     }
     if message.embeds:
         embed = message.embeds[0]
-        if embed.author:
+        if embed.author is not None:
             if embed.author.icon_url is not None:
                 embed_data['author']['icon_url'] = embed.author.icon_url
             if embed.author.name is not None:
                 embed_data['author']['name'] = embed.author.name
-        if embed.description:
+        if embed.description is not None:
             embed_data['description'] = embed.description
         if embed.fields:
             try:
@@ -222,12 +223,12 @@ async def parse_embed(message: discord.Message) -> Dict[str, str]:
                 embed_data['field5']['value'] = embed.fields[5].value
             except IndexError:
                 pass
-        if embed.footer:
+        if embed.footer is not None:
             if embed.footer.icon_url is not None:
                 embed_data['footer']['icon_url'] = embed.footer.icon_url
             if embed.footer.text is not None:
                 embed_data['footer']['text'] = embed.footer.text
-        if embed.title:
+        if embed.title is not None:
             embed_data['title'] = embed.title
     return embed_data
 
@@ -283,4 +284,12 @@ async def check_edited_message_never_allowed(message_before: discord.Message,
     ]
     if any(search_string in embed_data['author']['name'].lower() for search_string in search_strings):
         return True
+    """
+    search_strings =  [
+        '— worker roll', #All languages
+    ]
+    if (any(search_string in embed_data['author']['name'].lower() for search_string in search_strings)
+           and '(+' in embed_data['field0']['value']):
+        return True
+    """
     return False

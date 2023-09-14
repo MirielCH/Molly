@@ -59,9 +59,7 @@ async def track_workers_from_lootboxes(message: discord.Message, embed_data: Dic
                 clan_settings: clans.Clan = await clans.get_clan_by_member_id(user.id)
             except exceptions.NoDataFoundError:
                 pass
-        helper_teamraid_enabled = getattr(clan_settings, 'helper_teamraid_enabled', False)
-        if (not user_settings.helper_raid_enabled and not helper_teamraid_enabled) or not user_settings.bot_enabled:
-            return add_reaction
+        if not user_settings.bot_enabled: return add_reaction
         for line in embed_data['field0']['value'].split('\n'):
             worker_data_match = re.search(r'^\+([0-9,]+)\s<a:(.+?)worker:', line.lower())
             if worker_data_match:
