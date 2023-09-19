@@ -75,17 +75,17 @@ class SettingsCog(commands.Cog):
         await settings_cmd.command_settings_user(self.bot, ctx)
 
     #Prefix commands
-    @commands.command(name='on', aliases=('register', 'activate', 'start'))
+    @commands.command(name='on', aliases=('register', 'activate', 'start', 'hi'))
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def prefix_on(self, ctx: commands.Context, *args: str) -> None:
         """Turn on Navi (prefix version)"""
-        await ctx.reply(f'Yeehaw! Please use {await functions.get_bot_slash_command(self.bot, "on")} to activate me.')
+        await settings_cmd.command_on(self.bot, ctx)
 
-    @commands.command(name='off', aliases=('deactivate','stop'))
+    @commands.command(name='off', aliases=('deactivate', 'stop', 'bye'))
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def prefix_off(self, ctx: commands.Context, *args: str) -> None:
         """Turn off Navi (prefix version)"""
-        await ctx.reply(f'Yeehaw! Please use {await functions.get_bot_slash_command(self.bot, "off")} to deactivate me.')
+        await settings_cmd.command_off(self.bot, ctx)
 
     @commands.command(name='settings', aliases=('me','setting','set'))
     @commands.bot_has_permissions(send_messages=True, embed_links=True)

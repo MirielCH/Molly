@@ -61,7 +61,8 @@ class RemindersCog(commands.Cog):
         reminder_text = ' '.join(args) if args else 'you wanted to get reminded for idk, something?'
         await reminders_custom.command_custom_reminder(ctx, timestring, reminder_text)
 
-    @commands.command(name='list', aliases=('cd','cooldown','cooldowns','lastclaim','lc','claim','daily','teamraid'))
+    @commands.command(name='list', aliases=('cd','cooldown','cooldowns','lastclaim','lc','claim','daily','teamraid',
+                                            'rd','ready',))
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
     async def prefix_reminders_list(self, ctx: commands.Context, *args: str) -> None:
         """Lists all active reminders (prefix version)"""

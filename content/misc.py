@@ -19,11 +19,14 @@ async def command_calculator(ctx: discord.ApplicationContext, calculation: str) 
     calculation = calculation.replace(' ','')
     allowedchars = set('1234567890.-+/*%()')
     if not set(calculation).issubset(allowedchars) or '**' in calculation:
-        message = (
+        answer = (
             f'Invalid characters. Please only use numbers and supported operators.\n'
             f'Supported operators are `+`, `-`, `/`, `*` and `%`.'
         )
-        await ctx.respond(message, ephemeral=True)
+        if isinstance(ctx, discord.ApplicationContext):
+            await ctx.respond(answer, ephemeral=True)
+        else:
+            await ctx.reply(answer)
         return
     error_parsing = (
         f'Error while parsing your input. Please check your input.\n'
@@ -63,7 +66,10 @@ async def command_calculator(ctx: discord.ApplicationContext, calculation: str) 
 
                         if slice in ('*','%','/'):
                             if last_char_was_operator:
-                                await ctx.respond(error_parsing, ephemeral=True)
+                                if isinstance(ctx, discord.ApplicationContext):
+                                    await ctx.respond(error_parsing, ephemeral=True)
+                                else:
+                                    await ctx.reply(error_parsing)
                                 return
                             else:
                                 calculation_parsed.append(slice)
@@ -73,7 +79,10 @@ async def command_calculator(ctx: discord.ApplicationContext, calculation: str) 
                             last_char_was_operator = False
                         last_char_was_number = False
             else:
-                await ctx.respond(error_parsing, ephemeral=True)
+                if isinstance(ctx, discord.ApplicationContext):
+                    await ctx.respond(error_parsing, ephemeral=True)
+                else:
+                    await ctx.reply(error_parsing)
                 return
 
             calculation_sliced = calculation_sliced[1:]
@@ -82,7 +91,10 @@ async def command_calculator(ctx: discord.ApplicationContext, calculation: str) 
             if number != '':
                 calculation_parsed.append(Decimal(float(number)))
     except:
-        await ctx.respond(error_parsing, ephemeral=True)
+        if isinstance(ctx, discord.ApplicationContext):
+            await ctx.respond(error_parsing, ephemeral=True)
+        else:
+            await ctx.reply(error_parsing)
         return
 
     # Reassemble and execute calculation
@@ -98,25 +110,36 @@ async def command_calculator(ctx: discord.ApplicationContext, calculation: str) 
         else:
             result = f'{result:,}'.rstrip('0').rstrip('.')
         if len(result) > 2000:
-            await ctx.respond(
-                'Well. Whatever you calculated, the result is too long to display. GG.',
-                ephemeral=True
-            )
+            answer = 'Well. Whatever you calculated, the result is too long to display. GG.'
+            if isinstance(ctx, discord.ApplicationContext):
+                await ctx.respond(answer, ephemeral=True)
+            else:
+                await ctx.reply(answer)
             return
     except:
-        await ctx.respond(
+        answer = (
             f'Well, _that_ didn\'t calculate to anything useful.\n'
-            f'What were you trying to do there? :thinking:',
-            ephemeral=True
+            f'What were you trying to do there? :thinking:'
         )
+        if isinstance(ctx, discord.ApplicationContext):
+            await ctx.respond(answer, ephemeral=True)
+        else:
+            await ctx.reply(answer)
         return
-    await ctx.respond(result)
+    if isinstance(ctx, discord.ApplicationContext):
+        await ctx.respond(result)
+    else:
+        await ctx.reply(result)
+    return
 
 
 async def command_codes(ctx: discord.ApplicationContext) -> None:
     """Codes command"""
     embed = await embed_codes()
-    await ctx.respond(embed=embed)
+    if isinstance(ctx, discord.ApplicationContext):
+        await ctx.respond(embed=embed)
+    else:
+        await ctx.reply(embed=embed)
 
 
 # --- Embeds ---

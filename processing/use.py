@@ -94,7 +94,7 @@ async def track_time_items(message: discord.Message, user: discord.User) -> bool
             user_name_match = re.search(regex.NAME_FROM_MESSAGE_START, message.content.lower())
             user_name = user_name_match.group(1)
             user_command_message = (
-                await messages.find_message(message.channel.id, regex.COMMAND_USE_TIME_SPEEDER, user_name=user_name)
+                await messages.find_message(message.channel.id, regex.COMMAND_USE_TIME_ITEM, user_name=user_name)
             )
             user = user_command_message.author
         try:
@@ -116,10 +116,13 @@ async def track_time_items(message: discord.Message, user: discord.User) -> bool
             claim_reminder: reminders.Reminder = await reminders.get_user_reminder(user.id, 'claim')
         except exceptions.NoDataFoundError:
             claim_reminder = []
-        if claim_reminder:
+        if claim_reminder and not claim_reminder.triggered:
             current_time = utils.utcnow()
             time_left = claim_reminder.end_time - current_time
-            if time_left <= item_time_left: time_left = timedelta(seconds=1)
-            await claim_reminder.update(end_time=current_time+time_left-item_time_left)
+            if time_left <= item_time_left:
+                time_left = timedelta(seconds=1)
+            else:
+                time_left = time_left - item_time_left
+            await claim_reminder.update(end_time=current_time + time_left)
             if user_settings.reactions_enabled: add_reaction = True
     return add_reaction

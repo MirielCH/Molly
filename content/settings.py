@@ -20,7 +20,11 @@ async def command_on(bot: discord.Bot, ctx: discord.ApplicationContext) -> None:
     try:
         user_settings: users.User = await users.get_user(ctx.author.id)
         if user_settings.bot_enabled:
-            await ctx.respond(f'**{ctx.author.display_name}**, I\'m already turned on.', ephemeral=True)
+            answer = f'**{ctx.author.display_name}**, I\'m already turned on.'
+            if isinstance(ctx, discord.ApplicationContext):
+                await ctx.respond(answer, ephemeral=True)
+            else:
+                await ctx.reply(answer)
             return
     except exceptions.FirstTimeUserError:
         user_settings = await users.insert_user(ctx.author.id)
@@ -31,7 +35,10 @@ async def command_on(bot: discord.Bot, ctx: discord.ApplicationContext) -> None:
         return
     if not first_time_user:
         answer = f'Yeehaw! Welcome back **{ctx.author.display_name}**!'
-        await ctx.respond(answer)
+        if isinstance(ctx, discord.ApplicationContext):
+            await ctx.respond(answer)
+        else:
+            await ctx.reply(answer)
     else:
         field_first = (
             f'Please do the following to properly use my features:\n'
@@ -65,20 +72,27 @@ async def command_on(bot: discord.Bot, ctx: discord.ApplicationContext) -> None:
         embed.add_field(name='Settings', value=field_settings, inline=False)
         embed.add_field(name='Command tracking', value=field_tracking, inline=False)
         embed.set_thumbnail(url=image_url)
-        view = views.OneButtonView(ctx, discord.ButtonStyle.blurple, 'pressed', '➜ Settings')
-        interaction = await ctx.respond(embed=embed, file=img_logo, view=view)
-        view.interaction_message = interaction
-        await view.wait()
-        if view.value == 'pressed':
-            await functions.edit_interaction(interaction, view=None)
-            await command_settings_user(bot, ctx)
+        if isinstance(ctx, discord.ApplicationContext):
+            view = views.OneButtonView(ctx, discord.ButtonStyle.blurple, 'pressed', '➜ Settings')
+            interaction = await ctx.respond(embed=embed, file=img_logo, view=view)
+            view.interaction_message = interaction
+            await view.wait()
+            if view.value == 'pressed':
+                await functions.edit_interaction(interaction, view=None)
+                await command_settings_user(bot, ctx)
+        else:
+            await ctx.reply(embed=embed, file=img_logo)
 
 
 async def command_off(bot: discord.Bot, ctx: discord.ApplicationContext) -> None:
     """Off command"""
     user: users.User = await users.get_user(ctx.author.id)
     if not user.bot_enabled:
-        await ctx.respond(f'**{ctx.author.display_name}**, I\'m already turned off.', ephemeral=True)
+        answer = f'**{ctx.author.display_name}**, I\'m already turned off.'
+        if isinstance(ctx, discord.ApplicationContext):
+            await ctx.respond(answer, ephemeral=True)
+        else:
+            await ctx.reply(answer)
         return
     answer = (
         f'**{ctx.author.display_name}**, turning me off will disable me completely. It will also delete all of your active '
@@ -86,7 +100,10 @@ async def command_off(bot: discord.Bot, ctx: discord.ApplicationContext) -> None
         f'Are you sure?'
     )
     view = views.ConfirmCancelView(ctx, styles=[discord.ButtonStyle.red, discord.ButtonStyle.grey])
-    interaction = await ctx.respond(answer, view=view)
+    if isinstance(ctx, discord.ApplicationContext):
+        interaction = await ctx.respond(answer, view=view)
+    else:
+        interaction = await ctx.reply(answer, view=view)
     view.interaction_message = interaction
     await view.wait()
     if view.value is None:
@@ -106,12 +123,18 @@ async def command_off(bot: discord.Bot, ctx: discord.ApplicationContext) -> None
                 f'All active reminders were deleted.\n'
                 f'Yeehaw! {emojis.LOGO}'
             )
-            await functions.edit_interaction(interaction, content=answer, view=None)
+            if isinstance(ctx, discord.ApplicationContext):
+                await functions.edit_interaction(interaction, content=answer, view=None)
+            else:
+                await interaction.edit(content=answer, view=None)
         else:
             await ctx.followup.send(strings.MSG_ERROR)
             return
     else:
-        await functions.edit_interaction(interaction, content='Aborted.', view=None)
+        if isinstance(ctx, discord.ApplicationContext):
+            await functions.edit_interaction(interaction, content='Aborted.', view=None)
+        else:
+            await interaction.edit(content='Aborted', view=None)
 
 
 async def command_purge_data(bot: discord.Bot, ctx: discord.ApplicationContext) -> None:
@@ -546,6 +569,7 @@ async def embed_settings_server(bot: discord.Bot, ctx: discord.ApplicationContex
     """Server settings embed"""
     server_settings = (
         f'{emojis.BP} **Prefix**: `{guild_settings.prefix}`\n'
+        f'{emojis.DETAIL} _If you want to have a space after the prefix, you need to input it as `"prefix "`._'
     )
     embed = discord.Embed(
         color = settings.EMBED_COLOR,

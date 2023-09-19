@@ -9,7 +9,7 @@ from discord.ext import commands
 
 from database import clans, guilds, users
 from processing import buy, claim, clan, daily, donate, events, open, payday, profile, raid, request, shop, teamraid
-from processing import upgrades, use, workers
+from processing import upgrades, use, vote, workers
 from resources import exceptions, functions, logs, regex, settings
 
 
@@ -134,6 +134,11 @@ class DetectionCog(commands.Cog):
         if helper_raid_enabled or helper_teamraid_enabled:
             add_reaction = await request.process_message(self.bot, message, embed_data, interaction_user, user_settings,
                                                          clan_settings)
+            return_values.append(add_reaction)
+
+        # Vote
+        if reminder_vote_enabled:
+            add_reaction = await vote.process_message(self.bot, message, embed_data, interaction_user, user_settings)
             return_values.append(add_reaction)
             
         # Worker tracking

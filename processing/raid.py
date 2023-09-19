@@ -146,6 +146,7 @@ async def call_raid_helper(bot: discord.Bot, message: discord.Message, embed_dat
                     enemies_powers_copy = copy.deepcopy(enemies_power)
                     used_workers = {}
                     for worker_name in possible_solution:
+                        killed_enemies = 0
                         for enemy_name, enemy_power in enemies_powers_copy.items():
                             if enemy_power == 0: continue
                             worker_power = workers_power[worker_name]
@@ -154,7 +155,11 @@ async def call_raid_helper(bot: discord.Bot, message: discord.Message, embed_dat
                             if power_remaining < 0: power_remaining = 0
                             enemies_powers_copy[enemy_name] = power_remaining
                             break
-                        killed_enemies = len([enemy_name for enemy_name, enemy_power in enemies_powers_copy.items() if enemy_power == 0])
+                        for enemy_name, enemy_power in enemies_powers_copy.items():
+                            if enemy_power == 0:
+                                killed_enemies += 1
+                            elif enemy_power != enemies_power[enemy_name]:
+                                killed_enemies += 1 - (100 / enemies_power[enemy_name] * enemy_power / 100)
                         if killed_enemies >= len(enemies_powers_copy.keys()): break
                     if best_solution:
                         if killed_enemies > best_solution[0]:
@@ -264,7 +269,7 @@ async def call_raid_helper(bot: discord.Bot, message: discord.Message, embed_dat
         worker_emojis = {}
         for worker_name, power in worker_solution.items():
             worker_emojis[worker_name] = getattr(emojis, f'WORKER_{worker_name}_S'.upper(), emojis.WARNING)
-        killed_enemies = 'all' if killed_enemies >= len(enemies_power.keys()) else killed_enemies
+        killed_enemies = 'all' if killed_enemies >= len(enemies_power.keys()) else round(killed_enemies,2)
         field_solution = ''
         for worker_name, emoji in worker_emojis.items():
             field_solution = emoji if field_solution == '' else f'{field_solution} ➜ {emoji}'
@@ -272,7 +277,7 @@ async def call_raid_helper(bot: discord.Bot, message: discord.Message, embed_dat
         embed.insert_field_at(
             0,
             name = f'Raid guide',
-            value = f'{field_solution.strip()}\n_You can kill {killed_enemies} farms._',
+            value = f'{field_solution.strip()}\n_You can kill {killed_enemies:g} farms._',
             inline = False
         )
         message_helper = await message.reply(embed=embed)
@@ -325,7 +330,7 @@ async def call_raid_helper(bot: discord.Bot, message: discord.Message, embed_dat
                         if not '_x' in worker_emoji: del worker_emojis[worker_name]
                     for worker_name, power in worker_solution.items():
                         worker_emojis[worker_name] = getattr(emojis, f'WORKER_{worker_name}_S'.upper(), emojis.WARNING)
-                    killed_enemies = 'all' if killed_enemies >= len(enemies_power.keys()) else killed_enemies
+                    killed_enemies = 'all' if killed_enemies >= len(enemies_power.keys()) else round(killed_enemies,2)
                 else:
                     if worker_solution_remaining: del worker_solution_remaining[0]
                 field_solution = ''
@@ -334,7 +339,7 @@ async def call_raid_helper(bot: discord.Bot, message: discord.Message, embed_dat
                 embed.insert_field_at(
                     0,
                     name = f'Raid guide',
-                    value = f'{field_solution.strip()}\n_You can kill {killed_enemies} farms._',
+                    value = f'{field_solution.strip()}\n_You can kill {killed_enemies:g} farms._',
                     inline = False
                 )
             if not active_component:

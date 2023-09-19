@@ -103,12 +103,13 @@ async def embed_reminders_list(bot: discord.Bot, user: discord.User, user_settin
             farms_full_in_timestamp = f'{emojis.WARNING}{farms_full_in_timestamp}'
     if daily_reminder is not None: daily_reminder_end_time = utils.format_dt(daily_reminder.end_time, 'R')
     if clan_reminder is not None: clan_reminder_end_time = utils.format_dt(clan_reminder.end_time, 'R')
+    if vote_reminder is not None: vote_reminder_end_time = utils.format_dt(vote_reminder.end_time, 'R')
     claim_reminder_emoji = emojis.ENABLED_LARGE if claim_reminder is None else emojis.COOLDOWN
     claim_reminder_text = '`Ready!`' if claim_reminder is None else claim_reminder_end_time
     daily_reminder_emoji = emojis.ENABLED_LARGE if daily_reminder is None else emojis.COOLDOWN
     daily_reminder_text = '`Ready!`' if daily_reminder is None else daily_reminder_end_time
     vote_reminder_emoji = emojis.ENABLED_LARGE if vote_reminder is None else emojis.COOLDOWN
-    #vote_reminder_text = '`Ready`' if vote_reminder is None else vote_reminder_end_time
+    vote_reminder_text = '`Ready!`' if vote_reminder is None else vote_reminder_end_time
     clan_reminder_emoji = emojis.ENABLED_LARGE if clan_reminder is None else emojis.COOLDOWN
     clan_reminder_text = '`Ready!`' if clan_reminder is None else clan_reminder_end_time
     embed = discord.Embed(
@@ -144,14 +145,12 @@ async def embed_reminders_list(bot: discord.Bot, user: discord.User, user_settin
             value=f'{emojis.DETAIL} _Daily rewards reset at midnight UTC._',
             inline=False
         )
-    """
     if user_settings.reminder_vote.enabled:
         embed.add_field(
-            name=f'{vote_reminder_emoji} {strings.SLASH_COMMANDS["vote"]} {vote_reminder_active}',
+            name=f'{vote_reminder_emoji} {strings.SLASH_COMMANDS["vote"]} {vote_reminder_text}',
             value=f'{emojis.DETAIL} _You can vote every 12 hours._',
             inline=False
         )
-    """
     if clan_reminder_enabled:
         embed.add_field(
             name=f'{clan_reminder_emoji} {strings.SLASH_COMMANDS["teamraid"]} {clan_reminder_text}',

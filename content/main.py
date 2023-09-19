@@ -106,7 +106,9 @@ async def embed_help(bot: discord.Bot, ctx: discord.ApplicationContext) -> disco
     )
     commands_settings = (
         f'{emojis.BP} {await functions.get_bot_slash_command(bot, "on")} : Turn on Molly\n'
+        f'{emojis.DETAIL} _Aliases: `{prefix}on`_\n'
         f'{emojis.BP} {await functions.get_bot_slash_command(bot, "off")} : Turn off Molly\n'
+        f'{emojis.DETAIL} _Aliases: `{prefix}off`_\n'
         f'{emojis.BP} {await functions.get_bot_slash_command(bot, "settings helpers")} : Manage helpers\n'
         f'{emojis.BP} {await functions.get_bot_slash_command(bot, "settings messages")} : Manage reminder messages\n'
         f'{emojis.BP} {await functions.get_bot_slash_command(bot, "settings reminders")} : Manage reminder settings\n'
@@ -122,7 +124,9 @@ async def embed_help(bot: discord.Bot, ctx: discord.ApplicationContext) -> disco
     )
     commands_misc = (
         f'{emojis.BP} {await functions.get_bot_slash_command(bot, "calculator")} : A basic calculator\n'
+        f'{emojis.DETAIL} _Aliases: `{prefix}calc`_\n'
         f'{emojis.BP} {await functions.get_bot_slash_command(bot, "codes")} : All currently available codes\n'
+        f'{emojis.DETAIL} _Aliases: `{prefix}codes`_\n'
         f'{emojis.BP} {await functions.get_bot_slash_command(bot, "event-reductions")} : Check active event reductions\n'
         f'{emojis.BP} {await functions.get_bot_slash_command(bot, "purge data")} : Purge your user data\n'
     )
