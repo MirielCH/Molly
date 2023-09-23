@@ -134,6 +134,8 @@ class ManageClanSettingsSelect(discord.ui.Select):
                                             value='reset_channel', emoji=emojis.REMOVE))
         options.append(discord.SelectOption(label='Remove reminder role',
                                             value='reset_role', emoji=emojis.REMOVE))
+        options.append(discord.SelectOption(label='Set reminder offset',
+                                            value='set_offset'))
         super().__init__(placeholder='Change reminder settings', min_values=1, max_values=1, options=options, row=row,
                          custom_id='manage_clan_settings')
 
@@ -230,6 +232,10 @@ class ManageClanSettingsSelect(discord.ui.Select):
                 embed = await self.view.embed_function(self.view.bot, self.view.ctx, self.view.clan_settings)
                 await interaction.message.edit(embed=embed, view=self.view)
                 return
+        elif select_value == 'set_offset':
+            modal = modals.SetClanReminderOffsetModal(self.view)
+            await interaction.response.send_modal(modal)
+            return
         for child in self.view.children.copy():
             if isinstance(child, ManageClanSettingsSelect):
                 self.view.remove_item(child)
@@ -305,8 +311,14 @@ class ManageHelperSettingsSelect(discord.ui.Select):
     def __init__(self, view: discord.ui.View, row: Optional[int] = None):
         options = []
         raid_helper_mode = 'compact mode' if not view.user_settings.helper_raid_compact_mode_enabled else 'full mode'
-        options.append(discord.SelectOption(label=f'Use raid guide in {raid_helper_mode}',
+        worker_names_emoji = emojis.ENABLED if view.user_settings.helper_raid_names_enabled else emojis.DISABLED
+        ready_commands_emoji = emojis.ENABLED if view.user_settings.helper_profile_ready_commands_visible else emojis.DISABLED
+        options.append(discord.SelectOption(label=f'Raid guide: Switch to {raid_helper_mode}',
                                             value='toggle_raid_guide_mode'))
+        options.append(discord.SelectOption(label=f'Raid guide: Worker names', emoji=worker_names_emoji,
+                                            value='toggle_raid_names'))
+        options.append(discord.SelectOption(label=f'Profile timers: Ready commands', emoji=ready_commands_emoji,
+                                            value='toggle_ready_commands'))
         super().__init__(placeholder='Change helper settings', min_values=1, max_values=1, options=options, row=row,
                          custom_id='manage_helper_settings')
 
@@ -315,6 +327,14 @@ class ManageHelperSettingsSelect(discord.ui.Select):
         if select_value == 'toggle_raid_guide_mode':
             await self.view.user_settings.update(
                 helper_raid_compact_mode_enabled=not self.view.user_settings.helper_raid_compact_mode_enabled
+            )
+        elif select_value == 'toggle_raid_names':
+            await self.view.user_settings.update(
+                helper_raid_names_enabled=not self.view.user_settings.helper_raid_names_enabled
+            )
+        elif select_value == 'toggle_ready_commands':
+            await self.view.user_settings.update(
+                helper_profile_ready_commands_visible=not self.view.user_settings.helper_profile_ready_commands_visible
             )
         for child in self.view.children.copy():
             if isinstance(child, ManageHelperSettingsSelect):
@@ -346,6 +366,8 @@ class ManageReminderSettingsSelect(discord.ui.Select):
         if view.user_settings.reminder_channel_id is not None:
             options.append(discord.SelectOption(label='Remove reminder channel', emoji=emojis.REMOVE,
                                                 value='reset_channel'))
+        options.append(discord.SelectOption(label=f'Change daily reminder offset',
+                                            value='set_daily_offset', emoji=None))
         options.append(discord.SelectOption(label=f'Change last claim time',
                                             value='set_last_claim', emoji=None))
         super().__init__(placeholder='Change settings', min_values=1, max_values=1, options=options, row=row,
@@ -390,6 +412,10 @@ class ManageReminderSettingsSelect(discord.ui.Select):
                 await confirm_interaction.edit_original_response(content='Channel reset.', view=None)
             else:
                 await confirm_interaction.edit_original_response(content='Aborted', view=None)
+        elif select_value == 'set_daily_offset':
+            modal = modals.SetDailyReminderOffsetModal(self.view)
+            await interaction.response.send_modal(modal)
+            return
         elif select_value == 'set_last_claim':
             modal = modals.SetLastClaimModal(self.view)
             await interaction.response.send_modal(modal)

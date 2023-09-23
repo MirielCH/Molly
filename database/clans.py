@@ -21,6 +21,7 @@ class Clan():
     reminder_channel_id: int
     reminder_enabled: bool
     reminder_message: str
+    reminder_offset: float
     reminder_role_id: int
     record_exists: bool = True
 
@@ -50,6 +51,7 @@ class Clan():
         self.reminder_channel_id = new_settings.reminder_channel_id
         self.reminder_enabled = new_settings.reminder_enabled
         self.reminder_message = new_settings.reminder_message
+        self.reminder_offset = new_settings.reminder_offset
         self.reminder_role_id = new_settings.reminder_role_id
 
     async def update(self, **kwargs) -> None:
@@ -65,6 +67,7 @@ class Clan():
             reminder_channel_id: int
             reminder_enabled: bool
             reminder_message: str
+            reminder_offset: float
             reminder_role_id: int
 
         Raises
@@ -108,6 +111,7 @@ async def _dict_to_clan(record: dict) -> Clan:
             reminder_channel_id = record['reminder_channel_id'],
             reminder_enabled = bool(record['reminder_enabled']),
             reminder_message = record['reminder_message'],
+            reminder_offset = record['reminder_offset'],
             reminder_role_id = record['reminder_role_id'],
         )
     except Exception as error:
@@ -314,6 +318,7 @@ async def _update_clan(clan_settings: Clan, **kwargs) -> None:
         reminder_channel_id: int
         reminder_enabled: bool
         reminder_message: str
+        reminder_offset: float
         reminder_role_id: int
 
     Note: If member_ids is passed this function will assume that these are all the members the clan has. Any members 
@@ -384,10 +389,10 @@ async def insert_clan(clan_name: str, leader_id: int, member_ids: Union[Tuple[in
     function_name = 'insert_clan'
     table = 'clans'
     
-    sql = f'INSERT INTO {table} (clan_name, leader_id, reminder_message) VALUES (?, ?, ?)'
+    sql = f'INSERT INTO {table} (clan_name, leader_id, reminder_message, helper_teamraid_enabled) VALUES (?, ?, ?, ?)'
     try:
         cur = settings.DATABASE.cursor()
-        cur.execute(sql, (clan_name, leader_id, strings.DEFAULT_MESSAGE_CLAN))
+        cur.execute(sql, (clan_name, leader_id, strings.DEFAULT_MESSAGE_CLAN, 1))
     except sqlite3.Error as error:
         await errors.log_error(
             strings.INTERNAL_ERROR_SQLITE3.format(error=error, table=table, function=function_name, sql=sql)

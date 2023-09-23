@@ -145,21 +145,6 @@ async def embed_reminders_list(bot: discord.Bot, user: discord.User, user_settin
             value=f'{emojis.DETAIL} _Daily rewards reset at midnight UTC._',
             inline=False
         )
-    if user_settings.reminder_vote.enabled:
-        embed.add_field(
-            name=f'{vote_reminder_emoji} {strings.SLASH_COMMANDS["vote"]} {vote_reminder_text}',
-            value=f'{emojis.DETAIL} _You can vote every 12 hours._',
-            inline=False
-        )
-    if clan_reminder_enabled:
-        embed.add_field(
-            name=f'{clan_reminder_emoji} {strings.SLASH_COMMANDS["teamraid"]} {clan_reminder_text}',
-            value=(
-                f'{emojis.DETAIL2} **Guild name**: `{clan_settings.clan_name.upper()}`\n'
-                f'{emojis.DETAIL} **Guild channel**: <#{clan_settings.reminder_channel_id}>\n'
-            ),
-            inline=False
-        )
     if user_settings.reminder_shop.enabled and shop_reminders:
         shop_field_value = ''
         for reminder in shop_reminders:
@@ -172,6 +157,21 @@ async def embed_reminders_list(bot: discord.Bot, user: discord.User, user_settin
         embed.add_field(
             name=f'{emojis.COOLDOWN} {strings.SLASH_COMMANDS["shop list"]} restocks',
             value=shop_field_value.strip(),
+            inline=False
+        )
+    if clan_reminder_enabled:
+        embed.add_field(
+            name=f'{clan_reminder_emoji} {strings.SLASH_COMMANDS["teamraid"]} {clan_reminder_text}',
+            value=(
+                f'{emojis.DETAIL2} **Guild name**: `{clan_settings.clan_name.upper()}`\n'
+                f'{emojis.DETAIL} **Guild channel**: <#{clan_settings.reminder_channel_id}>\n'
+            ),
+            inline=False
+        )
+    if user_settings.reminder_vote.enabled:
+        embed.add_field(
+            name=f'{vote_reminder_emoji} {strings.SLASH_COMMANDS["vote"]} {vote_reminder_text}',
+            value=f'{emojis.DETAIL} _You can vote every 12 hours._',
             inline=False
         )
     if custom_reminders:

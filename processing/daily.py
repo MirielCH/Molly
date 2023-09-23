@@ -62,7 +62,7 @@ async def create_reminder(message: discord.Message, embed_data: Dict, user: Opti
         current_time = utils.utcnow()
         midnight_today = utils.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
         end_time = midnight_today + timedelta(days=1, seconds=random.randint(60, 300))
-        time_left = end_time - current_time
+        time_left = end_time - current_time + timedelta(hours=user_settings.reminders_daily_offset)
         if time_left < timedelta(0): return add_reaction
         reminder_message = (
             user_settings.reminder_daily.message

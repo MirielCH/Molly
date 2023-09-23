@@ -1,6 +1,7 @@
 # modals.py
 
 from datetime import timedelta
+import random
 import re
 from typing import Literal
 
@@ -315,3 +316,87 @@ class SetEnergyReminderModal(Modal):
             await interaction.message.edit(embed=embed, view=self.view)
         else:
             await interaction.message.edit(view=self.view)
+
+
+class SetClanReminderOffsetModal(Modal):
+    def __init__(self, view: discord.ui.View) -> None:
+        super().__init__(title='Set teamraid reminder offset')
+        self.view = view
+        self.add_item(
+            InputText(
+                label='Offset in hours:',
+                placeholder='Example: 4.5 will shift the reminder to 04:30am UTC',
+            )
+        )
+
+    async def callback(self, interaction: discord.Interaction):
+        hours = self.children[0].value
+        try:
+            hours = float(hours)
+        except ValueError:
+            await interaction.response.edit_message(view=self.view)
+            await interaction.followup.send('That is not a valid number.', ephemeral=True)
+            return
+        if not 0 <= hours < 24:
+            await interaction.response.edit_message(view=self.view)
+            await interaction.followup.send('The offset needs to be at least 0 and less than 24 hours.', ephemeral=True)
+            return
+        await self.view.clan_settings.update(reminder_offset=hours)
+        try:
+            clan_reminder: reminders.Reminder = await reminders.get_clan_reminder(self.view.clan_settings.clan_name)
+            current_time = utils.utcnow()
+            midnight_today = utils.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+            end_time = midnight_today + timedelta(days=1, seconds=random.randint(60, 300))
+            time_left = end_time - current_time + timedelta(hours=hours)
+            await clan_reminder.update(end_time=current_time + time_left)
+        except exceptions.NoDataFoundError:
+            pass
+        embed = await self.view.embed_function(self.view.bot, self.view.ctx, self.view.clan_settings)
+        await interaction.response.edit_message(embed=embed, view=self.view)
+
+        
+class SetDailyReminderOffsetModal(Modal):
+    def __init__(self, view: discord.ui.View) -> None:
+        super().__init__(title='Set daily reminder offset')
+        self.view = view
+        self.add_item(
+            InputText(
+                label='Offset in hours:',
+                placeholder='Example: 4.5 will shift reminders to 04:30am UTC',
+            )
+        )
+
+    async def callback(self, interaction: discord.Interaction):
+        hours = self.children[0].value
+        try:
+            hours = float(hours)
+        except ValueError:
+            await interaction.response.edit_message(view=self.view)
+            await interaction.followup.send('That is not a valid number.', ephemeral=True)
+            return
+        if not 0 <= hours < 24:
+            await interaction.response.edit_message(view=self.view)
+            await interaction.followup.send('The offset needs to be at least 0 and less than 24 hours.', ephemeral=True)
+            return
+        await self.view.user_settings.update(reminders_daily_offset=hours)
+        try:
+            daily_reminder: reminders.Reminder = await reminders.get_user_reminder(self.view.user.id, 'daily')
+            current_time = utils.utcnow()
+            midnight_today = utils.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+            end_time = midnight_today + timedelta(days=1, seconds=random.randint(60, 300))
+            time_left = end_time - current_time + timedelta(hours=hours)
+            await daily_reminder.update(end_time=current_time + time_left)
+        except exceptions.NoDataFoundError:
+            pass
+        try:
+            shop_reminders = await reminders.get_active_user_reminders(self.view.user.id, 'shop')
+            current_time = utils.utcnow()
+            midnight_today = utils.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+            end_time = midnight_today + timedelta(days=1, seconds=random.randint(60, 300))
+            time_left = end_time - current_time + timedelta(hours=hours)
+            for reminder in shop_reminders:
+                await reminder.update(end_time=current_time + time_left)
+        except exceptions.NoDataFoundError:
+            pass
+        embed = await self.view.embed_function(self.view.bot, self.view.ctx, self.view.user_settings)
+        await interaction.response.edit_message(embed=embed, view=self.view)

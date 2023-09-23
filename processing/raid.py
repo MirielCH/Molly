@@ -102,7 +102,7 @@ async def call_raid_helper(bot: discord.Bot, message: discord.Message, embed_dat
                 if (enemy_power - 0.5).is_integer():
                     logs.logger.info(f'Worker {enemy_name} at level {enemy_level} has a power of {enemy_power}')
                 #enemy_power = int(Decimal(enemy_power).quantize(Decimal(1), rounding=ROUND_HALF_UP))
-                enemies_power[enemy_name] = enemy_power
+                enemies_power[enemy_name] = (enemy_power, enemy_hp_current)
         return (empty_farms_found, enemies_power)
 
     async def calculate_best_solution(workers_power: Dict[str, int], enemies_power: Dict[str, int], empty_farms_found: int) -> Tuple[int, Dict[str, int]]:
@@ -125,55 +125,51 @@ async def call_raid_helper(bot: discord.Bot, message: discord.Message, embed_dat
             used_workers = {}
             possible_solutions = []
             killed_enemies = 0
-            for enemy_name, enemy_power in enemies_power.items():
-                worker_found = False
-                for worker_name, power in remaining_workers.copy().items():
-                    if power >= enemy_power:
-                        used_workers[worker_name] = power
-                        del remaining_workers[worker_name]
-                        worker_found = True
-                        killed_enemies += 1
+            hp_left = 100
+            possible_solutions = list(itertools.permutations(list(remaining_workers.keys())))
+            """
+            for permutation in permutations:
+                possible_solutions.append(list(used_workers.keys()) + list(permutation))
+            """
+            best_solution = []
+            for possible_solution in possible_solutions:
+                enemies_powers_copy = copy.deepcopy(enemies_power)
+                used_workers = {}
+                for worker_name in possible_solution:
+                    killed_enemies = 0
+                    for enemy_name, enemy_power_hp in enemies_powers_copy.items():
+                        enemy_power, enemy_hp = enemy_power_hp
+                        if enemy_hp == 0: continue
+                        worker_power = workers_power[worker_name]
+                        worker_damage = round(80 * worker_power / enemies_power[enemy_name][0])
+                        hp_remaining = enemy_hp - worker_damage
+                        used_workers[worker_name] = worker_power
+                        if hp_remaining < 0: hp_remaining = 0
+                        power_remaining = enemies_power[enemy_name][0] / 100 * hp_remaining
+                        enemies_powers_copy[enemy_name] = (power_remaining, hp_remaining)
                         break
-                if worker_found: continue
-                permutations = list(itertools.permutations(list(remaining_workers.keys())))
-                possible_solutions = []
-                for permutation in permutations:
-                    possible_solutions.append(list(used_workers.keys()) + list(permutation))
-                break
-            if possible_solutions:
-                best_solution = []
-                for possible_solution in possible_solutions:
-                    enemies_powers_copy = copy.deepcopy(enemies_power)
-                    used_workers = {}
-                    for worker_name in possible_solution:
-                        killed_enemies = 0
-                        for enemy_name, enemy_power in enemies_powers_copy.items():
-                            if enemy_power == 0: continue
-                            worker_power = workers_power[worker_name]
-                            power_remaining = enemies_powers_copy[enemy_name] - worker_power
-                            used_workers[worker_name] = worker_power
-                            if power_remaining < 0: power_remaining = 0
-                            enemies_powers_copy[enemy_name] = power_remaining
-                            break
-                        for enemy_name, enemy_power in enemies_powers_copy.items():
-                            if enemy_power == 0:
-                                killed_enemies += 1
-                            elif enemy_power != enemies_power[enemy_name]:
-                                killed_enemies += 1 - (100 / enemies_power[enemy_name] * enemy_power / 100)
-                        if killed_enemies >= len(enemies_powers_copy.keys()): break
-                    if best_solution:
-                        if killed_enemies > best_solution[0]:
-                            best_solution = [killed_enemies, possible_solution, used_workers]
-                    else:
-                        best_solution = [killed_enemies, possible_solution, used_workers]
-                    if killed_enemies >= len(enemies_power.keys()): break
-                killed_enemies, _, used_workers = best_solution
+                    for enemy_name, enemy_power_hp in enemies_powers_copy.items():
+                        enemy_power, enemy_hp = enemy_power_hp
+                        if enemy_hp == 0:
+                            killed_enemies += 1
+                            hp_left = 100
+                        elif enemy_hp < enemies_power[enemy_name][1]:
+                            hp_left = enemy_hp
+                    if killed_enemies >= len(enemies_powers_copy.keys()): break
+                if best_solution:
+                    if (killed_enemies > best_solution[0]
+                        or ((killed_enemies == best_solution[0]) and hp_left <= best_solution[1])):
+                        best_solution = [killed_enemies, hp_left, possible_solution, used_workers]
+                else:
+                    best_solution = [killed_enemies, hp_left, possible_solution, used_workers]
+                if killed_enemies >= len(enemies_power.keys()): break
+            killed_enemies, hp_left, _, used_workers = best_solution
             if empty_farms_found and len(used_workers) < len(workers_power):
                     for worker_name, worker_power in workers_power.items():
                         if worker_name not in used_workers:
                             used_workers[worker_name] = worker_power
                             break
-            return (killed_enemies, used_workers)
+            return (killed_enemies, hp_left, used_workers)
 
     add_reaction = False
     search_strings = [
@@ -199,8 +195,13 @@ async def call_raid_helper(bot: discord.Bot, message: discord.Message, embed_dat
                 return add_reaction
         if not user_settings.bot_enabled or not user_settings.helper_raid_enabled: return add_reaction
 
-        def raid_message_check(message_before: discord.Message, message_after: discord.Message):
-            return message_after.id == message.id
+        def raid_message_check(payload: discord.RawMessageUpdateEvent):
+            try:
+                author_name = payload.data['embeds'][0]['author']['name']
+                return author_name == message.embeds[0].author.name # Temporary workaround for that weird issue
+            except:
+                return False
+        
         embed = discord.Embed(color=settings.EMBED_COLOR)
         msg_error_workers_outdated = (
                 f'Sorry, I can\'t provide any guidance because I don\'t know all of your workers. Please use '
@@ -228,7 +229,7 @@ async def call_raid_helper(bot: discord.Bot, message: discord.Message, embed_dat
             worker_power = (
                 ((strings.WORKER_STATS[worker_name]['speed'] + strings.WORKER_STATS[worker_name]['strength']
                   + strings.WORKER_STATS[worker_name]['intelligence']))
-                * (1 + (strings.WORKER_TYPES.index(worker_name) + 1) / 4) * (1 + worker_level / 2.5) * 0.8
+                * (1 + (strings.WORKER_TYPES.index(worker_name) + 1) / 4) * (1 + worker_level / 2.5)
             )
             workers_power[worker_name] = worker_power
         workers_power = dict(sorted(workers_power.items(), key=lambda x:x[1]))
@@ -254,9 +255,9 @@ async def call_raid_helper(bot: discord.Bot, message: discord.Message, embed_dat
         empty_farms_found, enemies_power = await read_enemy_farms(message)
         if not user_settings.helper_raid_compact_mode_enabled:
             field_enemies = ''
-            for enemy_name, enemy_power in enemies_power.items():
+            for enemy_name, enemy_power_hp in enemies_power.items():
                 enemy_emoji = getattr(emojis, f'WORKER_{enemy_name}_A'.upper(), emojis.WARNING)
-                enemy_power = round(enemy_power, 2)
+                enemy_power = round(enemy_power_hp[0], 2)
                 field_enemies = (
                     f'{field_enemies}\n'
                     f'{enemy_emoji} - **{enemy_power:,g}** {emojis.WORKER_POWER}'
@@ -265,19 +266,28 @@ async def call_raid_helper(bot: discord.Bot, message: discord.Message, embed_dat
                 name = 'Enemy farms',
                 value = field_enemies.strip()
             )
-        killed_enemies, worker_solution = await calculate_best_solution(workers_power, enemies_power, empty_farms_found)
+        killed_enemies, hp_left, worker_solution = await calculate_best_solution(workers_power, enemies_power, empty_farms_found)
         worker_emojis = {}
         for worker_name, power in worker_solution.items():
             worker_emojis[worker_name] = getattr(emojis, f'WORKER_{worker_name}_S'.upper(), emojis.WARNING)
-        killed_enemies = 'all' if killed_enemies >= len(enemies_power.keys()) else round(killed_enemies,2)
+        killed_enemies = 'all farms' if killed_enemies >= len(enemies_power.keys()) else f'`{round(killed_enemies,2):g}` farms'
+        if hp_left < 100: killed_enemies = f'{killed_enemies} (next at `{hp_left}` HP)'
         field_solution = ''
+        numbering = 1
         for worker_name, emoji in worker_emojis.items():
-            field_solution = emoji if field_solution == '' else f'{field_solution} ➜ {emoji}'
+            if user_settings.helper_raid_names_enabled:
+                if field_solution == '':
+                    field_solution = f'{numbering}. {emoji} {worker_name.capitalize()}'
+                else:
+                    field_solution = f'{field_solution}\n{numbering}. {emoji} {worker_name.capitalize()}'
+                numbering += 1
+            else:
+                field_solution = emoji if field_solution == '' else f'{field_solution} ➜ {emoji}'
         worker_solution_remaining = list(worker_solution.keys())
         embed.insert_field_at(
             0,
             name = f'Raid guide',
-            value = f'{field_solution.strip()}\n_You can kill {killed_enemies:g} farms._',
+            value = f'{field_solution.strip()}\n_You can kill {killed_enemies}._',
             inline = False
         )
         message_helper = await message.reply(embed=embed)
@@ -286,13 +296,13 @@ async def call_raid_helper(bot: discord.Bot, message: discord.Message, embed_dat
             f'Enemies: {enemies_power}\n'
             f'Workers: {workers_power}\n'
             f'Solution: {worker_solution}\n'
-            f'Kills: {killed_enemies} farms\n'
+            f'Kills: {killed_enemies}\n'
         )
 
         while True:
             try:
-                _, updated_message = await bot.wait_for('message_edit', check=raid_message_check,
-                                                     timeout=settings.INTERACTION_TIMEOUT)
+                payload = await bot.wait_for('raw_message_edit', check=raid_message_check,
+                                             timeout=settings.INTERACTION_TIMEOUT)
             except TimeoutError:
                 embed.remove_field(0)
                 embed.insert_field_at(
@@ -304,14 +314,17 @@ async def call_raid_helper(bot: discord.Bot, message: discord.Message, embed_dat
                 await message_helper.edit(embed=embed)
                 break
             active_component = False
+            message_components = payload.data['components']
             disabled_workers = []
-            for row in updated_message.components:
-                for button in row.children:
-                    if button.disabled:
-                        worker_name_match = re.search(r'^(.+?)worker', button.emoji.name.lower())
+            for row in message_components:
+                for component in row['components']:
+                    disabled = component.get('disabled', False)
+                    if disabled:
+                        worker_name_match = re.search(r'^(.+?)worker', component['emoji']['name'].lower())
                         disabled_workers.append(worker_name_match.group(1))
                     else:
                         active_component = True
+                        
             solution_still_valid = True
             workers_still_alive = list(workers_power.keys())
             embed.remove_field(0)
@@ -324,22 +337,32 @@ async def call_raid_helper(bot: discord.Bot, message: discord.Message, embed_dat
                 if not solution_still_valid:
                     workers_power = {worker_name: worker_power for worker_name, worker_power in workers_power.items() if worker_name in workers_still_alive}
                     empty_farms_found, enemies_power = await read_enemy_farms(message)
-                    killed_enemies, worker_solution = await calculate_best_solution(workers_power, enemies_power, empty_farms_found)
+                    killed_enemies, hp_left, worker_solution = await calculate_best_solution(workers_power, enemies_power, empty_farms_found)
                     worker_solution_remaining = list(worker_solution.keys())
                     for worker_name, worker_emoji in worker_emojis.copy().items():
                         if not '_x' in worker_emoji: del worker_emojis[worker_name]
                     for worker_name, power in worker_solution.items():
                         worker_emojis[worker_name] = getattr(emojis, f'WORKER_{worker_name}_S'.upper(), emojis.WARNING)
-                    killed_enemies = 'all' if killed_enemies >= len(enemies_power.keys()) else round(killed_enemies,2)
+                    killed_enemies = 'all farms' if killed_enemies >= len(enemies_power.keys()) else f'`{round(killed_enemies,2):g}` farms'
+                    if hp_left < 100: killed_enemies = f'{killed_enemies} (next at `{hp_left}` HP)'
                 else:
                     if worker_solution_remaining: del worker_solution_remaining[0]
                 field_solution = ''
+                numbering = 0
                 for worker_name, emoji in worker_emojis.items():
-                    field_solution = emoji if field_solution == '' else f'{field_solution} ➜ {emoji}'
+                    if user_settings.helper_raid_names_enabled:
+                        worker_name_str = f'~~{worker_name.capitalize()}~~' if '_x' in emoji.lower() else worker_name.capitalize()
+                        if field_solution == '':
+                            field_solution = f'{numbering}. {emoji} {worker_name_str}'
+                        else:
+                            field_solution = f'{field_solution}\n{numbering}. {emoji} {worker_name_str}'
+                        numbering += 1
+                    else:
+                        field_solution = emoji if field_solution == '' else f'{field_solution} ➜ {emoji}'
                 embed.insert_field_at(
                     0,
                     name = f'Raid guide',
-                    value = f'{field_solution.strip()}\n_You can kill {killed_enemies:g} farms._',
+                    value = f'{field_solution.strip()}\n_You can kill {killed_enemies}._',
                     inline = False
                 )
             if not active_component:
@@ -388,17 +411,11 @@ async def track_raid(message: discord.Message, embed_data: Dict, user: Optional[
             return add_reaction
         if user_settings.reminder_energy.enabled:
             try:
-                logs.logger.info(
-                    f'Energy full time before error: {user_settings.energy_full_time}\n'
-                )
                 await functions.change_user_energy(user_settings, -40)
                 if user_settings.reactions_enabled: add_reaction = True
             except exceptions.EnergyFullTimeOutdatedError:
                 await message.reply(strings.MSG_ENERGY_OUTDATED.format(user=user.display_name,
                                                                        cmd_profile=strings.SLASH_COMMANDS["profile"]))
-                logs.logger.info(
-                    f'Energy full time after error: {user_settings.energy_full_time}\n'
-                )
             except exceptions.EnergyFullTimeNoneError:
                 pass
         if user_settings.tracking_enabled:

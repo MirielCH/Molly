@@ -180,14 +180,12 @@ async def track_worker_stats(message: discord.Message, embed_data: Dict,
     ]
     if any(search_string in embed_data['author']['name'].lower() for search_string in search_strings):
         if interaction_user is None:
-            user_name_match = re.search(regex.USERNAME_FROM_EMBED_AUTHOR, embed_data['author']['name'])
-            user_name = user_name_match.group(1)
             user_command_message = (
-                await messages.find_message(message.channel.id, regex.COMMAND_WORKER_STATS, user_name=user_name)
+                await messages.find_message(message.channel.id, regex.COMMAND_WORKER_STATS)
             )
             if user_command_message is None: return add_reaction
             interaction_user = user_command_message.author
-        if embed_data['embed_user'] != interaction_user: return add_reaction
+        if embed_data['embed_user'] is not None and embed_data['embed_user'] != interaction_user: return add_reaction
         try:
             user_settings: users.User = await users.get_user(interaction_user.id)
         except exceptions.FirstTimeUserError:

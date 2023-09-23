@@ -48,6 +48,19 @@ async def find_message(channel_id: int, regex: Union[str, re.Pattern] = None,
             if user is not None and message.author != user: continue
             if (user_name is not None
                 and await functions.encode_text(user_name) != await functions.encode_text(message.author.name)):
+                try:
+                    logs.logger.info(
+                        f'User name not found in cache.\n'
+                        f'Looked for user name {user_name}\n'
+                        f'Compared it to user with:\n'
+                        f'- Name: {message.author.name}\n'
+                        f'- Display name: {message.author.display_name}\n'
+                        f'- Global name: {message.author.global_name}\n'
+                        f'- Discriminator: {message.author.discriminator}\n'
+                        f'Message content: {message.content}\n'
+                    )
+                except:
+                    pass
                 continue
             if regex is None:
                 return message

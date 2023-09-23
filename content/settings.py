@@ -412,10 +412,14 @@ async def embed_settings_clan(bot: discord.Bot, ctx: discord.ApplicationContext,
         f'{emojis.BP} **Reminder role**: {clan_role}\n'
         f'{emojis.DETAIL2} _This role will be pinged by the reminder._\n'
         f'{emojis.DETAIL} _Requires `Manage Server` permission or approval._\n'
+        f'{emojis.BP} **Reminder offset**: `{clan_settings.reminder_offset:g}`h\n'
+        f'{emojis.DETAIL2} _The offset is added to the reminder which normally triggers at 00:00 UTC._\n'
+        f'{emojis.DETAIL} _Example: `8.5`h will send the reminder at 08:30am UTC._\n'
     )
     helpers = (
         f'{emojis.BP} **Teamraid guide**: {teamraid_enabled}\n'
-        f'{emojis.DETAIL} _Note: If this is on, Molly will track the workers of all guild members using Molly._\n'
+        f'{emojis.DETAIL} _Note that the guide can only help you if **every** player in the teamraid has Molly turned on and '
+        f'their workers registered._\n'
     )
     embed = discord.Embed(
         color = settings.EMBED_COLOR,
@@ -447,8 +451,13 @@ async def embed_settings_helpers(bot: discord.Bot, ctx: discord.ApplicationConte
         f'{emojis.DETAIL} _Guides you through your raids._\n'
     )
     helper_settings = (
-        f'{emojis.BP} **Raid guide mode**: `{raid_guide_mode}`\n'
+        f'{emojis.BP} **Raid guide: Mode**: `{raid_guide_mode}`\n'
         f'{emojis.DETAIL} _The compact mode only shows the guide and omits the farm lists._\n'
+        f'{emojis.BP} **Raid guide: Show worker names**: {await functions.bool_to_text(user_settings.helper_raid_names_enabled)}\n'
+        f'{emojis.DETAIL} _If enabled, the raid guide will show the full worker names._\n'
+        f'{emojis.BP} **Profile timers: Show ready commands**: '
+        f'{await functions.bool_to_text(user_settings.helper_profile_ready_commands_visible)}\n'
+        f'{emojis.DETAIL} _Shows or hides the ready command list._\n'
     )
     embed = discord.Embed(
         color = settings.EMBED_COLOR,
@@ -531,7 +540,10 @@ async def embed_settings_reminders(bot: discord.Bot, ctx: discord.ApplicationCon
         f'{emojis.DETAIL} _If you can\'t see slash mentions properly, update your Discord app._\n'
         f'{emojis.BP} **Message style**: `{message_style}`\n'
         f'{emojis.BP} **Reminder channel**: {reminder_channel}\n'
-        f'{emojis.DETAIL} _If a channel is set, all reminders are sent to that channel._'
+        f'{emojis.DETAIL} _If a channel is set, all reminders are sent to that channel._\n'
+        f'{emojis.BP} **Daily reminders offset**: `{user_settings.reminders_daily_offset:g}` h\n'
+        f'{emojis.DETAIL2} _The offset is added to all reminders that normally trigger at 00:00 UTC._\n'
+        f'{emojis.DETAIL} _Example: `8.5`h will send these reminders at 08:30am UTC._\n'
     )
     if user_settings.last_claim_time is not None:
         last_claim_time = utils.format_dt(user_settings.last_claim_time, "R")

@@ -117,6 +117,8 @@ async def embed_help(bot: discord.Bot, ctx: discord.ApplicationContext) -> disco
     guild_settings = (
         f'{emojis.BP} {await functions.get_bot_slash_command(bot, "settings guild")} : Manage guild reminders\n'
         f'{emojis.BP} {strings.SLASH_COMMANDS["guild list"]} : Add or update your guild\n'
+        f'{emojis.BP} {await functions.get_bot_slash_command(bot, "guild power")} : Check the strongest guild members\n'
+        f'{emojis.DETAIL} _Aliases: `{prefix}guild`_\n'
     )
     server_settings = (
         f'{emojis.BP} {await functions.get_bot_slash_command(bot, "settings server")} : Manage prefix and event pings\n'

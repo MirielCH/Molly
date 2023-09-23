@@ -17,7 +17,6 @@ class DetectionCog(commands.Cog):
     """Cog that contains the detection events"""
     def __init__(self, bot):
         self.bot = bot
-    
 
     @commands.Cog.listener()
     async def on_message_edit(self, message_before: discord.Message, message_after: discord.Message) -> None:
@@ -142,10 +141,9 @@ class DetectionCog(commands.Cog):
             return_values.append(add_reaction)
             
         # Worker tracking
-        if helper_raid_enabled or tracking_enabled or helper_teamraid_enabled or reminder_energy_enabled:
-            add_reaction = await workers.process_message(self.bot, message, embed_data, interaction_user, user_settings,
-                                                         clan_settings)
-            return_values.append(add_reaction)
+        add_reaction = await workers.process_message(self.bot, message, embed_data, interaction_user, user_settings,
+                                                        clan_settings)
+        return_values.append(add_reaction)
 
         # Clan reminders & updates
         add_reaction = await clan.process_message(self.bot, message, embed_data, interaction_user, user_settings,

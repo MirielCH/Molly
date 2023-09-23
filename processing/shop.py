@@ -127,6 +127,7 @@ async def create_reminder_from_list(message: discord.Message, embed_data: Dict, 
             time_left = midnight_tomorrow - current_time  + timedelta(seconds=random.randint(60, 300))
             if time_left_timestring >= timedelta(days=1):
                 time_left = time_left + timedelta(days=time_left_timestring.days)
+            time_left = time_left + timedelta(hours=user_settings.reminders_daily_offset)
             reminder_message = (
                 user_settings.reminder_shop.message
                 .replace('{command}', user_command)

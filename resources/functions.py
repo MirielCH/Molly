@@ -672,6 +672,8 @@ async def get_current_energy_amount(user_settings: users.User, energy_regen_time
     if energy_regen_time is None:
         energy_regen_time = await get_energy_regen_time(user_settings)
     energy_until_max = (user_settings.energy_full_time - current_time).total_seconds() / energy_regen_time.total_seconds()
+    if energy_until_max > user_settings.energy_max:
+        raise exceptions.EnergyFullTimeOutdatedError
     return int(user_settings.energy_max - energy_until_max)
 
 
@@ -707,6 +709,7 @@ async def recalculate_energy_reminder(user_settings: users.User, energy_regen_ti
     """Recalculates the end time of an energy reminder based on energy_max and energy_full_time in the user settings."""
     try:
         reminder: reminders.Reminder = await reminders.get_user_reminder(user_settings.user_id, 'energy')
+        if reminder.triggered: return
         if energy_regen_time is None:
             energy_regen_time = await get_energy_regen_time(user_settings)
         energy_current = await get_current_energy_amount(user_settings, energy_regen_time)

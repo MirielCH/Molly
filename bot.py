@@ -80,6 +80,7 @@ async def on_error(event: str, *args, **kwargs) -> None:
 
 EXTENSIONS = [
     'cogs.cache',
+    'cogs.clan',
     'cogs.detection',
     'cogs.dev',
     'cogs.main',

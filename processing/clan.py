@@ -52,7 +52,7 @@ async def create_clan_reminder(message: discord.Message, embed_data: Dict, clan_
         current_time = utils.utcnow()
         midnight_today = utils.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
         end_time = midnight_today + timedelta(days=1, seconds=random.randint(60, 300))
-        time_left = end_time - current_time
+        time_left = end_time - current_time + timedelta(hours=clan_settings.reminder_offset)
         if time_left < timedelta(0): return add_reaction
         reminder_message = clan_settings.reminder_message.replace('{command}', clan_command)
         reminder: reminders.Reminder = (

@@ -26,8 +26,10 @@ class User():
     donor_tier: int
     helper_context_enabled: bool
     helper_profile_enabled: bool
+    helper_profile_ready_commands_visible: bool
     helper_raid_enabled: bool
     helper_raid_compact_mode_enabled: bool
+    helper_raid_names_enabled: bool
     helper_upgrades_enabled: bool
     idlucks: int
     last_claim_time: datetime
@@ -42,6 +44,7 @@ class User():
     reminder_shop: UserReminder
     reminder_vote: UserReminder
     reminders_as_embed: bool
+    reminders_daily_offset: float
     reminders_slash_enabled: bool
     tracking_enabled: bool
     time_compressors_used: int
@@ -58,8 +61,10 @@ class User():
         self.energy_max = new_settings.energy_max
         self.helper_context_enabled = new_settings.helper_context_enabled
         self.helper_profile_enabled = new_settings.helper_profile_enabled
+        self.helper_profile_ready_commands_visible = new_settings.helper_profile_ready_commands_visible
         self.helper_raid_enabled = new_settings.helper_raid_enabled
         self.helper_raid_compact_mode_enabled = new_settings.helper_raid_compact_mode_enabled
+        self.helper_raid_names_enabled = new_settings.helper_raid_names_enabled
         self.helper_upgrades_enabled = new_settings.helper_upgrades_enabled
         self.idlucks = new_settings.idlucks
         self.last_claim_time = new_settings.last_claim_time
@@ -74,6 +79,7 @@ class User():
         self.reminder_shop = new_settings.reminder_shop
         self.reminder_vote = new_settings.reminder_vote
         self.reminders_as_embed = new_settings.reminders_as_embed
+        self.reminders_daily_offset = new_settings.reminders_daily_offset
         self.reminders_slash_enabled = new_settings.reminders_slash_enabled
         self.time_compressors_used = new_settings.time_compressors_used
         self.time_speeders_used = new_settings.time_speeders_used
@@ -93,8 +99,10 @@ class User():
             energy_max: int
             helper_context_enabled: bool
             helper_profile_enabled: bool
+            helper_profile_ready_commands_visible: bool
             helper_raid_enabled: bool
             helper_raid_compact_mode_enabled: bool
+            helper_raid_names_enabled: bool
             helper_upgrades_enabled: bool
             idlucks: int
             last_claim_time: datetime UTC aware
@@ -114,6 +122,7 @@ class User():
             reminder_vote_enabled: bool
             reminder_vote_message: str
             reminders_as_embed: bool
+            reminders_daily_offset: float
             reminders_slash_enabled: bool
             time_compressors_used: int
             time_speeders_used: int
@@ -154,8 +163,10 @@ async def _dict_to_user(record: dict) -> User:
             energy_max = record['energy_max'],
             helper_context_enabled = bool(record['helper_context_enabled']),
             helper_profile_enabled = bool(record['helper_profile_enabled']),
+            helper_profile_ready_commands_visible = bool(record['helper_profile_ready_commands_visible']),
             helper_raid_enabled = bool(record['helper_raid_enabled']),
             helper_raid_compact_mode_enabled = bool(record['helper_raid_compact_mode_enabled']),
+            helper_raid_names_enabled = bool(record['helper_raid_names_enabled']),
             helper_upgrades_enabled = bool(record['helper_upgrades_enabled']),
             idlucks = record['idlucks'],
             last_claim_time = last_claim_time,
@@ -176,6 +187,7 @@ async def _dict_to_user(record: dict) -> User:
             reminder_vote = UserReminder(enabled=bool(record['reminder_vote_enabled']),
                                          message=record['reminder_vote_message']),
             reminders_as_embed = bool(record['reminders_as_embed']),
+            reminders_daily_offset = record['reminders_daily_offset'],
             reminders_slash_enabled = bool(record['reminders_slash_enabled']),
             time_compressors_used = record['time_compressors_used'],
             time_speeders_used = record['time_speeders_used'],
@@ -305,8 +317,10 @@ async def _update_user(user: User, **kwargs) -> None:
         energy_max: int
         helper_context_enabled: bool
         helper_profile_enabled: bool
+        helper_profile_ready_commands_visible: bool
         helper_raid_enabled: bool
         helper_raid_compact_mode_enabled: bool
+        helper_raid_names_enabled: bool
         helper_upgrades_enabled: bool
         idlucks: int
         last_claim_time: datetime UTC aware
@@ -326,6 +340,7 @@ async def _update_user(user: User, **kwargs) -> None:
         reminder_vote_enabled: bool
         reminder_vote_message: str
         reminders_as_embed: bool
+        reminders_daily_offset: float
         reminders_slash_enabled: bool
         time_compressors_used: int
         time_speeders_used: int
