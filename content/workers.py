@@ -57,7 +57,7 @@ async def embed_workers_list(ctx: Union[discord.ApplicationContext, commands.Con
         worker_power = (
             ((strings.WORKER_STATS[worker_name]['speed'] + strings.WORKER_STATS[worker_name]['strength']
                 + strings.WORKER_STATS[worker_name]['intelligence']))
-            * (1 + (strings.WORKER_TYPES.index(worker_name) + 1) / 4) * (1 + worker_level / 2.5)
+            * (1 + (strings.WORKER_TYPES.index(worker_name) + 1) / 3.25) * (1 + worker_level / 1.25)
         )
         workers_power[worker_name] = worker_power
     workers_by_type = {}

@@ -70,8 +70,7 @@ async def call_teamraid_helper(bot: discord.Bot, message: discord.Message, embed
                 enemy_power = (
                     (strings.WORKER_STATS[enemy_type]['speed'] + strings.WORKER_STATS[enemy_type]['strength']
                     + strings.WORKER_STATS[enemy_type]['intelligence'])
-                    * (1 + (strings.WORKER_TYPES.index(enemy_type) + 1) / 4) * (1 + enemy_level / 2.5)
-                    * (enemy_hp_max / 100) / enemy_hp_max * enemy_hp_current
+                    * (1 + (strings.WORKER_TYPES.index(enemy_type) + 1) / 3.25) * (1 + enemy_level / 1.25)
                 )
                 enemies_power[f'{enemy_type}{field_index}'] = (enemy_power, enemy_hp_current)
         return enemies_power
@@ -102,7 +101,7 @@ async def call_teamraid_helper(bot: discord.Bot, message: discord.Message, embed
                     recommended_worker_user = list(recommended_worker.keys())[0]
                     recommended_worker_type = list(recommended_worker[recommended_worker_user].keys())[0]
                     recommended_worker_power = recommended_worker[recommended_worker_user][recommended_worker_type]
-                    if worker_power < recommended_worker_power and worker_power > next_enemy_power:
+                    if worker_power < recommended_worker_power:
                         recommended_worker = {}
                         recommended_worker[teamraid_user] = {}
                         recommended_worker[teamraid_user][worker_type] = worker_power
@@ -205,14 +204,13 @@ async def call_teamraid_helper(bot: discord.Bot, message: discord.Message, embed
             except (exceptions.FirstTimeUserError, exceptions.NoDataFoundError):
                 user_settings = user_workers = None
             if user_settings is not None:
-                if user_settings.reminder_energy.enabled:
-                    try:
-                        await functions.change_user_energy(user_settings, -80)
-                        if user_settings.reactions_enabled: add_reaction = True
-                    except exceptions.EnergyFullTimeOutdatedError:
-                        pass
-                    except exceptions.EnergyFullTimeNoneError:
-                        pass
+                try:
+                    await functions.change_user_energy(user_settings, -80)
+                    if user_settings.reactions_enabled: add_reaction = True
+                except exceptions.EnergyFullTimeOutdatedError:
+                    pass
+                except exceptions.EnergyFullTimeNoneError:
+                    pass
             for worker_type in teamraid_users_workers[teamraid_user.name]:
                 worker_emoji = getattr(emojis, f'WORKER_{worker_type}_A'.upper(), emojis.WARNING)
                 if user_workers is None or user_settings is None:
@@ -225,7 +223,7 @@ async def call_teamraid_helper(bot: discord.Bot, message: discord.Message, embed
                     worker_power = (
                         ((strings.WORKER_STATS[worker_type]['speed'] + strings.WORKER_STATS[worker_type]['strength']
                         + strings.WORKER_STATS[worker_type]['intelligence']))
-                        * (1 + (strings.WORKER_TYPES.index(worker_type) + 1) / 4) * (1 + user_workers_required[worker_type] / 2.5)
+                        * (1 + (strings.WORKER_TYPES.index(worker_type) + 1) / 3.25) * (1 + user_workers_required[worker_type] / 1.25)
                     )
                     user_workers_power[teamraid_user.name][worker_type] = worker_power
                     worker_power = round(worker_power, 2)
@@ -248,13 +246,15 @@ async def call_teamraid_helper(bot: discord.Bot, message: discord.Message, embed
         field_enemies = ''
         for enemy_type, enemy_power_hp in enemies_power.items():
             enemy_power, enemy_hp = enemy_power_hp
-            enemy_type = enemy_type[:-1]
-            enemy_emoji = getattr(emojis, f'WORKER_{enemy_type}_A'.upper(), emojis.WARNING)
-            enemy_power = round(enemy_power, 2)
+            enemy_emoji = getattr(emojis, f'WORKER_{enemy_type[:-1]}_A'.upper(), emojis.WARNING)
+            enemy_damage_required = round((enemy_hp-0.5) * enemy_power / 100,2)
+            worker_power = 1
             field_enemies = (
                 f'{field_enemies}\n'
-                f'{enemy_emoji} - **{enemy_power:,g}** {emojis.WORKER_POWER}'
+                f'{enemy_emoji} - needs **{enemy_damage_required:,g}** {emojis.WORKER_POWER} to one-shot'
             )
+            enemies_power.keys()
+            if (list(enemies_power.keys()).index(enemy_type) + 1) % 3 == 0: field_enemies = f'{field_enemies}\n'
         if workers_incomplete:
             embed.insert_field_at(
                 0,
@@ -349,8 +349,32 @@ async def call_teamraid_helper(bot: discord.Bot, message: discord.Message, embed
                             active_component = True
 
                 embed.remove_field(0)
+                embed.remove_field(0)
                 if active_component:
                     enemies_power = await read_enemy_farms(payload)
+                    field_enemies = ''
+                    for enemy_type, enemy_power_hp in enemies_power.items():
+                        enemy_power, enemy_hp = enemy_power_hp
+                        enemy_emoji = getattr(emojis, f'WORKER_{enemy_type[:-1]}_A'.upper(), emojis.WARNING)
+                        enemy_damage_required = round((enemy_hp-0.5) * enemy_power / 100,2)
+                        worker_power = 1
+                        if enemy_damage_required <= 0:
+                            field_enemies = (
+                                f'{field_enemies}\n'
+                                f'{enemy_emoji} - _killed_'
+                            )
+                        else:
+                            field_enemies = (
+                                f'{field_enemies}\n'
+                                f'{enemy_emoji} - needs **{enemy_damage_required:,g}** {emojis.WORKER_POWER} to one-shot'
+                            )
+                        if (list(enemies_power.keys()).index(enemy_type) + 1) % 3 == 0: field_enemies = f'{field_enemies}\n'
+                    embed.insert_field_at(
+                        index=0,
+                        name = enemy_name,
+                        value = f'{field_enemies.strip()}\n{emojis.BLANK}',
+                        inline = False
+                    )
                     for enemy_type, enemy_power_hp in enemies_power.copy().items():
                         if enemy_power_hp[1] == 0: del enemies_power[enemy_type]
                     next_enemy_power, next_enemy_hp = enemies_power[list(enemies_power.keys())[0]]
@@ -390,6 +414,32 @@ async def call_teamraid_helper(bot: discord.Bot, message: discord.Message, embed
                            f'Recommendation: None'
                         )
                 if not active_component:
+                    enemies_power = await read_enemy_farms(payload)
+                    field_enemies = ''
+                    enemy_count = 0
+                    for enemy_type, enemy_power_hp in enemies_power.items():
+                        enemy_power, enemy_hp = enemy_power_hp
+                        enemy_emoji = getattr(emojis, f'WORKER_{enemy_type[:-1]}_A'.upper(), emojis.WARNING)
+                        enemy_damage_required = round((enemy_hp-0.5) * enemy_power / 100,2)
+                        worker_power = 1
+                        if enemy_damage_required <= 0:
+                            field_enemies = (
+                                f'{field_enemies}\n'
+                                f'{enemy_emoji} - _killed_'
+                            )
+                        else:
+                            field_enemies = (
+                                f'{field_enemies}\n'
+                                f'{enemy_emoji} - needs **{enemy_damage_required:,g}** {emojis.WORKER_POWER} to one-shot'
+                            )
+                        enemy_count += 1    
+                        if (list(enemies_power.keys()).index(enemy_type) + 1) % 3 == 0: field_enemies = f'{field_enemies}\n'
+                    embed.insert_field_at(
+                        index=0,
+                        name = enemy_name,
+                        value = f'{field_enemies.strip()}\n{emojis.BLANK}',
+                        inline = False
+                    )
                     embed.insert_field_at(
                         0,
                         name = 'Next worker recommendation',

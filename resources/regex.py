@@ -26,5 +26,5 @@ COMMAND_USE_ENERGY_ITEM = re.compile(r"(?:\buse\b|\bconsume\b|\bconsoom\b)\s+\be
 COMMAND_USE_TIME_ITEM = re.compile(r"(?:\buse\b|\bconsume\b|\bconsoom\b)\s+\btime\b")
 COMMAND_UPGRADES_OVERVIEW = re.compile(r"\bupgrades?\b\s*$")
 COMMAND_VOTE = re.compile(r"\bvote\b")
-COMMAND_WORKER_HIRE = re.compile(r"(?:\broll\b|(\bwo(?:rkers?)?\b\s+\bhire\b))")
+COMMAND_WORKER_HIRE = re.compile(r"(?:\broll\b|(\bwo(?:rkers?)?\b\s+\bhire\b|\buse\b\s+\bcandy\b\s+\bapple\b))")
 COMMAND_WORKER_STATS = re.compile(r"\bwo(?:rkers?)?\b")

@@ -350,6 +350,10 @@ async def _update_clan(clan_settings: Clan, **kwargs) -> None:
             else:
                 new_member_ids.remove(member_id)
         for member_id in new_member_ids:
+            try:
+                await delete_clan_member(member_id)
+            except sqlite3.Error:
+                pass
             await insert_clan_member(clan_settings.clan_name, member_id)
         del kwargs['member_ids']
     try:

@@ -1,12 +1,14 @@
 # payday.py
 
+from datetime import timedelta
 import re
 from typing import Dict, Optional
 
 import discord
+from discord import utils
 
 from cache import messages
-from database import upgrades, users
+from database import reminders, upgrades, users
 from resources import emojis, exceptions, functions, regex, settings
 
 
@@ -122,7 +124,7 @@ async def call_upgrades_helper(message: discord.Message, embed_data: Dict, user:
 
 async def update_idlucks(message: discord.Message, embed_data: Dict, user: Optional[discord.User],
                               user_settings: Optional[users.User]) -> bool:
-    """Update the idluck amount after paydaying
+    """Update the idluck amount after paydaying. Also resets claim time if a claim reminder is active.
 
     Returns
     -------
@@ -147,5 +149,12 @@ async def update_idlucks(message: discord.Message, embed_data: Dict, user: Optio
         idlucks_match = re.search(r'got ([0-9,]+?) <', embed_data['description'].lower())
         idlucks = int(re.sub(r'\D','', idlucks_match.group(1)))
         await user_settings.update(idlucks=idlucks)
+        try:
+            reminder: reminders.Reminder = await reminders.get_user_reminder(user.id, 'claim')
+            current_time = utils.utcnow()
+            await user_settings.update(last_claim_time=current_time)
+            await reminder.update(end_time=current_time + timedelta(hours=user_settings.reminder_claim_last_selection))
+        except exceptions.NoDataFoundError:
+            pass
         if user_settings.reactions_enabled: add_reaction = True
     return add_reaction

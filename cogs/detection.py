@@ -84,9 +84,8 @@ class DetectionCog(commands.Cog):
             return_values.append(add_reaction)
 
         # Claim Reminder
-        if reminder_claim_enabled or reminder_energy_enabled:
-            add_reaction = await claim.process_message(self.bot, message, embed_data, interaction_user, user_settings)
-            return_values.append(add_reaction)
+        add_reaction = await claim.process_message(self.bot, message, embed_data, interaction_user, user_settings)
+        return_values.append(add_reaction)
 
         # Daily Reminder
         if reminder_daily_enabled:
@@ -158,9 +157,8 @@ class DetectionCog(commands.Cog):
         return_values.append(add_reaction)
 
          # Energy Helper
-        if helper_profile_enabled or helper_upgrades_enabled or reminder_energy_enabled:
-            add_reaction = await profile.process_message(self.bot, message, embed_data, interaction_user, user_settings)
-            return_values.append(add_reaction)
+        add_reaction = await profile.process_message(self.bot, message, embed_data, interaction_user, user_settings)
+        return_values.append(add_reaction)
 
         if any(return_values): await functions.add_logo_reaction(message)
 

@@ -56,7 +56,7 @@ async def embed_clan_power(clan_settings: clans.Clan) -> discord.Embed:
                 worker_power = (
                     ((strings.WORKER_STATS[worker_name]['speed'] + strings.WORKER_STATS[worker_name]['strength']
                         + strings.WORKER_STATS[worker_name]['intelligence']))
-                    * (1 + (strings.WORKER_TYPES.index(worker_name) + 1) / 4) * (1 + worker_level / 2.5)
+                    * (1 + (strings.WORKER_TYPES.index(worker_name) + 1) / 3.25) * (1 + worker_level / 1.25)
                 )
                 workers_power[worker_name] = worker_power
             workers_by_power = dict(sorted(workers_power.items(), key=lambda x:x[1], reverse=True))
@@ -65,24 +65,32 @@ async def embed_clan_power(clan_settings: clans.Clan) -> discord.Embed:
             for worker_name, worker_power in workers_by_power.items():
                 if 1 <= top_3_count <= 3: top_3_power += worker_power
                 top_3_count += 1
-            members_top_3_power[member_id] = top_3_power
+            if not top_3_power in members_top_3_power:
+                members_top_3_power[top_3_power] = [member_id,]
+            else:
+                members_top_3_power[top_3_power].append(member_id)
         except (exceptions.FirstTimeUserError, exceptions.NoDataFoundError):
             members_not_registered.append(member_id)
     field_top_5_members = ''
     if members_top_3_power:
-        members_top_3_power = dict(sorted(members_top_3_power.items(), key=lambda x:x[1], reverse=True))
+        members_top_3_power = dict(sorted(members_top_3_power.items(), key=lambda x:x[0], reverse=True))
         loop_count = 1
-        for member_id, top_3_power in members_top_3_power.items():
+        for top_3_power, member_ids in members_top_3_power.items():
             field_top_5_members = (
                 f'{field_top_5_members}\n'
-                f'- <@{member_id}> - **{round(top_3_power,2):g}** {emojis.WORKER_POWER}'
+                f'- **{round(top_3_power,2):g}** - '
             )
+            for member_id in member_ids:
+                field_top_5_members = (
+                    f'{field_top_5_members} <@{member_id}>, '
+                )
+            field_top_5_members = field_top_5_members.strip(', ')
             loop_count += 1
             if loop_count > 5: break
     else:
         field_top_5_members = '_No registered worker data found._'
     embed.add_field(
-        name = 'Top 5 members',
+        name = 'Top 5 power',
         value = field_top_5_members.strip(),
         inline = False
     )

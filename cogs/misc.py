@@ -30,8 +30,9 @@ class MiscCog(commands.Cog):
     #Prefix commands
     @commands.command(name='calculator', aliases=('calc','math'))
     @commands.bot_has_permissions(send_messages=True, embed_links=True)
-    async def prefix_calculator(self, ctx: commands.Context, calculation: str) -> None:
+    async def prefix_calculator(self, ctx: commands.Context, *args: str) -> None:
         """Basic calculator (prefix version)"""
+        calculation = ' '.join(args)
         await misc.command_calculator(ctx, calculation)
         
     @commands.command(name='codes', aliases=('code',))

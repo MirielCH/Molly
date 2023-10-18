@@ -135,15 +135,14 @@ async def track_worker_roll(message: discord.Message, embed_data: Dict, user: Op
                     await tracking.insert_log_entry(user.id, message.guild.id, f'worker-{worker_type}',
                                                     utils.utcnow().replace(microsecond=0), worker_amounts[0])
         # Update energy time until full
-        if user_settings.reminder_energy.enabled:
-            energy_match = re.search(r':\s([0-9,]+)/([0-9,]+)$', embed_data['footer']['text'])
-            energy_current = int(re.sub('\D','',energy_match.group(1)))
-            energy_max = int(re.sub('\D','',energy_match.group(2)))
-            energy_regen_time = await functions.get_energy_regen_time(user_settings)
-            seconds_until_max = (int(energy_max) - int(energy_current)) * energy_regen_time.total_seconds()
-            energy_full_time = utils.utcnow() + timedelta(seconds=seconds_until_max)
-            await user_settings.update(energy_max=energy_max, energy_full_time=energy_full_time)
-            await functions.recalculate_energy_reminder(user_settings, energy_regen_time)
+        energy_match = re.search(r':\s([0-9,]+)/([0-9,]+)$', embed_data['footer']['text'])
+        energy_current = int(re.sub('\D','',energy_match.group(1)))
+        energy_max = int(re.sub('\D','',energy_match.group(2)))
+        energy_regen_time = await functions.get_energy_regen_time(user_settings)
+        seconds_until_max = (int(energy_max) - int(energy_current)) * energy_regen_time.total_seconds()
+        energy_full_time = utils.utcnow() + timedelta(seconds=seconds_until_max)
+        await user_settings.update(energy_max=energy_max, energy_full_time=energy_full_time)
+        await functions.recalculate_energy_reminder(user_settings, energy_regen_time)
         # Update user workers
         for worker_type, worker_amounts in workers_found.items():
             _, workers_total, workers_required = worker_amounts

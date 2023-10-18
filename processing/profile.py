@@ -59,9 +59,6 @@ async def call_profile_timers_and_update_idlucks(bot: discord.Bot, message: disc
             idlucks_match = re.search(r'idlucks\*\*: ([0-9,]+?)\n', embed_data['field3']['value'].lower())
             idlucks = int(re.sub('\D','', idlucks_match.group(1)))
             await user_settings.update(idlucks=idlucks)
-        if not user_settings.helper_profile_enabled and not user_settings.reminder_energy.enabled:
-            return add_reaction
-        
         energy_match = re.search(r'1084593332312887396> ([0-9,]+)/([0-9,]+)\n', embed_data['field0']['value'])
         energy_current = int(re.sub('\D','',energy_match.group(1)))
         energy_max = int(re.sub('\D','',energy_match.group(2)))
@@ -71,7 +68,7 @@ async def call_profile_timers_and_update_idlucks(bot: discord.Bot, message: disc
         except exceptions.NoDataFoundError:
             multiplier_upgrade = 1
         multiplier_donor = list(strings.DONOR_TIER_ENERGY_MULTIPLIERS.values())[user_settings.donor_tier]
-        energy_regen = 5 / (multiplier_donor * multiplier_upgrade)
+        energy_regen = 5 / (multiplier_donor * multiplier_upgrade * 1.4)
         minutes_until_max = (int(energy_max) - int(energy_current)) * energy_regen
         current_time = utils.utcnow()
         level_full_time = current_time + timedelta(minutes=minutes_until_max)
@@ -126,7 +123,7 @@ async def call_profile_timers_and_update_idlucks(bot: discord.Bot, message: disc
                 time_since_last_claim = current_time - user_settings.last_claim_time
                 last_claim_time_timestamp = utils.format_dt(user_settings.last_claim_time, 'R')
                 time_produced = (time_since_last_claim + user_settings.time_speeders_used * timedelta(hours=2)
-                                 + user_settings.time_compressors_used * timedelta(hours=4))
+                                    + user_settings.time_compressors_used * timedelta(hours=4))
                 if time_produced >= timedelta(hours=24): time_produced = timedelta(hours=24)
                 time_produced_timestring = (
                     await functions.parse_timedelta_to_timestring(time_produced - timedelta(microseconds=time_produced.microseconds))
@@ -211,7 +208,7 @@ async def call_profile_timers_and_update_idlucks(bot: discord.Bot, message: disc
             if energy_regen_time.microseconds > 0:
                 energy_regen_time = energy_regen_time + timedelta(microseconds=1_000_000 - energy_regen_time.microseconds)
             energy_regen_timestring = await functions.parse_timedelta_to_timestring(energy_regen_time)
-            embed.set_footer(text=f'1 energy per {energy_regen_timestring} (+{percentage_donor}% donor | +{percentage_upgrade}% upgrades)')
+            embed.set_footer(text=f'1 energy per {energy_regen_timestring} (+{percentage_donor}% donor | +{percentage_upgrade}% upgrades | +40% event)')
             if user_settings.reminder_energy.enabled:
                 view = views.ProfileTimersView(bot, message, interaction_user, user_settings)
                 interaction = await message.reply(embed=embed, view=view)

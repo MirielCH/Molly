@@ -96,8 +96,8 @@ async def call_raid_helper(bot: discord.Bot, message: discord.Message, embed_dat
                 enemy_power = (
                     (strings.WORKER_STATS[enemy_name]['speed'] + strings.WORKER_STATS[enemy_name]['strength']
                      + strings.WORKER_STATS[enemy_name]['intelligence'])
-                    * (1 + (strings.WORKER_TYPES.index(enemy_name) + 1) / 4)
-                    * (1 + enemy_level / 2.5) * (enemy_hp_max / 100) / enemy_hp_max * enemy_hp_current
+                    * (1 + (strings.WORKER_TYPES.index(enemy_name) + 1) / 3.25)
+                    * (1 + enemy_level / 1.25) * (enemy_hp_max / 100) / enemy_hp_max * enemy_hp_current
                 )
                 if (enemy_power - 0.5).is_integer():
                     logs.logger.info(f'Worker {enemy_name} at level {enemy_level} has a power of {enemy_power}')
@@ -229,7 +229,7 @@ async def call_raid_helper(bot: discord.Bot, message: discord.Message, embed_dat
             worker_power = (
                 ((strings.WORKER_STATS[worker_name]['speed'] + strings.WORKER_STATS[worker_name]['strength']
                   + strings.WORKER_STATS[worker_name]['intelligence']))
-                * (1 + (strings.WORKER_TYPES.index(worker_name) + 1) / 4) * (1 + worker_level / 2.5)
+                * (1 + (strings.WORKER_TYPES.index(worker_name) + 1) / 3.25) * (1 + worker_level / 1.25)
             )
             workers_power[worker_name] = worker_power
         workers_power = dict(sorted(workers_power.items(), key=lambda x:x[1]))
@@ -409,15 +409,14 @@ async def track_raid(message: discord.Message, embed_data: Dict, user: Optional[
                 return False
         if not user_settings.tracking_enabled or not user_settings.bot_enabled or not user_settings.reminder_energy.enabled:
             return add_reaction
-        if user_settings.reminder_energy.enabled:
-            try:
-                await functions.change_user_energy(user_settings, -40)
-                if user_settings.reactions_enabled: add_reaction = True
-            except exceptions.EnergyFullTimeOutdatedError:
-                await message.reply(strings.MSG_ENERGY_OUTDATED.format(user=user.display_name,
-                                                                       cmd_profile=strings.SLASH_COMMANDS["profile"]))
-            except exceptions.EnergyFullTimeNoneError:
-                pass
+        try:
+            await functions.change_user_energy(user_settings, -40)
+            if user_settings.reactions_enabled: add_reaction = True
+        except exceptions.EnergyFullTimeOutdatedError:
+            await message.reply(strings.MSG_ENERGY_OUTDATED.format(user=user.display_name,
+                                                                    cmd_profile=strings.SLASH_COMMANDS["profile"]))
+        except exceptions.EnergyFullTimeNoneError:
+            pass
         if user_settings.tracking_enabled:
             current_time = utils.utcnow().replace(microsecond=0)
             amount = int(amount)
