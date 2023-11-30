@@ -71,29 +71,32 @@ async def embed_clan_power(clan_settings: clans.Clan) -> discord.Embed:
                 members_top_3_power[top_3_power].append(member_id)
         except (exceptions.FirstTimeUserError, exceptions.NoDataFoundError):
             members_not_registered.append(member_id)
-    field_top_5_members = ''
+    fields_top_5_members = ''
+    field_no = 1
+    fields_top_5_members = {field_no: ''}
     if members_top_3_power:
         members_top_3_power = dict(sorted(members_top_3_power.items(), key=lambda x:x[0], reverse=True))
         loop_count = 1
         for top_3_power, member_ids in members_top_3_power.items():
-            field_top_5_members = (
-                f'{field_top_5_members}\n'
+            field_value = (
                 f'- **{round(top_3_power,2):g}** - '
             )
             for member_id in member_ids:
-                field_top_5_members = (
-                    f'{field_top_5_members} <@{member_id}>, '
+                field_value = (
+                    f'{field_value} <@{member_id}>, '
                 )
-            field_top_5_members = field_top_5_members.strip(', ')
+            field_value = field_value.strip(', ')
+            if len(fields_top_5_members[field_no]) + len(field_value) > 1020:
+                field_no += 1
+                fields_top_5_members[field_no] = ''
+            fields_top_5_members[field_no] = f'{fields_top_5_members[field_no]}\n{field_value}'
             loop_count += 1
             if loop_count > 5: break
     else:
-        field_top_5_members = '_No registered worker data found._'
-    embed.add_field(
-        name = 'Top 5 power',
-        value = field_top_5_members.strip(),
-        inline = False
-    )
+        embed.add_field(name='Top 5 power', value='_No registered worker data found._', inline=False)
+    for field_no, field in fields_top_5_members.items():
+        field_name = f'Top 5 power ({field_no})' if field_no > 1 else 'Top 5 power'
+        embed.add_field(name=field_name, value=field.strip(), inline=False)
     if members_outdated:
         field_members_outdated = ''
         for member_id in members_outdated:

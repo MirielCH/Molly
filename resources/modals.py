@@ -283,11 +283,18 @@ class SetEnergyReminderModal(Modal):
             return
         
         if not self.energy_current < energy <= self.view.user_settings.energy_max:
+            if self.energy_current == self.view.user_settings.energy_max:
+                answer_energy = f'You are already at max energy ({self.view.user_settings.energy_max}).'
+            else:
+                answer_energy = (
+                    f'Please enter a number between **{self.energy_current + 1}** and '
+                    f'**{self.view.user_settings.energy_max}**'
+                )
             await interaction.response.edit_message(view=self.view)
             await interaction.followup.send(
                 (
                     f'I can\'t remind you at an energy level you already reached.\n'
-                    f'Please enter a number between **{self.energy_current + 1}** and **{self.view.user_settings.energy_max}**'
+                    f'{answer_energy}'
                 ),
                 ephemeral=True
             )

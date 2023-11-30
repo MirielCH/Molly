@@ -8,8 +8,8 @@ import discord
 from discord.ext import commands
 
 from database import clans, guilds, users
-from processing import buy, claim, clan, daily, donate, events, open, payday, profile, raid, request, shop, teamraid
-from processing import upgrades, use, vote, workers
+from processing import boosts, buy, claim, clan, daily, donate, events, halloween, open, payday, profile, raid, request
+from processing import shop, teamraid, upgrades, use, vote, workers
 from resources import exceptions, functions, logs, regex, settings
 
 
@@ -22,7 +22,10 @@ class DetectionCog(commands.Cog):
     async def on_message_edit(self, message_before: discord.Message, message_after: discord.Message) -> None:
         """Runs when a message is edited in a channel."""
         if message_after.author.id not in [settings.GAME_ID, settings.TESTY_ID]: return
+        embed_data_before = await parse_embed(message_before)
         embed_data = await parse_embed(message_after)
+        if (message_before.content == message_after.content and embed_data_before == embed_data
+            and message_before.components == message_after.components): return
         if await check_edited_message_never_allowed(message_before, message_after, embed_data): return
         if await check_edited_message_always_allowed(message_before, message_after, embed_data):
             await self.on_message(message_after)
@@ -158,6 +161,14 @@ class DetectionCog(commands.Cog):
 
          # Energy Helper
         add_reaction = await profile.process_message(self.bot, message, embed_data, interaction_user, user_settings)
+        return_values.append(add_reaction)
+        
+         # Boost reminders
+        add_reaction = await boosts.process_message(self.bot, message, embed_data, interaction_user, user_settings)
+        return_values.append(add_reaction)
+        
+         # Halloween
+        add_reaction = await halloween.process_message(self.bot, message, embed_data, interaction_user, user_settings)
         return_values.append(add_reaction)
 
         if any(return_values): await functions.add_logo_reaction(message)

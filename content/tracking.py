@@ -9,7 +9,7 @@ import discord
 from discord.ext import commands
 
 from database import users, tracking
-from resources import emojis, functions, exceptions, settings, views
+from resources import emojis, functions, exceptions, settings, strings, views
 
 
 # --- Commands ---
@@ -122,6 +122,7 @@ async def design_field(timeframe: timedelta, user: discord.Member) -> str:
         f'{emojis.BP} **{report.roll_amount:,} rolls**'
     )
     for worker_name, worker_amount in report.workers.items():
+        if worker_name not in strings.WORKER_TYPES_TRACKED: continue
         worker_emoji = getattr(emojis, f'WORKER_{worker_name}_A'.upper(), emojis.WARNING)
         detail_emoji = emojis.DETAIL if worker_name == list(report.workers.keys())[-1] else emojis.DETAIL2
         try:

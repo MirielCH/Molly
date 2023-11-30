@@ -183,7 +183,7 @@ async def call_teamraid_helper(bot: discord.Bot, message: discord.Message, embed
             #return message_after.id == message.id
             try:
                 author_name = payload.data['embeds'][0]['author']['name']
-                return author_name == message.embeds[0].author.name # Temporary workaround for that weird issue
+                return author_name == message.embeds[0].author.name and not '-40' in payload.data['embeds'][0]['description'] # Temporary workaround for that weird issue
             except:
                 return False
 
@@ -334,6 +334,7 @@ async def call_teamraid_helper(bot: discord.Bot, message: discord.Message, embed
                     await message_helper.edit(embed=embed)
                     break
                 active_component = False
+                if 'components' not in payload.data: continue
                 message_components = payload.data['components']
                 for row in message_components:
                     for component in row['components']:

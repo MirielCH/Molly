@@ -132,7 +132,7 @@ async def call_raid_helper(bot: discord.Bot, message: discord.Message, embed_dat
                 possible_solutions.append(list(used_workers.keys()) + list(permutation))
             """
             best_solution = []
-            for possible_solution in possible_solutions:
+            for possible_solution in reversed(possible_solutions):
                 enemies_powers_copy = copy.deepcopy(enemies_power)
                 used_workers = {}
                 for worker_name in possible_solution:
@@ -157,12 +157,15 @@ async def call_raid_helper(bot: discord.Bot, message: discord.Message, embed_dat
                             hp_left = enemy_hp
                     if killed_enemies >= len(enemies_powers_copy.keys()): break
                 if best_solution:
-                    if (killed_enemies > best_solution[0]
-                        or ((killed_enemies == best_solution[0]) and hp_left <= best_solution[1])):
+                    if killed_enemies > best_solution[0]:
                         best_solution = [killed_enemies, hp_left, possible_solution, used_workers]
+                    if killed_enemies == best_solution[0]:
+                        if hp_left < best_solution[1]:
+                            best_solution = [killed_enemies, hp_left, possible_solution, used_workers]
+                        elif len(used_workers.keys()) < len(best_solution[3].keys()):
+                            best_solution = [killed_enemies, hp_left, possible_solution, used_workers]
                 else:
                     best_solution = [killed_enemies, hp_left, possible_solution, used_workers]
-                if killed_enemies >= len(enemies_power.keys()): break
             killed_enemies, hp_left, _, used_workers = best_solution
             if empty_farms_found and len(used_workers) < len(workers_power):
                     for worker_name, worker_power in workers_power.items():
@@ -198,6 +201,7 @@ async def call_raid_helper(bot: discord.Bot, message: discord.Message, embed_dat
         def raid_message_check(payload: discord.RawMessageUpdateEvent):
             try:
                 author_name = payload.data['embeds'][0]['author']['name']
+                components = payload.data['components']
                 return author_name == message.embeds[0].author.name # Temporary workaround for that weird issue
             except:
                 return False
@@ -209,21 +213,30 @@ async def call_raid_helper(bot: discord.Bot, message: discord.Message, embed_dat
                 f'raid.'
             )
         try:
-            user_workers = await workers.get_user_workers(user.id)
+            user_workers = list(await workers.get_user_workers(user.id))
         except exceptions.NoDataFoundError:
             await message.reply(msg_error_workers_outdated)
             return add_reaction
+        for user_worker in user_workers:
+            if user_worker.worker_name not in strings.WORKER_TYPES_RAID:
+                user_workers.remove(user_worker)
+                break
         worker_levels = {user_worker.worker_name: user_worker.worker_level for user_worker in user_workers}
         worker_levels_sorted = {}
         for worker_type in strings.WORKER_TYPES:
             if worker_type in worker_levels:
                 worker_levels_sorted[worker_type] = worker_levels[worker_type]
+        workers_found = []
         for row in message.components:
             for button in row.children:
                 worker_name_match = re.search(r'^(.+?)worker', button.emoji.name.lower())
                 if worker_name_match.group(1) not in worker_levels_sorted:
                     await message.reply(msg_error_workers_outdated)
                     return add_reaction
+                workers_found.append(worker_name_match.group(1))
+        for worker_name in list(worker_levels_sorted.keys()).copy():
+            if worker_name not in workers_found:
+                del worker_levels_sorted[worker_name]
         workers_power = {}
         for worker_name, worker_level in worker_levels_sorted.items():
             worker_power = (
@@ -293,6 +306,7 @@ async def call_raid_helper(bot: discord.Bot, message: discord.Message, embed_dat
         message_helper = await message.reply(embed=embed)
         logs.logger.info(
             f'--- Raid guide log ---\n'
+            f'User: {user_settings.user_id}\n'
             f'Enemies: {enemies_power}\n'
             f'Workers: {workers_power}\n'
             f'Solution: {worker_solution}\n'
@@ -414,7 +428,7 @@ async def track_raid(message: discord.Message, embed_data: Dict, user: Optional[
             if user_settings.reactions_enabled: add_reaction = True
         except exceptions.EnergyFullTimeOutdatedError:
             await message.reply(strings.MSG_ENERGY_OUTDATED.format(user=user.display_name,
-                                                                    cmd_profile=strings.SLASH_COMMANDS["profile"]))
+                                                                   cmd_profile=strings.SLASH_COMMANDS["profile"]))
         except exceptions.EnergyFullTimeNoneError:
             pass
         if user_settings.tracking_enabled:

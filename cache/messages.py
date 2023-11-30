@@ -47,7 +47,8 @@ async def find_message(channel_id: int, regex: Union[str, re.Pattern] = None,
         for message in channel_messages:
             if user is not None and message.author != user: continue
             if (user_name is not None
-                and await functions.encode_text(user_name) != await functions.encode_text(message.author.name)):
+                and await functions.encode_text(user_name.lower()) != await functions.encode_text(message.author.name.lower())):
+                """
                 try:
                     logs.logger.info(
                         f'User name not found in cache.\n'
@@ -61,6 +62,7 @@ async def find_message(channel_id: int, regex: Union[str, re.Pattern] = None,
                     )
                 except:
                     pass
+                """
                 continue
             if regex is None:
                 return message

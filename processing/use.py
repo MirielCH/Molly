@@ -68,7 +68,7 @@ async def call_context_helper_on_energy_item(message: discord.Message, embed_dat
             if user_settings.reactions_enabled: add_reaction = True
         except exceptions.EnergyFullTimeOutdatedError:
             await message.reply(strings.MSG_ENERGY_OUTDATED.format(user=user.display_name,
-                                                                    cmd_profile=strings.SLASH_COMMANDS["profile"]))
+                                                                   cmd_profile=strings.SLASH_COMMANDS["profile"]))
         except exceptions.EnergyFullTimeNoneError:
             pass
     return add_reaction

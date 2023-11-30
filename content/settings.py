@@ -474,8 +474,8 @@ async def embed_settings_messages(bot: discord.Bot, ctx: discord.ApplicationCont
     """Reminder message specific activity embed"""
     if activity == 'all':
         description = '_If reminders are shown as embeds, the first line is used as the embed title._\n'
+        title = f'{ctx.author.display_name}\'s reminder messages'
         for activity in strings.ACTIVITIES:
-            title = f'{ctx.author.display_name}\'s reminder messages'
             activity_column = strings.ACTIVITIES_COLUMNS[activity]
             alert = getattr(user_settings, activity_column)
             alert_message = ''
@@ -550,6 +550,7 @@ async def embed_settings_reminders(bot: discord.Bot, ctx: discord.ApplicationCon
     else:
         last_claim_time = '`Never`'
     command_reminders = (
+        f'{emojis.BP} **Boosts**: {await functions.bool_to_text(user_settings.reminder_boosts.enabled)}\n'
         f'{emojis.BP} **Claim**: {await functions.bool_to_text(user_settings.reminder_claim.enabled)}\n'
         f'{emojis.BP} **Daily**: {await functions.bool_to_text(user_settings.reminder_daily.enabled)}\n'
         f'{emojis.BP} **Energy**: {await functions.bool_to_text(user_settings.reminder_energy.enabled)}\n'

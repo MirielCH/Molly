@@ -656,7 +656,7 @@ async def get_energy_regen_time(user_settings: users.User) -> timedelta:
     except exceptions.NoDataFoundError:
         multiplier_upgrade = 1
     multiplier_donor = list(strings.DONOR_TIER_ENERGY_MULTIPLIERS.values())[user_settings.donor_tier]
-    energy_regen = 5 / (multiplier_donor * multiplier_upgrade)
+    energy_regen = 5 / (multiplier_donor * multiplier_upgrade * settings.ENERGY_REGEN_MULTIPLIER_EVENT)
     return timedelta(minutes=energy_regen)
 
 
@@ -668,7 +668,7 @@ async def get_current_energy_amount(user_settings: users.User, energy_regen_time
     if user_settings.energy_full_time is None:
         raise exceptions.EnergyFullTimeNoneError
     if user_settings.energy_full_time <= current_time:
-        raise exceptions.EnergyFullTimeOutdatedError
+        return user_settings.energy_max
     if energy_regen_time is None:
         energy_regen_time = await get_energy_regen_time(user_settings)
     energy_until_max = (user_settings.energy_full_time - current_time).total_seconds() / energy_regen_time.total_seconds()
@@ -691,16 +691,23 @@ async def change_user_energy(user_settings: users.User, energy_amount: int) -> N
     if energy_amount < 0:
         energy_amount *= -1
         amount_negative = True
-    energy_current = await get_current_energy_amount(user_settings, energy_regen_time)
     current_time = utils.utcnow()
+    energy_full_time = user_settings.energy_full_time
+    try:
+        energy_current = await get_current_energy_amount(user_settings, energy_regen_time)
+    except exceptions.EnergyFullTimeOutdatedError:
+        energy_current = user_settings.energy_max
+        energy_full_time = current_time
+    if energy_current == user_settings.energy_max:
+        energy_full_time = current_time
     if energy_amount_original > (user_settings.energy_max - energy_current):
         energy_full_time_new = current_time
     else:
         energy_amount_time = timedelta(seconds=energy_amount * energy_regen_time.total_seconds())
         if amount_negative:
-            energy_full_time_new = user_settings.energy_full_time + energy_amount_time
+            energy_full_time_new = energy_full_time + energy_amount_time
         else:
-            energy_full_time_new = user_settings.energy_full_time - energy_amount_time
+            energy_full_time_new = energy_full_time - energy_amount_time
     await user_settings.update(energy_full_time=energy_full_time_new)
     await recalculate_energy_reminder(user_settings, energy_regen_time)
 

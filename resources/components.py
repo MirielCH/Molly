@@ -1221,10 +1221,17 @@ class SetEnergyReminder(discord.ui.Select):
         reminders_list_view = True if custom_reminders is not None else False
         if isinstance(select_value, int):
             if select_value <= energy_current:
+                if energy_current == self.view.user_settings.energy_max:
+                    answer_energy = f'You are already at max energy ({self.view.user_settings.energy_max}).'
+                else:
+                    answer_energy = (
+                        f'Please enter a number between **{energy_current + 1}** and '
+                        f'**{self.view.user_settings.energy_max}**'
+                    )
                 await interaction.response.send_message(
                     (
                         f'I can\'t remind you at an energy level you already reached.\n'
-                        f'Please enter a number between **{energy_current + 1}** and **{self.view.user_settings.energy_max}**'
+                        f'{answer_energy}'
                     ),
                     ephemeral=True
                 )

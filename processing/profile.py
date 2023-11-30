@@ -68,7 +68,7 @@ async def call_profile_timers_and_update_idlucks(bot: discord.Bot, message: disc
         except exceptions.NoDataFoundError:
             multiplier_upgrade = 1
         multiplier_donor = list(strings.DONOR_TIER_ENERGY_MULTIPLIERS.values())[user_settings.donor_tier]
-        energy_regen = 5 / (multiplier_donor * multiplier_upgrade * 1.4)
+        energy_regen = 5 / (multiplier_donor * multiplier_upgrade * settings.ENERGY_REGEN_MULTIPLIER_EVENT)
         minutes_until_max = (int(energy_max) - int(energy_current)) * energy_regen
         current_time = utils.utcnow()
         level_full_time = current_time + timedelta(minutes=minutes_until_max)
@@ -205,10 +205,16 @@ async def call_profile_timers_and_update_idlucks(bot: discord.Bot, message: disc
                     )
             percentage_donor = round((multiplier_donor - 1) * 100)
             percentage_upgrade = round((multiplier_upgrade - 1) * 100)
+            percentage_event = round((settings.ENERGY_REGEN_MULTIPLIER_EVENT - 1) * 100)
             if energy_regen_time.microseconds > 0:
                 energy_regen_time = energy_regen_time + timedelta(microseconds=1_000_000 - energy_regen_time.microseconds)
             energy_regen_timestring = await functions.parse_timedelta_to_timestring(energy_regen_time)
-            embed.set_footer(text=f'1 energy per {energy_regen_timestring} (+{percentage_donor}% donor | +{percentage_upgrade}% upgrades | +40% event)')
+            embed.set_footer(
+                text=(
+                    f'1 energy per {energy_regen_timestring} (+{percentage_donor}% donor | '
+                    f'+{percentage_upgrade}% upgrades | +{percentage_event}% event)'
+                )
+            )
             if user_settings.reminder_energy.enabled:
                 view = views.ProfileTimersView(bot, message, interaction_user, user_settings)
                 interaction = await message.reply(embed=embed, view=view)

@@ -11,10 +11,12 @@ NAME_FROM_MESSAGE_START = re.compile(r"^\*\*(.+?)\*\*\s")
 
 
 # --- User command detection ---)
+COMMAND_BOOSTS = re.compile(r"\bboosts?\b")
 COMMAND_CLAIM = re.compile(r"(?:\bclaim\b|\bcl\b)")
 COMMAND_CLAN_LIST = re.compile(r"(?:\bguild\b|\bclan\b)\s+\blist\b")
 COMMAND_DAILY = re.compile(r"\bdaily\b")
 COMMAND_DONATE = re.compile(r"(?:\bdonate\b|\bdonator\b|\bpatreon\b)")
+COMMAND_HAL_TRICKORTREAT = re.compile(r"\bhal(?:loween)?\b\s+(?:\btrickortreat\b|\btot\b)")
 COMMAND_OPEN = re.compile(r"\bopen\b\s+\b.+\b")
 COMMAND_PAYDAY = re.compile(r"(?:\bpd\b|\bpayday\b|\bpaytravel\b)")
 COMMAND_PROFILE = re.compile(r"(?:\bp\b|\bprofile\b|\bstats\b)")

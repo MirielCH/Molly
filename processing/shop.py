@@ -29,7 +29,7 @@ async def process_message(bot: discord.Bot, message: discord.Message, embed_data
 
 
 async def create_reminder_from_buying(message: discord.Message, embed_data: Dict, user: Optional[discord.User],
-                          user_settings: Optional[users.User]) -> bool:
+                                      user_settings: Optional[users.User]) -> bool:
     """Create a reminder when the user tries to buy an item that is out of stock.
     This only works with prefix command because I can't read the slash command option
 
@@ -65,7 +65,7 @@ async def create_reminder_from_buying(message: discord.Message, embed_data: Dict
                 return add_reaction
         if not user_settings.bot_enabled or not user_settings.reminder_shop.enabled: return add_reaction
         item_name_match = re.search(r'\bbuy\b\s+\b(.+?)$', user_command_message.content.lower())
-        item_name = item_name_match.group(1)
+        item_name = re.sub(r'\d+', '', item_name_match.group(1))
         timestring_match = re.search(r'🕓\s\*\*(.+?)\*\*\n', message.content.lower())
         timestring = timestring_match.group(1)
         time_left = await functions.calculate_time_left_from_timestring(message, timestring)

@@ -464,6 +464,6 @@ async def insert_worker_level(level: int, workers_required: int) -> WorkerLevel:
             strings.INTERNAL_ERROR_SQLITE3.format(error=error, table=table, function=function_name, sql=sql)
         )
         raise
-    worker_level = await get_worker_level(level, workers_required)
+    worker_level = await get_worker_level(level)
 
     return worker_level

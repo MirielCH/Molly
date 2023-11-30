@@ -35,6 +35,7 @@ class User():
     last_claim_time: datetime
     reactions_enabled: bool
     reminder_channel_id: int
+    reminder_boosts: UserReminder
     reminder_claim: UserReminder
     reminder_claim_last_selection: float
     reminder_custom: UserReminder
@@ -70,6 +71,7 @@ class User():
         self.last_claim_time = new_settings.last_claim_time
         self.reactions_enabled = new_settings.reactions_enabled
         self.reminder_channel_id = new_settings.reminder_channel_id
+        self.reminder_boosts = new_settings.reminder_boosts
         self.reminder_claim = new_settings.reminder_claim
         self.reminder_claim_last_selection = new_settings.reminder_claim_last_selection
         self.reminder_custom = new_settings.reminder_custom
@@ -108,6 +110,8 @@ class User():
             last_claim_time: datetime UTC aware
             reactions_enabled: bool
             reminder_channel_id: Optional[int] = None
+            reminder_boosts_enabled: bool
+            reminder_boosts_message: str
             reminder_claim_enabled: bool
             reminder_claim_message: str
             reminder_claim_last_selection: float
@@ -172,6 +176,8 @@ async def _dict_to_user(record: dict) -> User:
             last_claim_time = last_claim_time,
             reactions_enabled = bool(record['reactions_enabled']),
             reminder_channel_id = record['reminder_channel_id'],
+            reminder_boosts = UserReminder(enabled=bool(record['reminder_boosts_enabled']),
+                                          message=record['reminder_boosts_message']),
             reminder_claim = UserReminder(enabled=bool(record['reminder_claim_enabled']),
                                           message=record['reminder_claim_message']),
             reminder_claim_last_selection = record['reminder_claim_last_selection'],
@@ -326,6 +332,8 @@ async def _update_user(user: User, **kwargs) -> None:
         last_claim_time: datetime UTC aware
         reactions_enabled: bool
         reminder_channel_id: Optional[int] = None
+        reminder_boosts_enabled: bool
+        reminder_boosts_message: str
         reminder_claim_enabled: bool
         reminder_claim_last_selection: float
         reminder_claim_message: str

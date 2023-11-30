@@ -389,6 +389,7 @@ class SettingsRemindersView(discord.ui.View):
         self.embed_function = embed_function
         self.commands_settings = commands_settings
         toggled_settings_commands = {
+            'Boosts': 'reminder_boosts',
             'Claim': 'reminder_claim',
             'Daily': 'reminder_daily',
             'Energy': 'reminder_energy',

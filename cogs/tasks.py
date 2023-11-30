@@ -192,7 +192,7 @@ class TasksCog(commands.Cog):
                 date_time = log_entry.date_time.replace(hour=23, minute=59, second=59, microsecond=999999)
                 key = (log_entry.user_id, log_entry.guild_id, log_entry.text, date_time)
                 amount = entries.get(key, 0)
-                entries[key] = amount + 1
+                entries[key] = amount + log_entry.amount
                 log_entry_count += 1
             for key, amount in entries.items():
                 user_id, guild_id, command, date_time = key

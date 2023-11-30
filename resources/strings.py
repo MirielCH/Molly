@@ -101,6 +101,9 @@ DEFAULT_MESSAGE_CLAN = (
 )
 
 DEFAULT_MESSAGES_REMINDERS = {
+    'boosts': (
+        '{name}, your boost {boost_emoji} **{boost_name}** just ran out!'
+    ),
     'claim': (
         '{name}, time to {command}!\n'
         '• Your last claim was {last_claim_time}.\n'
@@ -134,6 +137,8 @@ DEFAULT_MESSAGES_EVENTS = {
 }
 
 PLACEHOLDER_DESCRIPTIONS = {
+    'boost_emoji': 'The emoji of the boost (if one exists)',
+    'boost_name': 'The name of the boost',
     'command': 'The command you get reminded for',
     'custom_reminder_text': 'The text you set when creating a custom reminder',
     'daily_reset_time': 'Time of the next daily reset',
@@ -149,6 +154,7 @@ PLACEHOLDER_DESCRIPTIONS = {
 MSG_ERROR = 'Whoops, something went wrong here. You should probably tell miriel.ch about this.'
 
 ACTIVITIES = (
+    'boosts',
     'claim',
     'custom',
     'daily',
@@ -162,6 +168,7 @@ ACTIVITIES_ALL.sort()
 ACTIVITIES_ALL.insert(0, 'all')
 
 ACTIVITIES_COLUMNS = {
+    'boosts': 'reminder_boosts',
     'claim': 'reminder_claim',
     'custom': 'reminder_custom',
     'daily': 'reminder_daily',
@@ -178,6 +185,7 @@ EVENTS = (
 )
 
 SLASH_COMMANDS = {
+    'boosts': '</boosts:1128412341650870404>',
     'claim': '</claim:1128412426472259625>',
     'code': '</code:1128414218115350679>',
     'daily': '</daily:1128414211085717609>',
@@ -211,6 +219,7 @@ TRACKED_WORKER_TYPES = (
     'worker-wise',
     'worker-expert',
     'worker-masterful',
+    'worker-spooky',
  ) # Sorted by rarity
 
 TRACKED_ITEMS_EMOJIS = {
@@ -221,9 +230,32 @@ TRACKED_ITEMS_EMOJIS = {
     'worker-wise': emojis.WORKER_WISE_A,
     'worker-expert': emojis.WORKER_EXPERT_A,
     'worker-masterful': emojis.WORKER_MASTERFUL_A,
+    'worker-spooky': emojis.WORKER_SPOOKY_A,
  }
 
 WORKER_TYPES = (
+    'useless',
+    'deficient',
+    'common',
+    'talented',
+    'wise',
+    'expert',
+    'masterful',
+    'spooky',
+) # Ordered by rarity
+
+WORKER_TYPES_RAID = (
+    'useless',
+    'deficient',
+    'common',
+    'talented',
+    'wise',
+    'expert',
+    'masterful',
+    'spooky',
+) # Ordered by rarity
+
+WORKER_TYPES_TRACKED = (
     'useless',
     'deficient',
     'common',
@@ -242,6 +274,7 @@ WORKER_STATS = {
     'wise': {'speed': 2.5, 'strength': 2, 'intelligence': 2.5},
     'expert': {'speed': 3, 'strength': 2.5, 'intelligence': 2.5},
     'masterful': {'speed': 3, 'strength': 3, 'intelligence': 3},
+    'spooky': {'speed': 2.045, 'strength': 2, 'intelligence': 2},
 }
 
 DONOR_TIER_ENERGY_MULTIPLIERS = {
@@ -264,3 +297,11 @@ ENERGY_UPGRADE_LEVEL_MULTIPLIERS = {
     6: 2.1,
     7: 2.2, # Unconfirmed value
 }
+
+
+ACTIVITIES_BOOSTS = (
+    'bad-spooker',
+    'good-spooker',
+    'spooked',
+    'spooker',
+)

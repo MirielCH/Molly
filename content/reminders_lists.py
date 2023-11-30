@@ -65,6 +65,7 @@ async def embed_reminders_list(bot: discord.Bot, user: discord.User, user_settin
     current_time = utils.utcnow()
     claim_reminder = daily_reminder = energy_reminder = vote_reminder = None
     claim_reminder_end_time = daily_reminder_end_time = clan_reminder_end_time = vote_reminder_end_time = ''
+    boost_reminders = []
     shop_reminders = []
     for reminder in user_reminders:
         if reminder.activity == 'daily':
@@ -73,6 +74,8 @@ async def embed_reminders_list(bot: discord.Bot, user: discord.User, user_settin
             claim_reminder = reminder
         elif reminder.activity.startswith('energy'):
             energy_reminder = reminder
+        elif reminder.activity.startswith('boost-'):
+            boost_reminders.append(reminder)
         elif reminder.activity.startswith('shop-'):
             shop_reminders.append(reminder)
         elif reminder.activity == 'vote':
@@ -125,6 +128,20 @@ async def embed_reminders_list(bot: discord.Bot, user: discord.User, user_settin
             value=(
                 f'{emojis.DETAIL} _Use {strings.SLASH_COMMANDS["profile"]} to update your current energy._'
             ),
+            inline=False
+        )
+    if user_settings.reminder_boosts.enabled and boost_reminders:
+        boosts_field_value = ''
+        for reminder in boost_reminders:
+            emoji = emojis.DETAIL if reminder == boost_reminders[-1] else emojis.DETAIL2
+            boost_name = reminder.activity[6:].replace('-',' ').strip().capitalize()
+            boosts_field_value = (
+                f'{boosts_field_value}\n'
+                f'{emoji} **{boost_name}**: {utils.format_dt(reminder.end_time, "R")}'
+            )
+        embed.add_field(
+            name=f'{emojis.COOLDOWN} {strings.SLASH_COMMANDS["boosts"]}',
+            value=boosts_field_value.strip(),
             inline=False
         )
     if user_settings.reminder_claim.enabled:

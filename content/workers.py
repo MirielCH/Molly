@@ -71,15 +71,17 @@ async def embed_workers_list(ctx: Union[discord.ApplicationContext, commands.Con
     for worker_name, worker_power in workers_by_type.items():
         worker_emoji = getattr(emojis, f'WORKER_{worker_name}_A'.upper(), emojis.WARNING)
         worker_power = round(worker_power, 2)
+        if worker_name not in strings.WORKER_TYPES_RAID: continue
         field_workers_by_type = (
             f'{field_workers_by_type}\n'
             f'{worker_emoji} - {worker_power:,g} {emojis.WORKER_POWER}'
         )
     for worker_name, worker_power in workers_by_power.items():
         worker_emoji = getattr(emojis, f'WORKER_{worker_name}_A'.upper(), emojis.WARNING)
+        if worker_name not in strings.WORKER_TYPES_RAID: continue
         if 1 <= top_3_count <= 3:
             top_3_power += worker_power
-        top_3_count += 1
+            top_3_count += 1
         worker_power = round(worker_power, 2)
         field_workers_by_power = (
             f'{field_workers_by_power}\n'
@@ -100,4 +102,5 @@ async def embed_workers_list(ctx: Union[discord.ApplicationContext, commands.Con
         value = field_workers_by_power.strip(),
         inline = True
     )
+    embed.set_footer(text='This list only includes workers usable in raids.')
     return embed
