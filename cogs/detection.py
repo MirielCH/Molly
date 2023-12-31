@@ -9,7 +9,7 @@ from discord.ext import commands
 
 from database import clans, guilds, users
 from processing import boosts, buy, claim, clan, daily, donate, events, halloween, open, payday, profile, raid, request
-from processing import shop, teamraid, upgrades, use, vote, workers
+from processing import shop, teamraid, upgrades, use, vote, workers, xmas
 from resources import exceptions, functions, logs, regex, settings
 
 
@@ -169,6 +169,10 @@ class DetectionCog(commands.Cog):
         
          # Halloween
         add_reaction = await halloween.process_message(self.bot, message, embed_data, interaction_user, user_settings)
+        return_values.append(add_reaction)
+        
+         # Christmas
+        add_reaction = await xmas.process_message(self.bot, message, embed_data, interaction_user, user_settings)
         return_values.append(add_reaction)
 
         if any(return_values): await functions.add_logo_reaction(message)

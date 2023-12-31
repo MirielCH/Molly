@@ -21,6 +21,7 @@ LB_EPIC = '<:epiclootbox:1140716253313499157>'
 LB_MYTHIC = '<:mythiclootbox:1140716254894760019>'
 LB_RARE = '<:rarelootbox:1140716257822375997>'
 LB_USELESS = '<:uselesslootbox:1140716259143590078>'
+PRESENT = '<:present:1180429333341409391>'
 PUMPKIN = '<:pumpkin:1164638459399524382>'
 PUMPKIN_CARVED = '<:pumpkin_carved:1166638278569627678>'
 RAID_POINT = '<:rp:1135940435269927065>'
@@ -84,6 +85,7 @@ LOGO = '<:molly:1139232632119513230>'
 
 BOOSTS_EMOJIS = {
     'bad-spooker': PUMPKIN_CARVED,
+    'christmas-spirit': PRESENT,
     'good-spooker': PUMPKIN_CARVED,
     'spooked': PUMPKIN,
     'spooker': PUMPKIN_CARVED,

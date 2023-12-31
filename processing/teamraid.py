@@ -70,7 +70,7 @@ async def call_teamraid_helper(bot: discord.Bot, message: discord.Message, embed
                 enemy_power = (
                     (strings.WORKER_STATS[enemy_type]['speed'] + strings.WORKER_STATS[enemy_type]['strength']
                     + strings.WORKER_STATS[enemy_type]['intelligence'])
-                    * (1 + (strings.WORKER_TYPES.index(enemy_type) + 1) / 3.25) * (1 + enemy_level / 1.25)
+                    * (1 + (strings.WORKER_STATS[enemy_type]['tier']) / 2.5) * (1 + enemy_level / 1.25)
                 )
                 enemies_power[f'{enemy_type}{field_index}'] = (enemy_power, enemy_hp_current)
         return enemies_power
@@ -205,7 +205,7 @@ async def call_teamraid_helper(bot: discord.Bot, message: discord.Message, embed
                 user_settings = user_workers = None
             if user_settings is not None:
                 try:
-                    await functions.change_user_energy(user_settings, -80)
+                    await functions.change_user_energy(user_settings, -40)
                     if user_settings.reactions_enabled: add_reaction = True
                 except exceptions.EnergyFullTimeOutdatedError:
                     pass
@@ -223,7 +223,7 @@ async def call_teamraid_helper(bot: discord.Bot, message: discord.Message, embed
                     worker_power = (
                         ((strings.WORKER_STATS[worker_type]['speed'] + strings.WORKER_STATS[worker_type]['strength']
                         + strings.WORKER_STATS[worker_type]['intelligence']))
-                        * (1 + (strings.WORKER_TYPES.index(worker_type) + 1) / 3.25) * (1 + user_workers_required[worker_type] / 1.25)
+                        * (1 + (strings.WORKER_STATS[worker_type]['tier']) / 2.5) * (1 + user_workers_required[worker_type] / 1.25)
                     )
                     user_workers_power[teamraid_user.name][worker_type] = worker_power
                     worker_power = round(worker_power, 2)

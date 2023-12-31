@@ -99,6 +99,7 @@ async def embeds_stats_overview(ctx: commands.Context, user: discord.User) -> di
     embed2.add_field(name='Last 4 weeks', value=field_last_4w, inline=True)
     embed2.add_field(name='Last year', value=field_last_1y, inline=True)
     embed2.set_image(url=image_url)
+    embed2.set_footer(text='Raid count is not available for data older than 28 days.')
     return (embed1, embed2)
 
 
@@ -112,6 +113,8 @@ async def embed_stats_timeframe(ctx: commands.Context, user: discord.Member, tim
         description = '**Command tracking is currently turned off!**' if not user_settings.tracking_enabled else ''
     )
     embed.add_field(name=f'Last {format_timespan(time_left)}', value=field_content, inline=False)
+    if time_left.days > 28:
+        embed.set_footer(text='Raid count is not available for data older than 28 days.')
     return embed
 
 
@@ -133,9 +136,10 @@ async def design_field(timeframe: timedelta, user: discord.Member) -> str:
             f'{field_content}\n'
             f'{detail_emoji} {worker_emoji} **{worker_amount:,}** ({percentage:g}%)'
         )
+    raid_amount = f'{report.raid_amount:,} raids' if report.raid_amount != -1 else 'Raids'
     field_content = (
         f'{field_content}\n'
-        f'{emojis.BP} **{report.raid_amount:,} raids**\n'
+        f'{emojis.BP} **{raid_amount}**\n'
         f'{emojis.DETAIL2} {emojis.RAID_POINT} gained: **{report.raid_points_gained:,}**\n'
         f'{emojis.DETAIL2} {emojis.RAID_POINT} lost: **{report.raid_points_lost:,}**\n'
         f'{emojis.DETAIL} {emojis.RAID_POINT} total: **{report.raid_points_gained - report.raid_points_lost:,}**'

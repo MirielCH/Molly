@@ -96,7 +96,7 @@ async def call_raid_helper(bot: discord.Bot, message: discord.Message, embed_dat
                 enemy_power = (
                     (strings.WORKER_STATS[enemy_name]['speed'] + strings.WORKER_STATS[enemy_name]['strength']
                      + strings.WORKER_STATS[enemy_name]['intelligence'])
-                    * (1 + (strings.WORKER_TYPES.index(enemy_name) + 1) / 3.25)
+                    * (1 + (strings.WORKER_STATS[enemy_name]['tier']) / 2.5)
                     * (1 + enemy_level / 1.25) * (enemy_hp_max / 100) / enemy_hp_max * enemy_hp_current
                 )
                 if (enemy_power - 0.5).is_integer():
@@ -141,7 +141,7 @@ async def call_raid_helper(bot: discord.Bot, message: discord.Message, embed_dat
                         enemy_power, enemy_hp = enemy_power_hp
                         if enemy_hp == 0: continue
                         worker_power = workers_power[worker_name]
-                        worker_damage = round(80 * worker_power / enemies_power[enemy_name][0])
+                        worker_damage = round(85 * worker_power / enemies_power[enemy_name][0])
                         hp_remaining = enemy_hp - worker_damage
                         used_workers[worker_name] = worker_power
                         if hp_remaining < 0: hp_remaining = 0
@@ -242,7 +242,7 @@ async def call_raid_helper(bot: discord.Bot, message: discord.Message, embed_dat
             worker_power = (
                 ((strings.WORKER_STATS[worker_name]['speed'] + strings.WORKER_STATS[worker_name]['strength']
                   + strings.WORKER_STATS[worker_name]['intelligence']))
-                * (1 + (strings.WORKER_TYPES.index(worker_name) + 1) / 3.25) * (1 + worker_level / 1.25)
+                * (1 + (strings.WORKER_STATS[worker_name]['tier']) / 2.5) * (1 + worker_level / 1.25)
             )
             workers_power[worker_name] = worker_power
         workers_power = dict(sorted(workers_power.items(), key=lambda x:x[1]))

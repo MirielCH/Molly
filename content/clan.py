@@ -56,7 +56,7 @@ async def embed_clan_power(clan_settings: clans.Clan) -> discord.Embed:
                 worker_power = (
                     ((strings.WORKER_STATS[worker_name]['speed'] + strings.WORKER_STATS[worker_name]['strength']
                         + strings.WORKER_STATS[worker_name]['intelligence']))
-                    * (1 + (strings.WORKER_TYPES.index(worker_name) + 1) / 3.25) * (1 + worker_level / 1.25)
+                    * (1 + (strings.WORKER_STATS[worker_name]['tier']) / 2.5) * (1 + worker_level / 1.25)
                 )
                 workers_power[worker_name] = worker_power
             workers_by_power = dict(sorted(workers_power.items(), key=lambda x:x[1], reverse=True))

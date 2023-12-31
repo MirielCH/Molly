@@ -220,6 +220,7 @@ TRACKED_WORKER_TYPES = (
     'worker-expert',
     'worker-masterful',
     'worker-spooky',
+    'worker-snowy',
  ) # Sorted by rarity
 
 TRACKED_ITEMS_EMOJIS = {
@@ -231,6 +232,7 @@ TRACKED_ITEMS_EMOJIS = {
     'worker-expert': emojis.WORKER_EXPERT_A,
     'worker-masterful': emojis.WORKER_MASTERFUL_A,
     'worker-spooky': emojis.WORKER_SPOOKY_A,
+    'worker-snowy': emojis.WORKER_SNOWY_A,
  }
 
 WORKER_TYPES = (
@@ -242,6 +244,7 @@ WORKER_TYPES = (
     'expert',
     'masterful',
     'spooky',
+    'snowy',
 ) # Ordered by rarity
 
 WORKER_TYPES_RAID = (
@@ -253,6 +256,7 @@ WORKER_TYPES_RAID = (
     'expert',
     'masterful',
     'spooky',
+    'snowy',
 ) # Ordered by rarity
 
 WORKER_TYPES_TRACKED = (
@@ -267,14 +271,15 @@ WORKER_TYPES_TRACKED = (
 
 
 WORKER_STATS = {
-    'useless': {'speed': 1, 'strength': 1, 'intelligence': 1},
-    'deficient': {'speed': 1.5, 'strength': 1.5, 'intelligence': 1},
-    'common': {'speed': 1.5, 'strength': 2, 'intelligence': 1.5},
-    'talented': {'speed': 2, 'strength': 2, 'intelligence': 2},
-    'wise': {'speed': 2.5, 'strength': 2, 'intelligence': 2.5},
-    'expert': {'speed': 3, 'strength': 2.5, 'intelligence': 2.5},
-    'masterful': {'speed': 3, 'strength': 3, 'intelligence': 3},
-    'spooky': {'speed': 2.045, 'strength': 2, 'intelligence': 2},
+    'useless': {'tier': 1, 'speed': 1, 'strength': 1, 'intelligence': 1},
+    'deficient': {'tier': 2, 'speed': 1.5, 'strength': 1.5, 'intelligence': 1},
+    'common': {'tier': 3, 'speed': 1.5, 'strength': 2, 'intelligence': 1.5},
+    'talented': {'tier': 4, 'speed': 2, 'strength': 2, 'intelligence': 2},
+    'wise': {'tier': 5, 'speed': 2.5, 'strength': 2, 'intelligence': 2.5},
+    'expert': {'tier': 6, 'speed': 3, 'strength': 2.5, 'intelligence': 2.5},
+    'masterful': {'tier': 7, 'speed': 3, 'strength': 3, 'intelligence': 3},
+    'spooky': {'tier': 1, 'speed': 5, 'strength': 6, 'intelligence': 5},
+    'snowy': {'tier': 2, 'speed': 5, 'strength': 5, 'intelligence': 6},
 }
 
 DONOR_TIER_ENERGY_MULTIPLIERS = {
@@ -301,6 +306,7 @@ ENERGY_UPGRADE_LEVEL_MULTIPLIERS = {
 
 ACTIVITIES_BOOSTS = (
     'bad-spooker',
+    'christmas-spirit',
     'good-spooker',
     'spooked',
     'spooker',

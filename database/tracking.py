@@ -334,17 +334,20 @@ async def get_log_report(user_id: int, timeframe: timedelta,
             strings.INTERNAL_ERROR_SQLITE3.format(error=error, table=table, function=function_name, sql=sql)
         )
         raise
-    sql = f'SELECT COUNT(*) FROM {table} WHERE user_id=? AND date_time>=? AND (text=? OR text=?)'
-    try:
-        cur = settings.DATABASE.cursor()
-        cur.execute(sql, (user_id, date_time, 'raid-points-gained', 'raid-points-lost'))
-        record_raid_amount = cur.fetchone()
-    except sqlite3.Error as error:
-        await errors.log_error(
-            strings.INTERNAL_ERROR_SQLITE3.format(error=error, table=table, function=function_name, sql=sql)
-        )
-        raise
-    (raid_amount,) = record_raid_amount
+    if timeframe.days > 28:
+        raid_amount = -1
+    else:
+        sql = f'SELECT COUNT(*) FROM {table} WHERE user_id=? AND date_time>=? AND (text=? OR text=?)'
+        try:
+            cur = settings.DATABASE.cursor()
+            cur.execute(sql, (user_id, date_time, 'raid-points-gained', 'raid-points-lost'))
+            record_raid_amount = cur.fetchone()
+        except sqlite3.Error as error:
+            await errors.log_error(
+                strings.INTERNAL_ERROR_SQLITE3.format(error=error, table=table, function=function_name, sql=sql)
+            )
+            raise
+        (raid_amount,) = record_raid_amount
     records_data = {
         'raid-points-gained': 0,
         'raid-points-lost': 0,

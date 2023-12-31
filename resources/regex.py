@@ -4,7 +4,7 @@ import re
 
 
 # --- User data extraction ---
-USER_ID_FROM_ICON_URL = re.compile(r"avatars\/(.+?)\/")
+USER_ID_FROM_ICON_URL = re.compile(r"(?:avatars|users)\/(.+?)\/")
 USERNAME_FROM_EMBED_AUTHOR = re.compile(r"^(.+?) —")
 NAME_FROM_MESSAGE = re.compile(r"\s\*\*(.+?)\*\*\s")
 NAME_FROM_MESSAGE_START = re.compile(r"^\*\*(.+?)\*\*\s")
@@ -24,6 +24,7 @@ COMMAND_RAID = re.compile(r"\braid\b")
 COMMAND_REQUEST = re.compile(r"(?:\bre\b|\brequest\b)")
 COMMAND_SHOP = re.compile(r"\bshop\b")
 COMMAND_TEAMRAID = re.compile(r"\bteamraid\b")
+COMMAND_USE_CHRISTMAS_BELL = re.compile(r"(?:\buse\b|\bconsume\b|\bconsoom\b)\s+\bchristmas\b\s+\bbell\b")
 COMMAND_USE_ENERGY_ITEM = re.compile(r"(?:\buse\b|\bconsume\b|\bconsoom\b)\s+\benergy\b")
 COMMAND_USE_TIME_ITEM = re.compile(r"(?:\buse\b|\bconsume\b|\bconsoom\b)\s+\btime\b")
 COMMAND_UPGRADES_OVERVIEW = re.compile(r"\bupgrades?\b\s*$")
