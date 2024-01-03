@@ -185,6 +185,7 @@ async def track_worker_stats(message: discord.Message, embed_data: Dict,
             if user_command_message is None: return add_reaction
             interaction_user = user_command_message.author
         if embed_data['embed_user'] is not None and embed_data['embed_user'] != interaction_user: return add_reaction
+        if interaction_user.name not in embed_data['author']['name']: return
         try:
             user_settings: users.User = await users.get_user(interaction_user.id)
         except exceptions.FirstTimeUserError:

@@ -11,6 +11,7 @@ NAME_FROM_MESSAGE_START = re.compile(r"^\*\*(.+?)\*\*\s")
 
 
 # --- User command detection ---)
+COMMAND_ACTIVITIES = re.compile(r"(?:\bactivities\b|\bact\b|\ba\b)")
 COMMAND_BOOSTS = re.compile(r"\bboosts?\b")
 COMMAND_CLAIM = re.compile(r"(?:\bclaim\b|\bcl\b)")
 COMMAND_CLAN_LIST = re.compile(r"(?:\bguild\b|\bclan\b)\s+\blist\b")

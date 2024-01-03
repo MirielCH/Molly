@@ -183,7 +183,7 @@ async def call_teamraid_helper(bot: discord.Bot, message: discord.Message, embed
             #return message_after.id == message.id
             try:
                 author_name = payload.data['embeds'][0]['author']['name']
-                return author_name == message.embeds[0].author.name and not '-40' in payload.data['embeds'][0]['description'] # Temporary workaround for that weird issue
+                return author_name == message.embeds[0].author.name and payload.data['embeds'][0]['fields'][0]['name'].count('farm') >= 4 # Temporary workaround for that weird issue
             except:
                 return False
 

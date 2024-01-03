@@ -196,7 +196,16 @@ async def call_raid_helper(bot: discord.Bot, message: discord.Message, embed_dat
                 user_settings: users.User = await users.get_user(user.id)
             except exceptions.FirstTimeUserError:
                 return add_reaction
-        if not user_settings.bot_enabled or not user_settings.helper_raid_enabled: return add_reaction
+        if not user_settings.bot_enabled: return add_reaction
+        if user_settings.reminder_energy.enabled:
+            try:
+                energy_match = re.search (r'-(\d+) <', embed_data['description'].lower())
+                energy_lost = int(energy_match.group(1))
+                await functions.change_user_energy(user_settings, energy_lost * -1)
+                if user_settings.reactions_enabled: add_reaction = True
+            except:
+                pass
+        if not user_settings.helper_raid_enabled: return add_reaction
 
         def raid_message_check(payload: discord.RawMessageUpdateEvent):
             try:
@@ -421,16 +430,7 @@ async def track_raid(message: discord.Message, embed_data: Dict, user: Optional[
                 user_settings: users.User = await users.get_user(user.id)
             except exceptions.FirstTimeUserError:
                 return False
-        if not user_settings.tracking_enabled or not user_settings.bot_enabled or not user_settings.reminder_energy.enabled:
-            return add_reaction
-        try:
-            await functions.change_user_energy(user_settings, -40)
-            if user_settings.reactions_enabled: add_reaction = True
-        except exceptions.EnergyFullTimeOutdatedError:
-            await message.reply(strings.MSG_ENERGY_OUTDATED.format(user=user.display_name,
-                                                                   cmd_profile=strings.SLASH_COMMANDS["profile"]))
-        except exceptions.EnergyFullTimeNoneError:
-            pass
+        if not user_settings.tracking_enabled or not user_settings.bot_enabled: return add_reaction
         if user_settings.tracking_enabled:
             current_time = utils.utcnow().replace(microsecond=0)
             amount = int(amount)

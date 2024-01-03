@@ -1171,8 +1171,7 @@ class SetEnergyReminder(discord.ui.Select):
     def __init__(self, view: discord.ui.View, disabled: Optional[bool] = False, row: Optional[int] = None):
         options = [
             discord.SelectOption(label='Claim level (5)', value='5'),
-            discord.SelectOption(label='Raid level (40)', value='40'),
-            discord.SelectOption(label='Teamraid level (80)', value='80'),
+            discord.SelectOption(label='Raid / Teamraid level (40)', value='40'),
             discord.SelectOption(label=f'Full energy ({view.user_settings.energy_max})',
                                  value=str(view.user_settings.energy_max)),
             discord.SelectOption(label='Custom amount', value='custom'),

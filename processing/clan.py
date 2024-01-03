@@ -105,14 +105,21 @@ async def update_clan(message: discord.Message, embed_data: Dict, user: Optional
             guild_members = await functions.get_guild_member_by_name(message.guild, leader_id_or_name, False)
             leader_id = guild_members[0].id
         clan_member_ids = []
-        clan_members = f"{embed_data['field0']['value']}\n{embed_data['field1']['value']}".strip()
+        clan_members = (
+            f"{embed_data['field0']['value']}\n"
+            f"{embed_data['field1']['value']}\n"
+            f"{embed_data['field2']['value']}\n"
+            f"{embed_data['field3']['value']}\n"
+            f"{embed_data['field4']['value']}\n"
+            f"{embed_data['field5']['value']}"
+        ).strip()
         for line in clan_members.split('\n'):
-            user_name_match = re.search(r'^\*\*(.+?)\*\*$', line)
+            user_name_match = re.search(r'^\*\*(.+?)\*\* -', line)
             if user_name_match:
                 guild_members = await functions.get_guild_member_by_name(message.guild, user_name_match.group(1), False)
                 clan_member_ids.append(guild_members[0].id)
             else:
-                user_id_match = re.search(r'^ID: \*\*(\d+?)\*\*$', line)
+                user_id_match = re.search(r'^ID: \*\*(\d+?)\*\* -', line)
                 clan_member_ids.append(int(user_id_match.group(1)))
         try:
             clan_settings: clans.Clan = await clans.get_clan_by_leader_id(leader_id)        

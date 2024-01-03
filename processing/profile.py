@@ -90,19 +90,12 @@ async def call_profile_timers_and_update_idlucks(bot: discord.Bot, message: disc
                 level_claim_time = current_time + timedelta(minutes=minutes_until_claim)
                 level_claim_info = f'{emojis.COOLDOWN} **Claim** (5) {utils.format_dt(level_claim_time, "R")}'
             if energy_current >= 40:
-                level_raid_info = f'{emojis.ENABLED} **Raid** (40)'
+                level_raid_info = f'{emojis.ENABLED} **Raid / Teamraid** (40)'
             else:
                 minutes_until_raid = int(40 - energy_current) * energy_regen
                 level_raid_time = current_time + timedelta(minutes=minutes_until_raid)
-                level_raid_info = f'{emojis.COOLDOWN} **Raid** (40) {utils.format_dt(level_raid_time, "R")}'
-            if energy_current >= 80:
-                level_teamraid_info = f'{emojis.ENABLED} **Teamraid** (80)'
-            else:
-                minutes_until_teamraid = int(80 - energy_current) * energy_regen
-                level_teamraid_time = current_time + timedelta(minutes=minutes_until_teamraid)
-                level_teamraid_info = f'{emojis.COOLDOWN} **Teamraid** (80) {utils.format_dt(level_teamraid_time, "R")}'
-            energy_level = f'{level_claim_info} | {level_raid_info} | {level_teamraid_info}'
-            energy_level = f'{level_claim_info}\n{level_raid_info}\n{level_teamraid_info}'
+                level_raid_info = f'{emojis.COOLDOWN} **Raid / Teamraid** (40) {utils.format_dt(level_raid_time, "R")}'
+            energy_level = f'{level_claim_info}\n{level_raid_info}'
             if energy_current >= energy_max:
                 energy_level = f'{emojis.WARNING} **FULL!**'
             else:
