@@ -100,6 +100,12 @@ DEFAULT_MESSAGE_CLAN = (
     '• Don\'t be lazy now, chop chop.'
 )
 
+DEFAULT_MESSAGE_CONTRIBUTION_ALERT = (
+    '{guild_role}, you unlocked **{guild_buff_name}**!\n'
+    '• Current contribution total: `{guild_seals_total}` <:guildseal:1192088053095858226>\n'
+    '• The buff will activate {guild_contribution_reset_time}'
+)
+
 DEFAULT_MESSAGES_REMINDERS = {
     'boosts': (
         '{name}, your boost {boost_emoji} **{boost_name}** just ran out!'
@@ -144,7 +150,10 @@ PLACEHOLDER_DESCRIPTIONS = {
     'daily_reset_time': 'Time of the next daily reset',
     'energy_amount': 'The amount of energy the reminder was set for',
     'energy_full_time': 'Time until your energy is full',
+    'guild_buff_name': 'Name of the guild buff',
+    'guild_contribution_reset_time': 'Time when the guild contributions will reset',
     'guild_role': 'The role that gets pinged for your guild reminder',
+    'guild_seals_total': 'Total amount of seal contributions at the moment',
     'last_claim_time': 'Time of your last claim',
     'name': 'Embed: Your user name\nNormal message: Your name or mention depending on DND mode',
     'production_time': 'The acual amount of time your farms spent producing including time speeders and compressors',
@@ -311,3 +320,19 @@ ACTIVITIES_BOOSTS = (
     'spooked',
     'spooker',
 )
+
+
+GUILD_BUFF_THRESHOLDS = (5, 40, 250, 800, 2400, 5000, 7800)
+
+NUMBERS_INTEGER_ROMAN = {
+    1: 'i',
+    2: 'ii',
+    3: 'iii',
+    4: 'iv',
+    5: 'v',
+    6: 'vi',
+    7: 'vii',
+    8: 'viii',
+    9: 'ix',
+    10: 'x',
+}

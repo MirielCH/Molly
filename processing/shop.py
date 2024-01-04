@@ -69,7 +69,7 @@ async def create_reminder_from_buying(message: discord.Message, embed_data: Dict
         timestring_match = re.search(r'🕓\s\*\*(.+?)\*\*\n', message.content.lower())
         timestring = timestring_match.group(1)
         time_left = await functions.calculate_time_left_from_timestring(message, timestring)
-        time_left += timedelta(seconds=random.randint(60, 300))
+        time_left += timedelta(seconds=random.randint(0, 600))
         user_command = await functions.get_game_command(user_settings, 'shop buy')
         reminder_message = (
             user_settings.reminder_shop.message
@@ -124,7 +124,7 @@ async def create_reminder_from_list(message: discord.Message, embed_data: Dict, 
             timestring = shop_item_data_match.group(4)
             if item_amount_bought < item_amount_available: continue
             time_left_timestring = await functions.parse_timestring_to_timedelta(timestring)
-            time_left = midnight_tomorrow - current_time  + timedelta(seconds=random.randint(60, 300))
+            time_left = midnight_tomorrow - current_time + timedelta(seconds=random.randint(0, 600))
             if time_left_timestring >= timedelta(days=1):
                 time_left = time_left + timedelta(days=time_left_timestring.days)
             time_left = time_left + timedelta(hours=user_settings.reminders_daily_offset)

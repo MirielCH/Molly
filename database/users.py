@@ -16,6 +16,10 @@ class UserReminder(NamedTuple):
     enabled: bool
     message: str
 
+class UserInventory(NamedTuple):
+    """Object that summarizes all tracked inventory items for a user"""
+    guild_seal: int
+
 @dataclass()
 class User():
     """Object that represents a record from table "user"."""
@@ -32,6 +36,7 @@ class User():
     helper_raid_names_enabled: bool
     helper_upgrades_enabled: bool
     idlucks: int
+    inventory: UserInventory
     last_claim_time: datetime
     reactions_enabled: bool
     reminder_channel_id: int
@@ -68,6 +73,7 @@ class User():
         self.helper_raid_names_enabled = new_settings.helper_raid_names_enabled
         self.helper_upgrades_enabled = new_settings.helper_upgrades_enabled
         self.idlucks = new_settings.idlucks
+        self.inventory = new_settings.inventory
         self.last_claim_time = new_settings.last_claim_time
         self.reactions_enabled = new_settings.reactions_enabled
         self.reminder_channel_id = new_settings.reminder_channel_id
@@ -107,6 +113,7 @@ class User():
             helper_raid_names_enabled: bool
             helper_upgrades_enabled: bool
             idlucks: int
+            inventory_guild_seal: int
             last_claim_time: datetime UTC aware
             reactions_enabled: bool
             reminder_channel_id: Optional[int] = None
@@ -173,6 +180,7 @@ async def _dict_to_user(record: dict) -> User:
             helper_raid_names_enabled = bool(record['helper_raid_names_enabled']),
             helper_upgrades_enabled = bool(record['helper_upgrades_enabled']),
             idlucks = record['idlucks'],
+            inventory = UserInventory(guild_seal=(record['inventory_guild_seal'])),
             last_claim_time = last_claim_time,
             reactions_enabled = bool(record['reactions_enabled']),
             reminder_channel_id = record['reminder_channel_id'],
@@ -329,6 +337,7 @@ async def _update_user(user: User, **kwargs) -> None:
         helper_raid_names_enabled: bool
         helper_upgrades_enabled: bool
         idlucks: int
+        inventory_guild_seal: int
         last_claim_time: datetime UTC aware
         reactions_enabled: bool
         reminder_channel_id: Optional[int] = None

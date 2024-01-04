@@ -61,7 +61,7 @@ async def create_reminder(message: discord.Message, embed_data: Dict, user: Opti
         user_command = await functions.get_game_command(user_settings, 'daily')
         current_time = utils.utcnow()
         midnight_today = utils.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
-        end_time = midnight_today + timedelta(days=1, seconds=random.randint(60, 300))
+        end_time = midnight_today + timedelta(days=1, seconds=random.randint(0, 600))
         time_left = end_time - current_time + timedelta(hours=user_settings.reminders_daily_offset)
         if time_left < timedelta(0): return add_reaction
         reminder_message = (
@@ -71,7 +71,7 @@ async def create_reminder(message: discord.Message, embed_data: Dict, user: Opti
         )
         reminder: reminders.Reminder = (
             await reminders.insert_user_reminder(user.id, 'daily', time_left,
-                                            message.channel.id, reminder_message)
+                                                 message.channel.id, reminder_message)
         )
         if user_settings.reactions_enabled and reminder.record_exists: add_reaction = True
     return add_reaction

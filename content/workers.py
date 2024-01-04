@@ -72,9 +72,10 @@ async def embed_workers_list(ctx: Union[discord.ApplicationContext, commands.Con
         worker_emoji = getattr(emojis, f'WORKER_{worker_name}_A'.upper(), emojis.WARNING)
         worker_power = round(worker_power, 2)
         if worker_name not in strings.WORKER_TYPES_RAID: continue
+        worker_power_str = f'{worker_power:,g}'.rjust(8)
         field_workers_by_type = (
             f'{field_workers_by_type}\n'
-            f'{worker_emoji} - {worker_power:,g} {emojis.WORKER_POWER}'
+            f'{worker_emoji} `{worker_power_str}`{emojis.WORKER_POWER}'
         )
     for worker_name, worker_power in workers_by_power.items():
         worker_emoji = getattr(emojis, f'WORKER_{worker_name}_A'.upper(), emojis.WARNING)
@@ -83,13 +84,14 @@ async def embed_workers_list(ctx: Union[discord.ApplicationContext, commands.Con
             top_3_power += worker_power
             top_3_count += 1
         worker_power = round(worker_power, 2)
+        worker_power_str = f'{worker_power:,g}'.rjust(8)
         field_workers_by_power = (
             f'{field_workers_by_power}\n'
-            f'{worker_emoji} - {worker_power:,g} {emojis.WORKER_POWER}'
+            f'{worker_emoji} `{worker_power_str}`{emojis.WORKER_POWER}'
         )
     embed = discord.Embed(
         title = f'{ctx.author.display_name}\'s workers',
-        description = f'Top 3 power: **{round(top_3_power, 2)}** {emojis.WORKER_POWER}',
+        description = f'Top 3 power: **`{round(top_3_power, 2):,g}`** {emojis.WORKER_POWER}',
         color = settings.EMBED_COLOR,
     )
     embed.add_field(

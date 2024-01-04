@@ -148,8 +148,11 @@ async def embed_codes():
     field_no = 1
     codes = {field_no: ''}
     all_codes = await codes_db.get_all_codes()
+    max_length = 1
+    for code in all_codes:
+        if len(code.code) > max_length: max_length = len(code.code)
     for code in sorted(all_codes):
-        code_value = f'{emojis.BP} `{code.code}`{emojis.BLANK}{code.contents}'
+        code_value = f'{emojis.BP} `{code.code.ljust(max_length)}`{emojis.BLANK}{code.contents}'
         if len(codes[field_no]) + len(code_value) > 1020:
             field_no += 1
             codes[field_no] = ''

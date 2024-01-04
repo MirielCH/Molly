@@ -11,7 +11,7 @@ from discord import utils
 from humanfriendly import format_timespan
 
 from database import cooldowns, guilds, reminders, users
-from resources import emojis, exceptions, functions, modals, strings, views
+from resources import emojis, exceptions, functions, modals, settings, strings, views
 
 
 # --- Miscellaneous ---
@@ -126,13 +126,16 @@ class ManageClanSettingsSelect(discord.ui.Select):
     def __init__(self, view: discord.ui.View, row: Optional[int] = None):
         options = []
         reminder_emoji = emojis.ENABLED if view.clan_settings.reminder_enabled else emojis.DISABLED
-        options.append(discord.SelectOption(label=f'Reminder',
+        alert_contribution_emoji = emojis.ENABLED if view.clan_settings.alert_contribution_enabled else emojis.DISABLED
+        options.append(discord.SelectOption(label='Teamraid reminder',
                                             value='toggle_reminder', emoji=reminder_emoji))
-        options.append(discord.SelectOption(label='Add this channel as reminder channel',
+        options.append(discord.SelectOption(label='Contribution alert',
+                                            value='toggle_alert_contribution', emoji=alert_contribution_emoji))
+        options.append(discord.SelectOption(label='Add this channel as guild channel',
                                             value='set_channel', emoji=emojis.ADD))
-        options.append(discord.SelectOption(label='Remove reminder channel',
+        options.append(discord.SelectOption(label='Remove guild channel',
                                             value='reset_channel', emoji=emojis.REMOVE))
-        options.append(discord.SelectOption(label='Remove reminder role',
+        options.append(discord.SelectOption(label='Remove guild role',
                                             value='reset_role', emoji=emojis.REMOVE))
         options.append(discord.SelectOption(label='Set reminder offset',
                                             value='set_offset'))
@@ -155,11 +158,19 @@ class ManageClanSettingsSelect(discord.ui.Select):
         if select_value == 'toggle_reminder':
             if (not self.view.clan_settings.reminder_enabled
                 and (self.view.clan_settings.reminder_channel_id is None or self.view.clan_settings.reminder_role_id is None)):
-                await interaction.response.send_message('You need to set a reminder channel and a role first.', ephemeral=True)
+                await interaction.response.send_message('You need to set a guild channel and a role first.', ephemeral=True)
                 embed = await self.view.embed_function(self.view.bot, self.view.ctx, self.view.clan_settings)
                 await interaction.message.edit(embed=embed, view=self.view)
                 return
             await self.view.clan_settings.update(reminder_enabled=not self.view.clan_settings.reminder_enabled)
+        elif select_value == 'toggle_alert_contribution':
+            if (not self.view.clan_settings.alert_contribution_enabled
+                and (self.view.clan_settings.reminder_channel_id is None or self.view.clan_settings.reminder_role_id is None)):
+                await interaction.response.send_message('You need to set a guild channel and a role first.', ephemeral=True)
+                embed = await self.view.embed_function(self.view.bot, self.view.ctx, self.view.clan_settings)
+                await interaction.message.edit(embed=embed, view=self.view)
+                return
+            await self.view.clan_settings.update(alert_contribution_enabled=not self.view.clan_settings.alert_contribution_enabled)
         elif select_value == 'set_channel':
             confirm_view = views.ConfirmCancelView(self.view.ctx, styles=[discord.ButtonStyle.blurple, discord.ButtonStyle.grey])
             confirm_interaction = await interaction.response.send_message(
@@ -251,7 +262,7 @@ class ManageClanSettingsSelect(discord.ui.Select):
 class SetClanReminderRoleSelect(discord.ui.Select):
     """Select to change the clan reminder role"""
     def __init__(self, view: discord.ui.View, disabled: Optional[bool] = False, row: Optional[int] = None):
-        super().__init__(select_type=discord.ComponentType.role_select, placeholder='Select reminder role', min_values=1, max_values=1, row=row,
+        super().__init__(select_type=discord.ComponentType.role_select, placeholder='Select guild role', min_values=1, max_values=1, row=row,
                          custom_id='set_clan_role', disabled=disabled)
 
     async def callback(self, interaction: discord.Interaction):
@@ -546,7 +557,7 @@ class SetReminderMessageButton(discord.ui.Button):
                 followup_message = await interaction.followup.send('Aborted.')
                 await followup_message.delete(delay=3)
                 return
-            if len(new_message) > 1024:
+            if len(new_message) > 200:
                 await interaction.delete_original_response(delay=5)
                 followup_message = await interaction.followup.send(
                     'This is a command to set a new message, not to write a novel :thinking:',
@@ -1291,3 +1302,55 @@ class SetEnergyReminder(discord.ui.Select):
                 await interaction.message.edit(view=self.view)
             else:
                 await interaction.response.edit_message(view=self.view)
+
+
+class ClanMembersViewSelect(discord.ui.Select):
+    """Clan Members List Sort Select"""
+    def __init__(self, row: Optional[int] = None):
+        options = [
+            discord.SelectOption(label='Top 3 power', value='0', emoji='💥'),
+            discord.SelectOption(label='Guild seals', value='1', emoji=emojis.GUILD_SEAL),
+        ]
+        super().__init__(placeholder='Switch view ...', min_values=1, max_values=1, options=options, row=row,
+                         custom_id='select_view')
+
+    async def callback(self, interaction: discord.Interaction):
+        self.view.current_view = int(self.values[0])
+        embeds = await self.view.embed_function(self.view.clan_settings, self.view.current_view, self.view.sort_key)
+        image = discord.MISSING
+        if len(embeds) > 1:
+            image = discord.File(settings.IMG_EMBED_WIDTH_LINE, filename='embed_width_line.png')
+        for child in self.view.children:
+            if child.custom_id == 'select_sort_key':
+                options = []
+                for sort_method, (sort_key, emoji) in self.view.sort_keys[self.view.current_view].items():
+                    options.append(discord.SelectOption(label=sort_method, value=sort_key, emoji=emoji))
+                child.options = options
+                break
+        await interaction.response.edit_message(embeds=embeds, view=self.view, file=image)
+
+
+class ClanMembersViewSortSelect(discord.ui.Select):
+    """Clan Members List Sort Select"""
+    def __init__(self, view: discord.ui.View, sort_keys: Dict[int, Dict[str, str]], row: Optional[int] = None):
+        self.sort_keys = sort_keys
+        options = []
+        for sort_method, (sort_key, emoji) in sort_keys[view.current_view].items():
+            options.append(discord.SelectOption(label=sort_method, value=sort_key, emoji=emoji))
+        super().__init__(placeholder='Sort by ...', min_values=1, max_values=1, options=options, row=row,
+                         custom_id='select_sort_key')
+
+    async def callback(self, interaction: discord.Interaction):
+        self.view.sort_key = self.values[0]
+        for child in self.view.children:
+            if child.custom_id == 'select_sort_key':
+                options = []
+                for sort_method, (sort_key, emoji) in self.sort_keys[self.view.current_view].items():
+                    options.append(discord.SelectOption(label=sort_method, value=sort_key, emoji=emoji))
+                child.options = options
+                break
+        embeds = await self.view.embed_function(self.view.clan_settings, self.view.current_view, self.view.sort_key)
+        image = discord.MISSING
+        if len(embeds) > 1:
+            image = discord.File(settings.IMG_EMBED_WIDTH_LINE, filename='embed_width_line.png')
+        await interaction.response.edit_message(embeds=embeds, view=self.view, file=image)

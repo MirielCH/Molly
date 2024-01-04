@@ -48,7 +48,7 @@ async def track_upgrades_overview(message: discord.Message, embed_data: Dict, us
             user_settings: users.User = await users.get_user(user.id)
         except exceptions.FirstTimeUserError:
             return add_reaction
-        if not user_settings.bot_enabled or not user_settings.helper_context_enabled: return add_reaction
+        if not user_settings.bot_enabled: return add_reaction
         for field in message.embeds[0].fields:
             data_match = re.search(r'^`(\d+)`.+__\*\*(.+?)\*\*.+level\*\*:\s(\d+)\s\|', field.value.lower(), re.DOTALL)
             sort_index = int(data_match.group(1))

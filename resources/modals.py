@@ -353,7 +353,7 @@ class SetClanReminderOffsetModal(Modal):
             clan_reminder: reminders.Reminder = await reminders.get_clan_reminder(self.view.clan_settings.clan_name)
             current_time = utils.utcnow()
             midnight_today = utils.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
-            end_time = midnight_today + timedelta(days=1, seconds=random.randint(60, 300))
+            end_time = midnight_today + timedelta(days=1, seconds=random.randint(0, 600))
             time_left = end_time - current_time + timedelta(hours=hours)
             await clan_reminder.update(end_time=current_time + time_left)
         except exceptions.NoDataFoundError:
@@ -390,7 +390,7 @@ class SetDailyReminderOffsetModal(Modal):
             daily_reminder: reminders.Reminder = await reminders.get_user_reminder(self.view.user.id, 'daily')
             current_time = utils.utcnow()
             midnight_today = utils.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
-            end_time = midnight_today + timedelta(days=1, seconds=random.randint(60, 300))
+            end_time = midnight_today + timedelta(days=1, seconds=random.randint(0, 600))
             time_left = end_time - current_time + timedelta(hours=hours)
             await daily_reminder.update(end_time=current_time + time_left)
         except exceptions.NoDataFoundError:
@@ -399,7 +399,7 @@ class SetDailyReminderOffsetModal(Modal):
             shop_reminders = await reminders.get_active_user_reminders(self.view.user.id, 'shop')
             current_time = utils.utcnow()
             midnight_today = utils.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
-            end_time = midnight_today + timedelta(days=1, seconds=random.randint(60, 300))
+            end_time = midnight_today + timedelta(days=1, seconds=random.randint(0, 600))
             time_left = end_time - current_time + timedelta(hours=hours)
             for reminder in shop_reminders:
                 await reminder.update(end_time=current_time + time_left)

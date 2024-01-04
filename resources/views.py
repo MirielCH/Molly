@@ -2,13 +2,13 @@
 """Contains global interaction views"""
 
 import random
-from typing import Dict, List, Optional, Union
+from typing import Callable, Dict, List, Optional, Union
 
 import discord
 from discord.ext import commands
 
 from database import clans, cooldowns, guilds, reminders, users
-from resources import components, functions, settings, strings
+from resources import components, emojis, functions, settings, strings
 
 
 # --- Miscellaneous ---
@@ -675,4 +675,61 @@ class ProfileTimersView(discord.ui.View):
     async def on_timeout(self) -> None:
         self.disable_all_items()
         await self.message.edit(view=self)
+        self.stop()
+
+
+class ClanMembersView(discord.ui.View):
+    """View with a sort select.
+    Also needs the interaction of the response with the view, so do TopicView.interaction = await ctx.respond('foo').
+
+    Arguments
+    ---------
+    ctx: Context.
+    topics: Topics to select from - dict (description: function). The functions need to return an embed and have no
+    arguments
+    active_topic: Currently chosen topic
+
+    Returns
+    -------
+    'timeout if timed out.
+    None otherwise.
+    """
+    def __init__(self, ctx: discord.ApplicationContext, clan_settings: clans.Clan, current_view: int,
+                 embed_function: Callable, sort_key: Optional[str] = None,
+                 interaction_message: Optional[Union[discord.Message, discord.Interaction]] = None):
+        super().__init__(timeout=settings.INTERACTION_TIMEOUT)
+        self.value = None
+        self.ctx = ctx
+        self.interaction_message = interaction_message
+        self.user = ctx.author
+        self.clan_settings = clan_settings
+        self.current_view = current_view
+        self.sort_key = sort_key
+        self.embed_function = embed_function
+        self.add_item(components.ClanMembersViewSelect())
+        sort_keys = {
+            0: {
+                'Top 3 power': ('top_3_power', '💥'),
+                'Teamfarm life upgrade': ('teamfarm_life', emojis.IDLONS),
+                },
+            1: {
+                'Guild seals contributed': ('guild_seals_contributed', emojis.GUILD_SEAL_CONTRIBUTED),
+                'Guild seals in inventory': ('guild_seals_inventory', emojis.GUILD_SEAL_INVENTORY),
+                },
+        }
+        self.sort_keys = sort_keys
+        self.add_item(components.ClanMembersViewSortSelect(self, sort_keys))
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user != self.user:
+            await interaction.response.send_message(random.choice(strings.MSG_INTERACTION_ERRORS), ephemeral=True)
+            return False
+        return True
+
+    async def on_timeout(self) -> None:
+        self.disable_all_items()
+        if isinstance(self.ctx, discord.ApplicationContext):
+            await functions.edit_interaction(self.interaction_message, view=self)
+        else:
+            await self.interaction_message.edit(view=self)
         self.stop()

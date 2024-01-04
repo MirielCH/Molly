@@ -57,7 +57,17 @@ async def process_claim_message(bot: discord.Bot, message: discord.Message, embe
             except exceptions.FirstTimeUserError:
                 return add_reaction
         if not user_settings.bot_enabled: return add_reaction
-        await user_settings.update(last_claim_time=message.created_at, time_speeders_used=0, time_compressors_used=0)
+        claim_fields = ''
+        for field in message.embeds[0].fields:
+            claim_fields = f'{claim_fields}\n{field.value}'.strip()
+            guild_seal_count_match = re.search(r"\+([0-9,]+) <:guildseal", claim_fields.lower())
+            if guild_seal_count_match:
+                guild_seal_count = int(guild_seal_count_match.group(1).replace(',',''))
+                guild_seal_count = user_settings.inventory.guild_seal + guild_seal_count
+            else:
+                guild_seal_count = user_settings.inventory.guild_seal
+        await user_settings.update(last_claim_time=message.created_at, time_speeders_used=0, time_compressors_used=0,
+                                   inventory_guild_seal=guild_seal_count)
         try:
             await functions.change_user_energy(user_settings, -5)
             if not user_settings.reminder_claim.enabled and user_settings.reactions_enabled: add_reaction = True

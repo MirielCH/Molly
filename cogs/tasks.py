@@ -141,6 +141,7 @@ class TasksCog(commands.Cog):
         self.schedule_tasks.start()
         self.consolidate_tracking_log.start()
         self.delete_old_messages_from_cache.start()
+        self.reset_guild_seal_contributions.start()
 
     # Tasks
     @tasks.loop(seconds=0.5)
@@ -221,6 +222,27 @@ class TasksCog(commands.Cog):
         deleted_messages_count = await messages.delete_old_messages(timedelta(minutes=10))
         if settings.DEBUG_MODE:
             logs.logger.debug(f'Deleted {deleted_messages_count} messages from message cache.')
+
+    @tasks.loop(seconds=60)
+    async def reset_guild_seal_contributions(self) -> None:
+        """Task that resets the guild seal contributions"""
+        current_time = utils.utcnow()
+        if (
+            (current_time.weekday() == 0)
+            and
+            (current_time.hour == 0)
+            and
+            (current_time.minute == 0)
+        ):  
+            try:
+                all_clans = await clans.get_all_clans()
+            except exceptions.NoDataFoundError:
+                return
+            for clan in all_clans:
+                for clan_member in clan.members:
+                    if clan_member.guild_seals_contributed == 0: continue
+                    await clans.update_clan_member(clan_member.user_id, guild_seals_contributed=0)
+                    await asyncio.sleep(0.01)
 
 # Initialization
 def setup(bot):

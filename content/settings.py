@@ -392,6 +392,7 @@ async def embed_settings_clan(bot: discord.Bot, ctx: discord.ApplicationContext,
     """Clan settings embed"""
     teamraid_enabled = await functions.bool_to_text(clan_settings.helper_teamraid_enabled)
     reminder_enabled = await functions.bool_to_text(clan_settings.reminder_enabled)
+    alert_contribution_enabled = await functions.bool_to_text(clan_settings.alert_contribution_enabled)
     if clan_settings.reminder_channel_id is not None:
         clan_channel = f'<#{clan_settings.reminder_channel_id}>'
     else:
@@ -406,11 +407,13 @@ async def embed_settings_clan(bot: discord.Bot, ctx: discord.ApplicationContext,
         f'{emojis.BP} **Owner**: <@{clan_settings.leader_id}>\n'
     )
     reminder = (
-        f'{emojis.BP} **Reminder**: {reminder_enabled}\n'
-        f'{emojis.BP} **Reminder channel**: {clan_channel}\n'
-        f'{emojis.DETAIL} _Reminders will always be sent to this channel._\n'
-        f'{emojis.BP} **Reminder role**: {clan_role}\n'
-        f'{emojis.DETAIL2} _This role will be pinged by the reminder._\n'
+        f'{emojis.BP} **Teamraid reminder**: {reminder_enabled}\n'
+        f'{emojis.BP} **Contribution alert**: {alert_contribution_enabled}\n'
+        f'{emojis.DETAIL} _Sends an alert whenever a new guild buff is unlocked._\n'
+        f'{emojis.BP} **Guild channel**: {clan_channel}\n'
+        f'{emojis.DETAIL} _Reminders and alerts will be sent to this channel._\n'
+        f'{emojis.BP} **Guild role**: {clan_role}\n'
+        f'{emojis.DETAIL2} _This role will be pinged by reminders and alerts._\n'
         f'{emojis.DETAIL} _Requires `Manage Server` permission or approval._\n'
         f'{emojis.BP} **Reminder offset**: `{clan_settings.reminder_offset:g}`h\n'
         f'{emojis.DETAIL2} _The offset is added to the reminder which normally triggers at 00:00 UTC._\n'
@@ -425,8 +428,8 @@ async def embed_settings_clan(bot: discord.Bot, ctx: discord.ApplicationContext,
         color = settings.EMBED_COLOR,
         title = f'{clan_settings.clan_name.upper()} guild settings',
         description = (
-            f'_Settings to set up a guild reminder for the whole guild._\n'
-            f'_Molly will ping the set guild role when the reminder is ready._'
+            f'_Settings to set up guild reminders and alerts for the whole guild._\n'
+            f'_Molly will ping the set guild role._'
         )
     )
     embed.add_field(name='Overview', value=overview, inline=False)

@@ -215,10 +215,10 @@ async def call_teamraid_helper(bot: discord.Bot, message: discord.Message, embed
                 worker_emoji = getattr(emojis, f'WORKER_{worker_type}_A'.upper(), emojis.WARNING)
                 if user_workers is None or user_settings is None:
                     workers_incomplete = True
-                    current_worker = f'{worker_emoji} - **?** {emojis.WORKER_POWER}'
+                    current_worker = f'{worker_emoji} `       ?`{emojis.WORKER_POWER}'
                 elif not user_settings.bot_enabled:
                     workers_incomplete = True
-                    current_worker = f'{worker_emoji} - **?** {emojis.WORKER_POWER}'
+                    current_worker = f'{worker_emoji} `       ?`{emojis.WORKER_POWER}'
                 else:
                     worker_power = (
                         ((strings.WORKER_STATS[worker_type]['speed'] + strings.WORKER_STATS[worker_type]['strength']
@@ -227,7 +227,8 @@ async def call_teamraid_helper(bot: discord.Bot, message: discord.Message, embed
                     )
                     user_workers_power[teamraid_user.name][worker_type] = worker_power
                     worker_power = round(worker_power, 2)
-                    current_worker = f'{worker_emoji} - **{worker_power:,g}** {emojis.WORKER_POWER}'
+                    worker_power_str = f'{worker_power:,g}'.rjust(8)
+                    current_worker = f'{worker_emoji} `{worker_power_str}`{emojis.WORKER_POWER}'
                 field_workers = (
                     f'{field_workers}\n'
                     f'{current_worker}'
@@ -251,7 +252,7 @@ async def call_teamraid_helper(bot: discord.Bot, message: discord.Message, embed
             worker_power = 1
             field_enemies = (
                 f'{field_enemies}\n'
-                f'{enemy_emoji} - needs **{enemy_damage_required:,g}** {emojis.WORKER_POWER} to one-shot'
+                f'{enemy_emoji} - needs `{enemy_damage_required:,g}`{emojis.WORKER_POWER} to one-shot'
             )
             enemies_power.keys()
             if (list(enemies_power.keys()).index(enemy_type) + 1) % 3 == 0: field_enemies = f'{field_enemies}\n'
@@ -271,16 +272,12 @@ async def call_teamraid_helper(bot: discord.Bot, message: discord.Message, embed
                 recommended_worker_type = list(recommended_worker[recommended_worker_user].keys())[0]
                 recommended_worker_emoji = getattr(emojis, f'WORKER_{recommended_worker_type}_A'.upper(), emojis.WARNING)
                 recommended_worker_power = round(recommended_worker[recommended_worker_user][recommended_worker_type], 2)
-                field_workers = (
-                    f'{field_workers}\n'
-                    f'{worker_emoji} - **{worker_power:,g}** {emojis.WORKER_POWER}'
-                )
                 embed.insert_field_at(
                     0,
                     name = 'Next worker recommendation',
                     value = (
                         f'{recommended_worker_emoji} **{recommended_worker_user}** - '
-                        f'**{recommended_worker_power:,g}** {emojis.WORKER_POWER}\n'
+                        f'**`{recommended_worker_power:,g}`**{emojis.WORKER_POWER}\n'
                         f'{emojis.BLANK}'
                     ),
                     inline = False
@@ -313,7 +310,7 @@ async def call_teamraid_helper(bot: discord.Bot, message: discord.Message, embed
         embed.insert_field_at(
             index=2,
             name = clan_settings.clan_name.upper(),
-            value = '_If a worker power shows as **?**, the player is not using Molly or has not shown me their workers list._',
+            value = '_If a worker power shows as `?`, the player is not using Molly or has not shown me their workers list._',
             inline = False
         )
         message_helper = await message.reply(embed=embed)
@@ -367,7 +364,7 @@ async def call_teamraid_helper(bot: discord.Bot, message: discord.Message, embed
                         else:
                             field_enemies = (
                                 f'{field_enemies}\n'
-                                f'{enemy_emoji} - needs **{enemy_damage_required:,g}** {emojis.WORKER_POWER} to one-shot'
+                                f'{enemy_emoji} - needs `{enemy_damage_required:,g}`{emojis.WORKER_POWER} to one-shot'
                             )
                         if (list(enemies_power.keys()).index(enemy_type) + 1) % 3 == 0: field_enemies = f'{field_enemies}\n'
                     embed.insert_field_at(
@@ -431,7 +428,7 @@ async def call_teamraid_helper(bot: discord.Bot, message: discord.Message, embed
                         else:
                             field_enemies = (
                                 f'{field_enemies}\n'
-                                f'{enemy_emoji} - needs **{enemy_damage_required:,g}** {emojis.WORKER_POWER} to one-shot'
+                                f'{enemy_emoji} - needs `{enemy_damage_required:,g}`{emojis.WORKER_POWER} to one-shot'
                             )
                         enemy_count += 1    
                         if (list(enemies_power.keys()).index(enemy_type) + 1) % 3 == 0: field_enemies = f'{field_enemies}\n'
@@ -468,14 +465,25 @@ async def create_clan_reminder(message: discord.Message, embed_data: Dict, clan_
     search_strings_description = [
         'estimated raid worth', #English
     ]
-    search_strings_field1 = [
+    search_strings_teamraid = [
         '🔱',
         ':trident:',
     ]
+    field_values = (
+        f"{embed_data['field0']['value']}\n"
+        f"{embed_data['field1']['value']}\n"
+        f"{embed_data['field2']['value']}\n"
+        f"{embed_data['field3']['value']}\n"
+        f"{embed_data['field4']['value']}\n"
+        f"{embed_data['field5']['value']}"
+    )
     if (any(search_string in embed_data['description'].lower() for search_string in search_strings_description)
-        and any(search_string in embed_data['field1']['value'] for search_string in search_strings_field1)):
-        clan_name_match = re.search(r"^\*\*(.+?)\*\*'s", embed_data['field1']['value'])
+        and any(search_string in field_values.lower() for search_string in search_strings_teamraid)):
         if clan_settings is None:
+            clan_name_match = None
+            for line in field_values.split('\n'):
+                clan_name_match = re.search(r"^\*\*(.+?)\*\*:", line)
+                if clan_name_match: break
             try:
                 clan_settings: clans.Clan = await clans.get_clan_by_clan_name(clan_name_match.group(1))
             except exceptions.NoDataFoundError:
@@ -484,7 +492,7 @@ async def create_clan_reminder(message: discord.Message, embed_data: Dict, clan_
         clan_command = strings.SLASH_COMMANDS['teamraid']
         current_time = utils.utcnow()
         midnight_today = utils.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
-        end_time = midnight_today + timedelta(days=1, seconds=random.randint(60, 300))
+        end_time = midnight_today + timedelta(days=1, seconds=random.randint(0, 600))
         time_left = end_time - current_time + timedelta(hours=clan_settings.reminder_offset)
         if time_left < timedelta(0): return add_reaction
         reminder_message = clan_settings.reminder_message.replace('{command}', clan_command)

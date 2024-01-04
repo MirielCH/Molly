@@ -1,6 +1,7 @@
 # activities.py
 
 from datetime import timedelta
+import random
 import re
 from typing import Dict, Optional
 
@@ -77,6 +78,8 @@ async def update_reminders_from_activities_list(message: discord.Message, embed_
             cd_message = cooldown[2]
             time_left = await functions.parse_timestring_to_timedelta(cd_timestring)
             if time_left <= timedelta(seconds=1): continue
+            if cd_activity == 'daily':
+                time_left += timedelta(seconds=random.randint(0, 600))
             reminder: reminders.Reminder = (
                 await reminders.insert_user_reminder(interaction_user.id, cd_activity, time_left,
                                                      message.channel.id, cd_message)

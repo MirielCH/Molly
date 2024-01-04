@@ -265,9 +265,10 @@ async def call_raid_helper(bot: discord.Bot, message: discord.Message, embed_dat
             for worker_name, worker_power in workers_power.items():
                 worker_emoji = getattr(emojis, f'WORKER_{worker_name}_A'.upper(), emojis.WARNING)
                 worker_power = round(worker_power, 2)
+                worker_power_str = f'{worker_power:,g}'.rjust(8)
                 field_workers = (
                     f'{field_workers}\n'
-                    f'{worker_emoji} - **{worker_power:,g}** {emojis.WORKER_POWER}'
+                    f'{worker_emoji} `{worker_power_str}`{emojis.WORKER_POWER}'
                 )
             field_workers = '\n'.join(reversed(field_workers.split('\n')))
             embed.add_field(
@@ -280,9 +281,10 @@ async def call_raid_helper(bot: discord.Bot, message: discord.Message, embed_dat
             for enemy_name, enemy_power_hp in enemies_power.items():
                 enemy_emoji = getattr(emojis, f'WORKER_{enemy_name}_A'.upper(), emojis.WARNING)
                 enemy_power = round(enemy_power_hp[0], 2)
+                enemy_power_str = f'{enemy_power:,g}'.rjust(8)
                 field_enemies = (
                     f'{field_enemies}\n'
-                    f'{enemy_emoji} - **{enemy_power:,g}** {emojis.WORKER_POWER}'
+                    f'{enemy_emoji} `{enemy_power_str}`{emojis.WORKER_POWER}'
                 )
             embed.add_field(
                 name = 'Enemy farms',
@@ -416,9 +418,20 @@ async def track_raid(message: discord.Message, embed_data: Dict, user: Optional[
         '🔱',
         ':trident:',
     ]
+    field_values = (
+        f"{embed_data['field0']['value']}\n"
+        f"{embed_data['field1']['value']}\n"
+        f"{embed_data['field2']['value']}\n"
+        f"{embed_data['field3']['value']}\n"
+        f"{embed_data['field4']['value']}\n"
+        f"{embed_data['field5']['value']}"
+    )
     if (any(search_string in embed_data['description'].lower() for search_string in search_strings)
-        and all(search_string not in embed_data['field1']['value'] for search_string in search_strings_excluded)):
-        user_name_amount_match = re.search(r'^\*\*(.+?)\*\*: (.+?) <:', embed_data['field1']['value'])
+        and all(search_string not in field_values.lower() for search_string in search_strings_excluded)):
+        user_name_amount_match = None
+        for line in field_values.split('\n'):
+            user_name_amount_match = re.search(r'^\*\*(.+?)\*\*: (.+?) <:', line)
+            if user_name_amount_match: break
         user_name, amount = user_name_amount_match.groups()
         if user is None:
             user_command_message = (
