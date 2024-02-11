@@ -448,7 +448,10 @@ async def call_teamraid_helper(bot: discord.Bot, message: discord.Message, embed
                         f'--- Teamraid against {enemy_name} ---\n'
                         f'Teamraid completed'
                     )
-                await message_helper.edit(embed=embed)
+                try:
+                    await message_helper.edit(embed=embed)
+                except discord.NotFound:
+                    return add_reaction
                 if not active_component: break
 
 

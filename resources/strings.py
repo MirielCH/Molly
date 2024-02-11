@@ -317,6 +317,9 @@ ACTIVITIES_BOOSTS = (
     'bad-spooker',
     'christmas-spirit',
     'good-spooker',
+    'mega-boost',
+    'party-popper',
+    'payday',
     'spooked',
     'spooker',
 )

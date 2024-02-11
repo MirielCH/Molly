@@ -11,7 +11,8 @@ from resources import emojis, exceptions, settings, strings, views
 
 
 # --- Commands ---
-async def command_clan_members(bot: discord.Bot, ctx: Union[discord.ApplicationContext, commands.Context]) -> None:
+async def command_clan_members(bot: discord.Bot, ctx: Union[discord.ApplicationContext, commands.Context],
+                               current_view: int) -> None:
     """Clan list command"""
     user_settings: users.User = await users.get_user(ctx.author.id)
     try:
@@ -26,8 +27,8 @@ async def command_clan_members(bot: discord.Bot, ctx: Union[discord.ApplicationC
         else:
             await ctx.respond(msg_error)
         return
-    view = views.ClanMembersView(ctx, clan_settings, 0, embeds_clan_members)
-    embeds = await embeds_clan_members(clan_settings)
+    view = views.ClanMembersView(ctx, clan_settings, current_view, embeds_clan_members)
+    embeds = await embeds_clan_members(clan_settings, current_view=current_view)
     image = None
     if len(embeds) > 1:
         image = discord.File(settings.IMG_EMBED_WIDTH_LINE, filename='embed_width_line.png')
@@ -47,12 +48,14 @@ async def embeds_clan_members(clan_settings: clans.Clan, current_view: Optional[
     members = {}
     members_disabled = []
     members_no_upgrades = []
+    members_no_workers = []
     members_not_registered = []
-    guild_seals_total = 0
+    guild_seals_contributed_total = guild_seals_inventory_total = 0
     for clan_member in clan_settings.members:
-        guild_seals_total += clan_member.guild_seals_contributed
+        guild_seals_contributed_total += clan_member.guild_seals_contributed
         try:
             member_settings: users.User = await users.get_user(clan_member.user_id)
+            guild_seals_inventory_total += member_settings.inventory.guild_seal
             if not member_settings.bot_enabled:
                 members_disabled.append(clan_member)
                 continue
@@ -62,7 +65,11 @@ async def embeds_clan_members(clan_settings: clans.Clan, current_view: Optional[
             except exceptions.NoDataFoundError:
                 members_no_upgrades.append(clan_member)
                 continue
-            member_workers = await workers.get_user_workers(clan_member.user_id)
+            try:
+                member_workers = await workers.get_user_workers(clan_member.user_id)
+            except exceptions.NoDataFoundError:
+                members_no_workers.append(clan_member)
+                continue
             worker_levels = {member_worker.worker_name: member_worker.worker_level for member_worker in member_workers}
             workers_power = {}
             for worker_name, worker_level in worker_levels.items():
@@ -84,21 +91,21 @@ async def embeds_clan_members(clan_settings: clans.Clan, current_view: Optional[
                 'guild_seals_contributed': clan_member.guild_seals_contributed,
                 'teamfarm_life': teamfarm_life_level
             }
-        except (exceptions.FirstTimeUserError, exceptions.NoDataFoundError):
+        except exceptions.FirstTimeUserError:
             members_not_registered.append(clan_member)
     field_no = 1
     fields_members = {field_no: ''}
     if current_view == 0:
         current_view_name = 'Top 3 power'
         if sort_key is None: sort_key = 'top_3_power'
-        description = None
+        overview = None
     if current_view == 1:
         current_view_name = 'Guild seals'
         if sort_key is None: sort_key = 'guild_seals_contributed'
         unlocked_guild_buff = 'No buff'
         next_threshold = 5
         for index, threshold in enumerate(strings.GUILD_BUFF_THRESHOLDS):
-            if guild_seals_total >= threshold:
+            if guild_seals_contributed_total >= threshold:
                 unlocked_guild_buff = f'Guild buff {strings.NUMBERS_INTEGER_ROMAN[index + 1].upper()}'
                 if threshold == strings.GUILD_BUFF_THRESHOLDS[-1]:
                     next_threshold = -1
@@ -106,24 +113,29 @@ async def embeds_clan_members(clan_settings: clans.Clan, current_view: Optional[
                     next_threshold = strings.GUILD_BUFF_THRESHOLDS[index + 1]
             else:
                 break
-        description = (
-            f'**`{guild_seals_total:,}`** {emojis.GUILD_SEAL} contributed (**{unlocked_guild_buff}**)'
+        overview = (
+            f'**`{guild_seals_contributed_total:,}`** {emojis.GUILD_SEAL_CONTRIBUTED} contributed (**{unlocked_guild_buff}**)'
         )
         if next_threshold > -1:
-            description = (
-                f'{description}\n'
-                f'➜ Next buff at `{next_threshold}` {emojis.GUILD_SEAL}\n'
+            overview = (
+                f'{overview}\n'
+                f'{emojis.DETAIL} Next buff unlocked at `{next_threshold:,}` {emojis.GUILD_SEAL}'
             )
         else:
-            description = (
-                f'{description}\n'
-                f'➜ All buffs unlocked!'
+            overview = (
+                f'{overview}\n'
+                f'{emojis.DETAIL} All buffs unlocked!'
             )
+        overview = (
+            f'{overview}\n'
+            f'**`{guild_seals_inventory_total:,}`** {emojis.GUILD_SEAL_INVENTORY} found in inventories'
+        )
     embed = discord.Embed(
         color = settings.EMBED_COLOR,
         title = f'{clan_settings.clan_name.upper()} - {current_view_name}',
-        description = description,
     )
+    if overview is not None:
+        embed.add_field(name='Overview', value=overview)
     if members:
         members = dict(sorted(members.items(), key=lambda x:x[1][sort_key], reverse=True))
         for member_id, member_data in members.items():
@@ -156,7 +168,7 @@ async def embeds_clan_members(clan_settings: clans.Clan, current_view: Optional[
         field_name = f'Members ({field_no})' if field_no > 1 else 'Members'
         embed.add_field(name=field_name, value=field.strip(), inline=False)
     embeds.append(embed)
-    if members_not_registered or members_no_upgrades or members_disabled:
+    if members_not_registered or members_no_upgrades or members_no_workers or members_disabled:
         embed = discord.Embed(color=settings.EMBED_COLOR)
     if members_disabled:
         field_members_disabled = ''
@@ -175,6 +187,26 @@ async def embeds_clan_members(clan_settings: clans.Clan, current_view: Optional[
             name = 'Members who have Molly disabled',
             value = (
                 f'{field_members_disabled.strip()}'
+            ),
+            inline = False
+        )
+    if members_no_workers:
+        field_members_no_workers = ''
+        for clan_member in members_no_workers:
+            field_members_no_workers = (
+                f'{field_members_no_workers}\n'
+                f'- <@{clan_member.user_id}>'
+            )
+            if len(field_members_no_workers) >= 900:
+                field_members_no_workers = (
+                    f'{field_members_no_workers}\n'
+                    f'- ...'
+                )
+                break
+        embed.add_field(
+            name = 'Members with missing worker data',
+            value = (
+                f'{field_members_no_workers.strip()}'
             ),
             inline = False
         )
@@ -226,7 +258,6 @@ async def embeds_clan_members(clan_settings: clans.Clan, current_view: Optional[
     elif current_view == 1:
         field_legend = (
             f'{emojis.GUILD_SEAL_CONTRIBUTED} Guild seals contributed this week\n'
-            f'{emojis.DETAIL} _Includes members not using Molly._\n'
             f'{emojis.GUILD_SEAL_INVENTORY} Guild seals in inventory'
         )
     embed.add_field(

@@ -52,7 +52,7 @@ async def process_message(bot: discord.Bot, message: discord.Message, embed_data
     """
     return_values = []
     return_values.append(await call_upgrades_helper(message, embed_data, user, user_settings))
-    return_values.append(await update_idlucks(message, embed_data, user, user_settings))
+    return_values.append(await update_idlucks_and_raid_shield_on_payday(message, embed_data, user, user_settings))
     return any(return_values)
 
 
@@ -69,7 +69,11 @@ async def call_upgrades_helper(message: discord.Message, embed_data: Dict, user:
     search_strings = [
         '— payday', #All languages
     ]
-    if any(search_string in embed_data['author']['name'].lower() for search_string in search_strings):
+    search_strings_excluded = [
+        'need to progress more', #All languages
+    ]
+    if (any(search_string in embed_data['author']['name'].lower() for search_string in search_strings)
+        and all(search_string not in embed_data['description'].lower() for search_string in search_strings_excluded)):
         if user is None:
             if embed_data['embed_user'] is not None:
                 user = embed_data['embed_user']
@@ -126,9 +130,10 @@ async def call_upgrades_helper(message: discord.Message, embed_data: Dict, user:
     return add_reaction
 
 
-async def update_idlucks(message: discord.Message, embed_data: Dict, user: Optional[discord.User],
-                              user_settings: Optional[users.User]) -> bool:
-    """Update the idluck amount after paydaying. Also resets claim time if a claim reminder is active.
+async def update_idlucks_and_raid_shield_on_payday(message: discord.Message, embed_data: Dict, user: Optional[discord.User],
+                                                   user_settings: Optional[users.User]) -> bool:
+    """Update the idluck amount and create boost reminder after paydaying.
+    Also resets claim time if a claim reminder is active.
 
     Returns
     -------
@@ -153,6 +158,20 @@ async def update_idlucks(message: discord.Message, embed_data: Dict, user: Optio
         idlucks_match = re.search(r'got ([0-9,]+?) <', embed_data['description'].lower())
         idlucks = int(re.sub(r'\D','', idlucks_match.group(1)))
         await user_settings.update(idlucks=idlucks)
+        if user_settings.reminder_boosts.enabled:
+            user_command = await functions.get_game_command(user_settings, 'boosts')
+            boost_emoji = emojis.BOOSTS_EMOJIS.get('payday', '')
+            reminder_message = (
+                user_settings.reminder_boosts.message
+                .replace('{boost_emoji}', boost_emoji)
+                .replace('{boost_name}', 'payday')
+                .replace('{command}', user_command)
+                .replace('  ', ' ')
+            )
+            reminder: reminders.Reminder = (
+                await reminders.insert_user_reminder(user.id, f'boost-payday', timedelta(minutes=30),
+                                                     message.channel.id, reminder_message)
+            )
         try:
             reminder: reminders.Reminder = await reminders.get_user_reminder(user.id, 'claim')
             current_time = utils.utcnow()

@@ -24,6 +24,8 @@ LB_EPIC = '<:epiclootbox:1140716253313499157>'
 LB_MYTHIC = '<:mythiclootbox:1140716254894760019>'
 LB_RARE = '<:rarelootbox:1140716257822375997>'
 LB_USELESS = '<:uselesslootbox:1140716259143590078>'
+MEGA_BOOST = '<:mega_boost:1200394052982558811>'
+PARTY_POPPER = '<:party_popper:1200394054559600650>'
 PRESENT = '<:present:1180429333341409391>'
 PUMPKIN = '<:pumpkin:1164638459399524382>'
 PUMPKIN_CARVED = '<:pumpkin_carved:1166638278569627678>'
@@ -90,6 +92,16 @@ BOOSTS_EMOJIS = {
     'bad-spooker': PUMPKIN_CARVED,
     'christmas-spirit': PRESENT,
     'good-spooker': PUMPKIN_CARVED,
+    'guild-buff-i': GUILD_SEAL,
+    'guild-buff-ii': GUILD_SEAL,
+    'guild-buff-iii': GUILD_SEAL,
+    'guild-buff-iv': GUILD_SEAL,
+    'guild-buff-v': GUILD_SEAL,
+    'guild-buff-vi': GUILD_SEAL,
+    'guild-buff-vii': GUILD_SEAL,
+    'mega-boost': MEGA_BOOST,
+    'party-popper': PARTY_POPPER,
+    'payday': IDLUCKS,
     'spooked': PUMPKIN,
     'spooker': PUMPKIN_CARVED,
 }

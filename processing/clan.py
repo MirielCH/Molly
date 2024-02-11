@@ -11,7 +11,7 @@ import pendulum
 
 from cache import messages
 from database import clans, errors, reminders, users
-from resources import exceptions, functions, logs, regex, strings
+from resources import exceptions, functions, regex, strings
 
 
 async def process_message(bot: discord.Bot, message: discord.Message, embed_data: Dict, user: Optional[discord.User] = None,
@@ -136,32 +136,35 @@ async def update_clan(bot: discord.Bot, message: discord.Message, embed_data: Di
             else:
                 member_data_match = re.search(r'^ID: \*\*(\d+?)\*\* - (\d+?) <', line)
                 user_id, guild_seals_contributed = member_data_match.groups()
-                clan_members_found[user_id] = guild_seals_contributed
+                clan_members_found[int(user_id)] = guild_seals_contributed
         try:
             clan_settings: clans.Clan = await clans.get_clan_by_leader_id(leader_id)
-            if clan_settings.clan_name != clan_name:
-                if sorted(clan_settings.members, key= lambda x:x.user_id) == sorted(tuple(clan_members_found.keys())):
-                    await clan_settings.update(clan_name=clan_name)
-                    try:
-                        reminder: reminders.Reminder = await reminders.get_clan_reminder(clan_settings.clan_name)
-                        await reminder.update(clan_name=clan_name)
-                    except exceptions.NoDataFoundError:
-                        pass
-                else:
-                    try:
-                        reminder: reminders.Reminder = await reminders.get_clan_reminder(clan_settings.clan_name)
-                        await reminder.delete()
-                    except exceptions.NoDataFoundError:
-                        pass
-                        await clan_settings.delete()
-                        await message.channel.send(
-                            f'<@{clan_settings.leader_id}> Found two guilds with unmatching members with you as an owner which '
-                            f'is an invalid state I can\'t resolve.\n'
-                            f'As a consequence I deleted the guild **{clan_settings.clan_name}** including **all settings**'
-                            f'from my database and added **{clan_name}** as a new guild.\n\n'
-                            f'If you renamed your guild: To prevent this from happening again, please run '
-                            f'{await functions.get_game_command["guild list"]} immediately after renaming next time.'
-                        )
+            if not clan_settings.members:
+                await clan_settings.delete()
+            else:
+                if clan_settings.clan_name != clan_name:
+                    if sorted(clan_settings.members, key= lambda x:x.user_id) == sorted(tuple(clan_members_found.keys())):
+                        await clan_settings.update(clan_name=clan_name)
+                        try:
+                            reminder: reminders.Reminder = await reminders.get_clan_reminder(clan_settings.clan_name)
+                            await reminder.update(clan_name=clan_name)
+                        except exceptions.NoDataFoundError:
+                            pass
+                    else:
+                        try:
+                            reminder: reminders.Reminder = await reminders.get_clan_reminder(clan_settings.clan_name)
+                            await reminder.delete()
+                        except exceptions.NoDataFoundError:
+                            pass
+                            await clan_settings.delete()
+                            await message.channel.send(
+                                f'<@{clan_settings.leader_id}> Found two guilds with unmatching members with you as an owner which '
+                                f'is an invalid state I can\'t resolve.\n'
+                                f'As a consequence I deleted the guild **{clan_settings.clan_name}** including **all settings**'
+                                f'from my database and added **{clan_name}** as a new guild.\n\n'
+                                f'If you renamed your guild: To prevent this from happening again, please run '
+                                f'{await functions.get_game_command["guild list"]} immediately after renaming next time.'
+                            )
         except exceptions.NoDataFoundError:
             pass
         guild_seals_total_old = 0
@@ -270,9 +273,7 @@ async def update_guild_seals_from_contribution(bot: discord.Bot, message: discor
             add_reaction = True
         if user_settings is not None:
             if not user_settings.bot_enabled: return add_reaction
-            guild_seals_new = clan_member.guild_seals_contributed - guild_seals_count
-            if guild_seals_new < 0: guild_seals_new = 0
-            await user_settings.update(inventory_guild_seal=guild_seals_new)
+            await user_settings.update(inventory_guild_seal=0)
             if user_settings.reactions_enabled: add_reaction = True
     return add_reaction
 

@@ -427,7 +427,8 @@ async def track_raid(message: discord.Message, embed_data: Dict, user: Optional[
         f"{embed_data['field5']['value']}"
     )
     if (any(search_string in embed_data['description'].lower() for search_string in search_strings)
-        and all(search_string not in field_values.lower() for search_string in search_strings_excluded)):
+        and all(search_string not in field_values.lower() for search_string in search_strings_excluded)
+        and not 'extra items' in embed_data['description'].lower()):
         user_name_amount_match = None
         for line in field_values.split('\n'):
             user_name_amount_match = re.search(r'^\*\*(.+?)\*\*: (.+?) <:', line)

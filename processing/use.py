@@ -8,8 +8,8 @@ import discord
 from discord import utils
 
 from cache import messages
-from database import reminders, users
-from resources import exceptions, functions, regex, strings
+from database import clans, reminders, users
+from resources import emojis, exceptions, functions, regex, strings
 
 
 async def process_message(bot: discord.Bot, message: discord.Message, embed_data: Dict, user: Optional[discord.User],
@@ -23,7 +23,9 @@ async def process_message(bot: discord.Bot, message: discord.Message, embed_data
     """
     return_values = []
     return_values.append(await call_context_helper_on_energy_item(message, embed_data, user, user_settings))
+    return_values.append(await create_boost_reminder(message, user))
     return_values.append(await track_time_items(message, user))
+    return_values.append(await update_clan_name_on_name_changer(message, user, user_settings))
     return any(return_values)
 
 
@@ -71,6 +73,57 @@ async def call_context_helper_on_energy_item(message: discord.Message, embed_dat
                                                                    cmd_profile=strings.SLASH_COMMANDS["profile"]))
         except exceptions.EnergyFullTimeNoneError:
             pass
+    return add_reaction
+
+
+async def create_boost_reminder(message: discord.Message, user: discord.User) -> bool:
+    """Creates reminders when using boosts
+
+    Returns
+    -------
+    - True if a logo reaction should be added to the message
+    - False otherwise
+    """
+    add_reaction = False
+    search_strings = [
+        'got a new `boost`',
+    ]
+    if any(search_string in message.content.lower() for search_string in search_strings):
+        if user is None:
+            user_name_match = re.search(regex.NAME_FROM_MESSAGE_START, message.content.lower())
+            user_name = user_name_match.group(1)
+            user_command_message = (
+                await messages.find_message(message.channel.id, regex.COMMAND_USE_BOOST, user_name=user_name)
+            )
+            user = user_command_message.author
+        try:
+            user_settings: users.User = await users.get_user(user.id)
+        except exceptions.FirstTimeUserError:
+            return add_reaction
+        if not user_settings.bot_enabled or not user_settings.reminder_boosts.enabled: return add_reaction
+        activities_time_left = {
+            'party-popper': timedelta(hours=1),
+            'mega-boost': timedelta(days=30),
+        }
+        boost_name_match = re.search(r' \*\*(.+?)\*\*\.\.\.', message.content.lower())
+        boost_name = boost_name_match.group(1)
+        activity = boost_name.replace(' ','-')
+        boost_emoji = emojis.BOOSTS_EMOJIS.get(activity, '')
+        if activity not in activities_time_left: return add_reaction
+        time_left = activities_time_left[activity]
+        user_command = await functions.get_game_command(user_settings, 'boosts')
+        reminder_message = (
+            user_settings.reminder_boosts.message
+            .replace('{boost_emoji}', boost_emoji)
+            .replace('{boost_name}', boost_name)
+            .replace('{command}', user_command)
+            .replace('  ', ' ')
+        )
+        reminder: reminders.Reminder = (
+            await reminders.insert_user_reminder(user.id, f'boost-{activity}', time_left,
+                                                    message.channel.id, reminder_message)
+        )
+        if user_settings.reactions_enabled: add_reaction = True
     return add_reaction
 
 
@@ -123,4 +176,45 @@ async def track_time_items(message: discord.Message, user: discord.User) -> bool
                 time_left = time_left - item_time_left
             await claim_reminder.update(end_time=current_time + time_left)
             if user_settings.reactions_enabled: add_reaction = True
+    return add_reaction
+
+
+async def update_clan_name_on_name_changer(message: discord.Message, user: Optional[discord.User],
+                                           user_settings: Optional[users.User]) -> bool:
+    """Update clan name when clan leader uses a name changer
+
+    Returns
+    -------
+    - True if a logo reaction should be added to the message
+    - False otherwise
+    """
+    add_reaction = False
+    search_strings = [
+        'guild name set to ', #English
+    ]
+
+    if any(search_string in message.content.lower() for search_string in search_strings):
+        if user is None:
+            user_name_match = re.search(regex.NAME_FROM_MESSAGE_START, message.content)
+            user_name = user_name_match.group(1)
+            user_command_message = (
+                await messages.find_message(message.channel.id, regex.COMMAND_USE_GUILD_NAME_CHANGER, user_name=user_name)
+            )
+            user = user_command_message.author
+        if user_settings is None:
+            try:
+                user_settings: users.User = await users.get_user(user.id)
+            except exceptions.FirstTimeUserError:
+                return add_reaction
+        if not user_settings.bot_enabled: return add_reaction
+        try:
+            clan_settings = await clans.get_clan_by_leader_id(user.id)
+        except exceptions.NoDataFoundError:
+            return
+        new_clan_name_match = re.search(r'set to (.+?)$', message.content)
+        new_clan_name = new_clan_name_match.group(1)
+        for clan_member in clan_settings.members:
+            await clans.update_clan_member(clan_member.user_id, clan_name=new_clan_name)
+        await clan_settings.update(clan_name=new_clan_name)
+        if user_settings.reactions_enabled: add_reaction = True
     return add_reaction

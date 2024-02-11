@@ -152,7 +152,7 @@ async def embed_codes():
     for code in all_codes:
         if len(code.code) > max_length: max_length = len(code.code)
     for code in sorted(all_codes):
-        code_value = f'{emojis.BP} `{code.code.ljust(max_length)}`{emojis.BLANK}{code.contents}'
+        code_value = f'{emojis.BP} `{code.code.center(max_length)}`{emojis.BLANK}{code.contents}'
         if len(codes[field_no]) + len(code_value) > 1020:
             field_no += 1
             codes[field_no] = ''

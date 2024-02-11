@@ -423,6 +423,8 @@ async def _update_clan(clan_settings: Clan, **kwargs) -> None:
         kwargs['clan_name_old'] = clan_settings.clan_name
         sql = f'{sql} WHERE clan_name = :clan_name_old'
         cur.execute(sql, kwargs)
+        if 'clan_name' in kwargs:
+            clan_settings.clan_name = kwargs['clan_name']
     except sqlite3.Error as error:
         await errors.log_error(
             strings.INTERNAL_ERROR_SQLITE3.format(error=error, table=table, function=function_name, sql=sql)

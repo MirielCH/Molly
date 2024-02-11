@@ -433,7 +433,7 @@ async def embed_settings_clan(bot: discord.Bot, ctx: discord.ApplicationContext,
         )
     )
     embed.add_field(name='Overview', value=overview, inline=False)
-    embed.add_field(name='Reminder', value=reminder, inline=False)
+    embed.add_field(name='Reminders & alerts', value=reminder, inline=False)
     embed.add_field(name='Helpers', value=helpers, inline=False)
     return embed
 

@@ -42,7 +42,8 @@ async def update_inventory(message: discord.Message, embed_data: Dict, interacti
         '⚠', #Materials in debt
     ]
     if (any(search_string in embed_data['author']['name'].lower() for search_string in search_strings_author)
-        and any(search_string in embed_data['field0']['name'].lower() for search_string in search_strings_items)):
+        and any(search_string in embed_data['field0']['name'].lower() for search_string in search_strings_items)
+        and 'page 1' in embed_data['footer']['text'].lower()):
         if interaction_user is None:
             user_command_message = (
                 await messages.find_message(message.channel.id, regex.COMMAND_INVENTORY)
