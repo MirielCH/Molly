@@ -28,7 +28,7 @@ At my discretion, I may change my ToS to reflect updates. If I decide to change 
 
 ## Code usage
 
-Molly is open source. For details about its license, please check [LICENSE](https://github.com/Miriel-py/Molly/blob/master/LICENSE).  
+Molly is open source. For details about its license, please check [LICENSE](https://github.com/MirielCH/Molly/blob/master/LICENSE).  
 
 ## Contact me
 

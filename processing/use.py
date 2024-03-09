@@ -139,6 +139,7 @@ async def track_time_items(message: discord.Message, user: discord.User) -> bool
     search_strings = [
         'timespeeder',
         'timecompressor',
+        'timedilator',
     ]
     if any(search_string in message.content.lower() for search_string in search_strings) and '🕓' in message.content.lower():
         if user is None:
@@ -157,10 +158,13 @@ async def track_time_items(message: discord.Message, user: discord.User) -> bool
         item_time_left = await functions.parse_timestring_to_timedelta(timestring_match.group(1))
         kwargs = {}
         if 'timespeeder' in message.content.lower():
-            items_used = item_time_left.total_seconds() // 7200
+            items_used = item_time_left.total_seconds() // 7_200
             kwargs['time_speeders_used'] = user_settings.time_speeders_used + items_used
+        elif 'timedilator' in message.content.lower():
+            items_used = item_time_left.total_seconds() // 28_800
+            kwargs['time_dilators_used'] = user_settings.time_dilators_used + items_used
         else:
-            items_used = item_time_left.total_seconds() // 14400
+            items_used = item_time_left.total_seconds() // 14_400
             kwargs['time_compressors_used'] = user_settings.time_compressors_used + items_used
         await user_settings.update(**kwargs)
         try:

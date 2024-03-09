@@ -1063,7 +1063,8 @@ class SetClaimReminderTime(discord.ui.Select):
                 return
             time_since_last_claim = current_time - self.view.user_settings.last_claim_time
             time_produced = (time_since_last_claim + (self.view.user_settings.time_speeders_used * timedelta(hours=2))
-                             + (self.view.user_settings.time_compressors_used * timedelta(hours=4)))
+                             + (self.view.user_settings.time_compressors_used * timedelta(hours=4))
+                             + (self.view.user_settings.time_dilators_used * timedelta(hours=8)))
             if time_left <= time_produced:
                 await interaction.response.send_message(
                     (
@@ -1133,7 +1134,8 @@ class SetClaimReminderTimeReminderList(discord.ui.Select):
             current_time = utils.utcnow()
             time_since_last_claim = current_time - self.view.user_settings.last_claim_time
             time_produced = (time_since_last_claim + (self.view.user_settings.time_speeders_used * timedelta(hours=2))
-                             + (self.view.user_settings.time_compressors_used * timedelta(hours=4)))
+                             + (self.view.user_settings.time_compressors_used * timedelta(hours=4))
+                             + (self.view.user_settings.time_dilators_used * timedelta(hours=8)))
             if time_left <= time_produced:
                 await interaction.response.send_message(
                     (

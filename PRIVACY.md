@@ -34,7 +34,7 @@ Please note that this will **permanently** delete all of your data in the bot, i
 Please be aware that I have no control over the code and policies of forks and other projects that use Molly's source code and cannot accept responsibility or liability for their respective privacy practices.  
 
 This policy therefore only applies to:  
-• The code in the [main repository](https://github.com/Miriel-py/Molly), maintained by myself.  
+• The code in the [main repository](https://github.com/MirielCH/Molly), maintained by myself.  
 • The bot instance with the username `Molly#0020`, hosted by myself. If you encounter another Molly with another discriminator, it is outside of the scope of this privacy policy, even if it falsely links to this document.  
 
 The bot may also link to external sites that are not operated by me. The same limits apply to those sites.  

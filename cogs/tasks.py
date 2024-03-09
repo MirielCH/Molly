@@ -65,6 +65,7 @@ class TasksCog(commands.Cog):
                         - user_settings.last_claim_time
                         + (user_settings.time_speeders_used * timedelta(hours=2))
                         + (user_settings.time_compressors_used * timedelta(hours=4))
+                        + (user_settings.time_dilators_used * timedelta(hours=8))
                     )
                     microseconds = production_time.microseconds
                     production_time = production_time - timedelta(microseconds=production_time.microseconds)
@@ -243,6 +244,7 @@ class TasksCog(commands.Cog):
                     if clan_member.guild_seals_contributed == 0: continue
                     await clans.update_clan_member(clan_member.user_id, guild_seals_contributed=0)
                     await asyncio.sleep(0.01)
+                    
 
 # Initialization
 def setup(bot):

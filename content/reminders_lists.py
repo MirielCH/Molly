@@ -86,11 +86,13 @@ async def embed_reminders_list(bot: discord.Bot, user: discord.User, user_settin
     if user_settings.reminder_claim.enabled and user_settings.last_claim_time is not None:
         time_since_last_claim = current_time - user_settings.last_claim_time
         time_produced = (time_since_last_claim + user_settings.time_speeders_used * timedelta(hours=2)
-                         + user_settings.time_compressors_used * timedelta(hours=4))
+                         + user_settings.time_compressors_used * timedelta(hours=4)
+                         + user_settings.time_dilators_used * timedelta(hours=8))
         if time_produced >= timedelta(hours=24): time_produced = timedelta(hours=24)
         farms_full_in = user_settings.last_claim_time + (timedelta(hours=24)
                                                          - user_settings.time_speeders_used * timedelta(hours=2)
-                                                         - user_settings.time_compressors_used * timedelta(hours=4))
+                                                         - user_settings.time_compressors_used * timedelta(hours=4)
+                                                         - user_settings.time_dilators_used * timedelta(hours=8))
         last_claim_time_timestamp = utils.format_dt(user_settings.last_claim_time, 'R')
         time_produced_timestring = (
             await functions.parse_timedelta_to_timestring(time_produced - timedelta(microseconds=time_produced.microseconds))
@@ -151,6 +153,7 @@ async def embed_reminders_list(bot: discord.Bot, user: discord.User, user_settin
                 f'{emojis.DETAIL2} **Last claim**: {last_claim_time_timestamp}\n'
                 f'{emojis.DETAIL2} **Time speeders used**: `{user_settings.time_speeders_used}`\n'
                 f'{emojis.DETAIL2} **Time compressors used**: `{user_settings.time_compressors_used}`\n'
+                f'{emojis.DETAIL2} **Time dilators used**: `{user_settings.time_dilators_used}`\n'
                 f'{emojis.DETAIL2} **Farm production time**: {time_produced_timespan}\n'
                 f'{emojis.DETAIL} **Farms at full capacity**: {farms_full_in_timestamp}\n'
             ).strip(),

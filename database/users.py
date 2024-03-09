@@ -54,6 +54,7 @@ class User():
     reminders_slash_enabled: bool
     tracking_enabled: bool
     time_compressors_used: int
+    time_dilators_used: int
     time_speeders_used: int
     user_id: int
 
@@ -90,6 +91,7 @@ class User():
         self.reminders_daily_offset = new_settings.reminders_daily_offset
         self.reminders_slash_enabled = new_settings.reminders_slash_enabled
         self.time_compressors_used = new_settings.time_compressors_used
+        self.time_dilators_used = new_settings.time_dilators_used
         self.time_speeders_used = new_settings.time_speeders_used
         self.tracking_enabled = new_settings.tracking_enabled
 
@@ -136,6 +138,7 @@ class User():
             reminders_daily_offset: float
             reminders_slash_enabled: bool
             time_compressors_used: int
+            time_dilators_used: int
             time_speeders_used: int
             tracking_enabled: bool
         """
@@ -204,6 +207,7 @@ async def _dict_to_user(record: dict) -> User:
             reminders_daily_offset = record['reminders_daily_offset'],
             reminders_slash_enabled = bool(record['reminders_slash_enabled']),
             time_compressors_used = record['time_compressors_used'],
+            time_dilators_used = record['time_dilators_used'],
             time_speeders_used = record['time_speeders_used'],
             tracking_enabled = bool(record['tracking_enabled']),            
             user_id = record['user_id'],
@@ -360,6 +364,7 @@ async def _update_user(user: User, **kwargs) -> None:
         reminders_daily_offset: float
         reminders_slash_enabled: bool
         time_compressors_used: int
+        time_dilators_used: int
         time_speeders_used: int
         tracking_enabled: bool
 

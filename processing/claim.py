@@ -67,7 +67,7 @@ async def process_claim_message(bot: discord.Bot, message: discord.Message, embe
             else:
                 guild_seal_count = user_settings.inventory.guild_seal
         await user_settings.update(last_claim_time=message.created_at, time_speeders_used=0, time_compressors_used=0,
-                                   inventory_guild_seal=guild_seal_count)
+                                   time_dilators_used=0, inventory_guild_seal=guild_seal_count)
         try:
             await functions.change_user_energy(user_settings, -5)
             if not user_settings.reminder_claim.enabled and user_settings.reactions_enabled: add_reaction = True

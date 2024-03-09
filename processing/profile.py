@@ -116,14 +116,16 @@ async def call_profile_timers_and_update_idlucks(bot: discord.Bot, message: disc
                 time_since_last_claim = current_time - user_settings.last_claim_time
                 last_claim_time_timestamp = utils.format_dt(user_settings.last_claim_time, 'R')
                 time_produced = (time_since_last_claim + user_settings.time_speeders_used * timedelta(hours=2)
-                                    + user_settings.time_compressors_used * timedelta(hours=4))
+                                    + user_settings.time_compressors_used * timedelta(hours=4)
+                                    + user_settings.time_dilators_used * timedelta(hours=8))
                 if time_produced >= timedelta(hours=24): time_produced = timedelta(hours=24)
                 time_produced_timestring = (
                     await functions.parse_timedelta_to_timestring(time_produced - timedelta(microseconds=time_produced.microseconds))
                 )
                 time_produced_timespan = (
                     f'`{time_produced_timestring}` ({user_settings.time_speeders_used}{emojis.TIME_SPEEDER} '
-                    f'| {user_settings.time_compressors_used}{emojis.TIME_COMPRESSOR})'
+                    f'| {user_settings.time_compressors_used}{emojis.TIME_COMPRESSOR}) '
+                    f'| {user_settings.time_dilators_used}{emojis.TIME_DILATOR})'
                 )
                 
             embed = discord.Embed(

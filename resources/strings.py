@@ -88,11 +88,11 @@ INTERNAL_ERROR_DICT_TO_OBJECT = 'Error converting record into object\nFunction: 
 
 
 # Links
-LINK_GITHUB = 'https://github.com/Miriel-py/Molly'
+LINK_GITHUB = 'https://github.com/MirielCH/Molly'
 LINK_INVITE = 'https://discord.com/api/oauth2/authorize?client_id=1134478584556310569&permissions=510016&scope=bot'
-LINK_PRIVACY_POLICY = 'https://github.com/Miriel-py/Molly/blob/master/PRIVACY.md'
+LINK_PRIVACY_POLICY = 'https://github.com/MirielCH/Molly/blob/master/PRIVACY.md'
 LINK_SUPPORT_SERVER = 'https://discord.gg/suHhUxHGwV'
-LINK_TERMS = 'https://github.com/Miriel-py/Molly/blob/master/TERMS.md'
+LINK_TERMS = 'https://github.com/MirielCH/Molly/blob/master/TERMS.md'
 
 # --- Default messages ---
 DEFAULT_MESSAGE_CLAN = (
@@ -230,6 +230,7 @@ TRACKED_WORKER_TYPES = (
     'worker-masterful',
     'worker-spooky',
     'worker-snowy',
+    'worker-lovely',
  ) # Sorted by rarity
 
 TRACKED_ITEMS_EMOJIS = {
@@ -242,6 +243,7 @@ TRACKED_ITEMS_EMOJIS = {
     'worker-masterful': emojis.WORKER_MASTERFUL_A,
     'worker-spooky': emojis.WORKER_SPOOKY_A,
     'worker-snowy': emojis.WORKER_SNOWY_A,
+    'worker-lovely': emojis.WORKER_LOVELY_A,
  }
 
 WORKER_TYPES = (
@@ -254,6 +256,7 @@ WORKER_TYPES = (
     'masterful',
     'spooky',
     'snowy',
+    'lovely',
 ) # Ordered by rarity
 
 WORKER_TYPES_RAID = (
@@ -266,6 +269,7 @@ WORKER_TYPES_RAID = (
     'masterful',
     'spooky',
     'snowy',
+    'lovely',
 ) # Ordered by rarity
 
 WORKER_TYPES_TRACKED = (
@@ -289,6 +293,7 @@ WORKER_STATS = {
     'masterful': {'tier': 7, 'speed': 3, 'strength': 3, 'intelligence': 3},
     'spooky': {'tier': 1, 'speed': 5, 'strength': 6, 'intelligence': 5},
     'snowy': {'tier': 2, 'speed': 5, 'strength': 5, 'intelligence': 6},
+    'lovely': {'tier': 3, 'speed': 5, 'strength': 6, 'intelligence': 4},
 }
 
 DONOR_TIER_ENERGY_MULTIPLIERS = {
