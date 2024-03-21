@@ -57,11 +57,11 @@ async def call_profile_timers_and_update_idlucks(bot: discord.Bot, message: disc
         if not user_settings.bot_enabled: return add_reaction
         if user_settings.helper_upgrades_enabled:
             idlucks_match = re.search(r'idlucks\*\*: ([0-9,]+?)\n', embed_data['field3']['value'].lower())
-            idlucks = int(re.sub('\D','', idlucks_match.group(1)))
+            idlucks = int(re.sub(r'\D','', idlucks_match.group(1)))
             await user_settings.update(idlucks=idlucks)
         energy_match = re.search(r'1084593332312887396> ([0-9,]+)/([0-9,]+)\n', embed_data['field0']['value'])
-        energy_current = int(re.sub('\D','',energy_match.group(1)))
-        energy_max = int(re.sub('\D','',energy_match.group(2)))
+        energy_current = int(re.sub(r'\D','',energy_match.group(1)))
+        energy_max = int(re.sub(r'\D','',energy_match.group(2)))
         try:
             energy_upgrade: upgrades.Upgrade = await upgrades.get_upgrade(user_settings.user_id, 'energy regeneration')
             multiplier_upgrade = strings.ENERGY_UPGRADE_LEVEL_MULTIPLIERS[energy_upgrade.level]

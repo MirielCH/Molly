@@ -1,6 +1,6 @@
 # Molly
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Python: 3.11](https://img.shields.io/badge/Python-3.11+-brightgreen.svg)](https://www.python.org/) [![Database: SQLite](https://img.shields.io/badge/Database-SQLite-blue.svg)](https://www.sqlite.org/index.html)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Python: 3.12](https://img.shields.io/badge/Python-3.12+-brightgreen.svg)](https://www.python.org/) [![Database: SQLite](https://img.shields.io/badge/Database-SQLite-blue.svg)](https://www.sqlite.org/index.html)
 
 Reminder / Helper for the Discord bot IDLE FARM.  
 
@@ -10,7 +10,7 @@ Reminder / Helper for the Discord bot IDLE FARM.
 
 ## Setup to run your own instance
 
-• Install python 3.11 or higher.  
+• Install python 3.12.  
 • Install the third party libraries mentioned in `requirements.txt`.  
 • Create a Discord application with a bot user, activate the required intents and generate a bot token.  
 • Rename `default.env` to `.env` and set all required variables mentioned in the file.  

@@ -134,3 +134,6 @@ database/database.db
 
 # Visual Studio Code
 .vscode/
+
+# Pyright config file
+pyrightconfig.json

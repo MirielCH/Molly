@@ -87,7 +87,7 @@ async def track_upgrade(message: discord.Message, user: Optional[discord.User]) 
         idlucks_match = re.search(r'for ([0-9,]+) <', message.content.lower())
         name = name_level_match.group(1)
         level = int(name_level_match.group(2))
-        idlucks = int(re.sub('\D','', idlucks_match.group(1)))
+        idlucks = int(re.sub(r'\D','', idlucks_match.group(1)))
         try:
             upgrade: upgrades.Upgrade = await upgrades.get_upgrade(user.id, name)
             await upgrade.update(level=level)

@@ -505,7 +505,7 @@ async def embed_settings_messages(bot: discord.Bot, ctx: discord.ApplicationCont
             title = title
         )
         allowed_placeholders = ''
-        for placeholder_match in re.finditer('\{(.+?)\}', strings.DEFAULT_MESSAGES_REMINDERS[activity]):
+        for placeholder_match in re.finditer(r'\{(.+?)\}', strings.DEFAULT_MESSAGES_REMINDERS[activity]):
             placeholder = placeholder_match.group(1)
             placeholder_description = strings.PLACEHOLDER_DESCRIPTIONS.get(placeholder, '')
             allowed_placeholders = (

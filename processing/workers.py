@@ -126,7 +126,7 @@ async def track_worker_roll(message: discord.Message, embed_data: Dict, user: Op
                 worker_data_match = re.search(r'`\[([0-9,]+)/([0-9,]+)]`', field.name.lower())
                 if not worker_data_match:
                     worker_data_match = re.search(r'`\[([0-9,]+)/([0-9,]+)]`', field.value.lower())
-                if amount_match: worker_amount = int(re.sub('\D','', amount_match.group(1)))
+                if amount_match: worker_amount = int(re.sub(r'\D','', amount_match.group(1)))
                 workers_total = int(re.sub(r'\D','', worker_data_match.group(1)))
                 workers_required = int(re.sub(r'\D','', worker_data_match.group(2)))
                 workers_found[worker_type] = (worker_amount, workers_total, workers_required)
@@ -136,8 +136,8 @@ async def track_worker_roll(message: discord.Message, embed_data: Dict, user: Op
                                                     utils.utcnow().replace(microsecond=0), worker_amounts[0])
         # Update energy time until full
         energy_match = re.search(r':\s([0-9,]+)/([0-9,]+)$', embed_data['footer']['text'])
-        energy_current = int(re.sub('\D','',energy_match.group(1)))
-        energy_max = int(re.sub('\D','',energy_match.group(2)))
+        energy_current = int(re.sub(r'\D','',energy_match.group(1)))
+        energy_max = int(re.sub(r'\D','',energy_match.group(2)))
         energy_regen_time = await functions.get_energy_regen_time(user_settings)
         seconds_until_max = (int(energy_max) - int(energy_current)) * energy_regen_time.total_seconds()
         energy_full_time = utils.utcnow() + timedelta(seconds=seconds_until_max)

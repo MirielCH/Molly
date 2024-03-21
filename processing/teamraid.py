@@ -6,7 +6,7 @@ from datetime import timedelta
 from itertools import combinations
 import random
 import re
-from typing import Dict, Optional, Union
+from typing import Dict, Optional, Tuple, Union
 
 import discord
 from discord import utils
@@ -64,7 +64,7 @@ async def call_teamraid_helper(bot: discord.Bot, message: discord.Message, embed
                 enemy_data_match = re.search(r'<a:(.+?)worker.+lv(\d+) \|.+`(\d+)/(\d+)`', line.lower())
                 if not enemy_data_match and 'none' in line.lower(): continue
                 enemy_type = enemy_data_match.group(1)
-                enemy_level = int(re.sub('\D','',enemy_data_match.group(2)))
+                enemy_level = int(re.sub(r'\D','',enemy_data_match.group(2)))
                 enemy_hp_current = int(enemy_data_match.group(3))
                 enemy_hp_max = int(enemy_data_match.group(4))
                 enemy_power = (
@@ -75,7 +75,7 @@ async def call_teamraid_helper(bot: discord.Bot, message: discord.Message, embed
                 enemies_power[f'{enemy_type}{field_index}'] = (enemy_power, enemy_hp_current)
         return enemies_power
 
-    async def get_recommended_worker(next_enemy_power_hp: (int, int),
+    async def get_recommended_worker(next_enemy_power_hp: Tuple[int, int],
                                      workers_still_alive: Dict[str, Dict[str, int]]) -> Dict[str, Dict[str, int]]:
         """Returns the next recommended worker.
 

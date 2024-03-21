@@ -64,7 +64,7 @@ async def call_context_helper_on_energy_item(message: discord.Message, embed_dat
                 f"➜ {strings.SLASH_COMMANDS['worker hire']}"
             )
         energy_amount_match = re.search(r'>\s([0-9,]+)\s\*\*', message.content.lower())
-        energy_amount = int(re.sub('\D','', energy_amount_match.group(1)))
+        energy_amount = int(re.sub(r'\D','', energy_amount_match.group(1)))
         try:
             await functions.change_user_energy(user_settings, energy_amount)
             if user_settings.reactions_enabled: add_reaction = True

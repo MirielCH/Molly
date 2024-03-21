@@ -90,7 +90,7 @@ async def call_raid_helper(bot: discord.Bot, message: discord.Message, embed_dat
             else:
                 enemy_data_match = re.search(r'<a:(.+?)worker.+lv(\d+) \|.+`(\d+)/(\d+)`', line.lower())
                 enemy_name = enemy_data_match.group(1)
-                enemy_level = int(re.sub('\D','',enemy_data_match.group(2)))
+                enemy_level = int(re.sub(r'\D','',enemy_data_match.group(2)))
                 enemy_hp_current = int(enemy_data_match.group(3))
                 enemy_hp_max = int(enemy_data_match.group(4))
                 enemy_power = (
