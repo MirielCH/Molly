@@ -231,6 +231,7 @@ TRACKED_WORKER_TYPES = (
     'worker-spooky',
     'worker-snowy',
     'worker-lovely',
+    'worker-jumpy',
  ) # Sorted by rarity
 
 TRACKED_ITEMS_EMOJIS = {
@@ -244,6 +245,7 @@ TRACKED_ITEMS_EMOJIS = {
     'worker-spooky': emojis.WORKER_SPOOKY_A,
     'worker-snowy': emojis.WORKER_SNOWY_A,
     'worker-lovely': emojis.WORKER_LOVELY_A,
+    'worker-jumpy': emojis.WORKER_JUMPY_A,
  }
 
 WORKER_TYPES = (
@@ -257,6 +259,7 @@ WORKER_TYPES = (
     'spooky',
     'snowy',
     'lovely',
+    'jumpy',
 ) # Ordered by rarity
 
 WORKER_TYPES_RAID = (
@@ -270,6 +273,7 @@ WORKER_TYPES_RAID = (
     'spooky',
     'snowy',
     'lovely',
+    'jumpy',
 ) # Ordered by rarity
 
 WORKER_TYPES_TRACKED = (
@@ -294,6 +298,7 @@ WORKER_STATS = {
     'spooky': {'tier': 1, 'speed': 5, 'strength': 6, 'intelligence': 5},
     'snowy': {'tier': 2, 'speed': 5, 'strength': 5, 'intelligence': 6},
     'lovely': {'tier': 3, 'speed': 5, 'strength': 6, 'intelligence': 4},
+    'jumpy': {'tier': 4, 'speed': 6, 'strength': 5, 'intelligence': 5},
 }
 
 DONOR_TIER_ENERGY_MULTIPLIERS = {

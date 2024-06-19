@@ -24,15 +24,15 @@ intents.message_content = True # for command detection
 
 allowed_mentions = discord.AllowedMentions(everyone=False, roles=False, replied_user=False)
 
-
+bot_activity: discord.Activity = discord.Activity(type=discord.ActivityType.playing, name='in your farm')
 if settings.DEBUG_MODE:
     bot = commands.AutoShardedBot(command_prefix=guilds.get_all_prefixes, help_command=None,
                                   case_insensitive=True, intents=intents, owner_id=settings.OWNER_ID,
-                                  allowed_mentions=allowed_mentions, debug_guilds=settings.DEV_GUILDS)
+                                  allowed_mentions=allowed_mentions, debug_guilds=settings.DEV_GUILDS, activity=bot_activity)
 else:
     bot = commands.AutoShardedBot(command_prefix=guilds.get_all_prefixes, help_command=None,
                                   case_insensitive=True, intents=intents, allowed_mentions=allowed_mentions,
-                                  owner_id=settings.OWNER_ID)
+                                  owner_id=settings.OWNER_ID, activiy=bot_activity)
 
 
 @bot.event

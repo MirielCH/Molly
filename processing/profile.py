@@ -124,7 +124,7 @@ async def call_profile_timers_and_update_idlucks(bot: discord.Bot, message: disc
                 )
                 time_produced_timespan = (
                     f'`{time_produced_timestring}` ({user_settings.time_speeders_used}{emojis.TIME_SPEEDER} '
-                    f'| {user_settings.time_compressors_used}{emojis.TIME_COMPRESSOR}) '
+                    f'| {user_settings.time_compressors_used}{emojis.TIME_COMPRESSOR} '
                     f'| {user_settings.time_dilators_used}{emojis.TIME_DILATOR})'
                 )
                 
