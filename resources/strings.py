@@ -256,6 +256,7 @@ WORKER_TYPES = (
     'wise',
     'expert',
     'masterful',
+    'guru',
     'spooky',
     'snowy',
     'lovely',
@@ -270,6 +271,7 @@ WORKER_TYPES_RAID = (
     'wise',
     'expert',
     'masterful',
+    'guru',
     'spooky',
     'snowy',
     'lovely',
@@ -295,6 +297,7 @@ WORKER_STATS = {
     'wise': {'tier': 5, 'speed': 2.5, 'strength': 2, 'intelligence': 2.5},
     'expert': {'tier': 6, 'speed': 3, 'strength': 2.5, 'intelligence': 2.5},
     'masterful': {'tier': 7, 'speed': 3, 'strength': 3, 'intelligence': 3},
+    'guru': {'tier': 8, 'speed': 3.5, 'strength': 3.5, 'intelligence': 3},
     'spooky': {'tier': 1, 'speed': 5, 'strength': 6, 'intelligence': 5},
     'snowy': {'tier': 2, 'speed': 5, 'strength': 5, 'intelligence': 6},
     'lovely': {'tier': 3, 'speed': 5, 'strength': 6, 'intelligence': 4},
@@ -319,20 +322,35 @@ ENERGY_UPGRADE_LEVEL_MULTIPLIERS = {
     4: 1.85,
     5: 2,
     6: 2.1,
-    7: 2.2, # Unconfirmed value
+    7: 2.2,
+    8: 2, # There is a bug where the game says level 8 when it's actually level 5. Real max level is 7
 }
 
 
 ACTIVITIES_BOOSTS = (
     'bad-spooker',
     'christmas-spirit',
+    'erngy-clover-i',
+    'erngy-clover-ii',
+    'erngy-clover-iii',
+    'erngy-clover-iv',
     'good-spooker',
+    'energy-tank',
+    'fragrance',
     'mega-boost',
+    'mini-boost',
     'party-popper',
     'payday',
     'spooked',
     'spooker',
+    'worger',
 )
+
+
+ACTIVITIES_BOOSTS_ALIASES = {
+    'easter-lily': 'fragrance',
+    'mini': 'mini-boost',
+}
 
 
 GUILD_BUFF_THRESHOLDS = (5, 40, 250, 800, 2400, 5000, 7800)

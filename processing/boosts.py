@@ -70,6 +70,8 @@ async def create_reminders_from_boosts(bot: discord.Bot, message: discord.Messag
                 break
             active_item_match = re.search(r' \*\*(.+?)\*\*: (.+?)$', line)
             active_item_activity = active_item_match.group(1).replace(' ','-')
+            if active_item_activity in strings.ACTIVITIES_BOOSTS_ALIASES:
+                active_item_activity = strings.ACTIVITIES_BOOSTS_ALIASES[active_item_activity]
             if active_item_activity in all_boosts: all_boosts.remove(active_item_activity)
             active_item_emoji = emojis.BOOSTS_EMOJIS.get(active_item_activity, '')
             time_string = active_item_match.group(2)

@@ -43,7 +43,8 @@ async def create_reminder_from_buying(message: discord.Message, embed_data: Dict
         'maxed the purchases', #All languages
     ]
     if any(search_string in message.content.lower() for search_string in search_strings):
-        if user is not None: return add_reaction
+        if user is None: return add_reaction
+        user = message.mentions[0]
         if user_settings is None:
             try:
                 user_settings: users.User = await users.get_user(user.id)
@@ -54,7 +55,6 @@ async def create_reminder_from_buying(message: discord.Message, embed_data: Dict
                 f'**{user.name}**, please use {strings.SLASH_COMMANDS["shop list"]} to create a reminder.'
             )
             return add_reaction
-        user = message.mentions[0]
         user_command_message = (
             await messages.find_message(message.channel.id, regex.COMMAND_SHOP, user=user)
         )

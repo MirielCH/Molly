@@ -10,6 +10,7 @@ from discord.ext import commands
 from discord import utils
 
 from database import cooldowns, errors, reminders, upgrades, users
+from database import settings as settings_db
 from resources import emojis, exceptions, functions, regex, settings, strings, views
 
 
@@ -656,7 +657,9 @@ async def get_energy_regen_time(user_settings: users.User) -> timedelta:
     except exceptions.NoDataFoundError:
         multiplier_upgrade = 1
     multiplier_donor = list(strings.DONOR_TIER_ENERGY_MULTIPLIERS.values())[user_settings.donor_tier]
-    energy_regen = 5 / (multiplier_donor * multiplier_upgrade * settings.ENERGY_REGEN_MULTIPLIER_EVENT)
+    all_settings = await settings_db.get_settings()
+    energy_regen = 2.5 / (multiplier_donor * multiplier_upgrade * settings.ENERGY_REGEN_MULTIPLIER_EVENT
+                          * float(all_settings['minievent_energy_multiplier']))
     return timedelta(minutes=energy_regen)
 
 
