@@ -88,10 +88,14 @@ async def update_minievent_multiplier(embed_data: Dict) -> bool:
     - True if a logo reaction should be added to the message
     - False otherwise
     """
-    search_strings = [
-        'mini events happen 2 times per month', #English
+    search_strings_name = [
+        'no seasonal event active', #English
     ]
-    if any(search_string in embed_data['field1']['value'].lower() for search_string in search_strings):
+    search_strings_value = [
+        'mini events happen 2 times per month', #Englishs
+    ]
+    if ((any(search_string in embed_data['field0']['name'].lower() for search_string in search_strings_name))
+        or any(search_string in embed_data['field1']['value'].lower() for search_string in search_strings_value)):
         new_multiplier = 1.2 if 'energy fest' in embed_data['description'].lower() else 1.0
         all_settings = await settings_db.get_settings()
         if float(all_settings['minievent_energy_multiplier']) != new_multiplier:

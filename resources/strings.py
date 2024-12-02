@@ -232,6 +232,7 @@ TRACKED_WORKER_TYPES = (
     'worker-snowy',
     'worker-lovely',
     'worker-jumpy',
+    'worker-festive',
  ) # Sorted by rarity
 
 TRACKED_ITEMS_EMOJIS = {
@@ -246,6 +247,7 @@ TRACKED_ITEMS_EMOJIS = {
     'worker-snowy': emojis.WORKER_SNOWY_A,
     'worker-lovely': emojis.WORKER_LOVELY_A,
     'worker-jumpy': emojis.WORKER_JUMPY_A,
+    'worker-festive': emojis.WORKER_FESTIVE_A,
  }
 
 WORKER_TYPES = (
@@ -261,6 +263,7 @@ WORKER_TYPES = (
     'snowy',
     'lovely',
     'jumpy',
+    'festive',
 ) # Ordered by rarity
 
 WORKER_TYPES_RAID = (
@@ -276,6 +279,7 @@ WORKER_TYPES_RAID = (
     'snowy',
     'lovely',
     'jumpy',
+    'festive',
 ) # Ordered by rarity
 
 WORKER_TYPES_TRACKED = (
@@ -302,6 +306,7 @@ WORKER_STATS = {
     'snowy': {'tier': 2, 'speed': 5, 'strength': 5, 'intelligence': 6},
     'lovely': {'tier': 3, 'speed': 5, 'strength': 6, 'intelligence': 4},
     'jumpy': {'tier': 4, 'speed': 6, 'strength': 5, 'intelligence': 5},
+    'festive': {'tier': 5, 'speed': 5, 'strength': 5, 'intelligence': 5},
 }
 
 DONOR_TIER_ENERGY_MULTIPLIERS = {
@@ -323,7 +328,8 @@ ENERGY_UPGRADE_LEVEL_MULTIPLIERS = {
     5: 2,
     6: 2.1,
     7: 2.2,
-    8: 2, # There is a bug where the game says level 8 when it's actually level 5. Real max level is 7
+    8: 2.3, 
+    9: 2.4,
 }
 
 

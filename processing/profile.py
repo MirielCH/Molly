@@ -60,7 +60,7 @@ async def call_profile_timers_and_update_idlucks(bot: discord.Bot, message: disc
             idlucks_match = re.search(r'idlucks\*\*: ([0-9,]+?)\n', embed_data['field3']['value'].lower())
             idlucks = int(re.sub(r'\D','', idlucks_match.group(1)))
             await user_settings.update(idlucks=idlucks)
-        energy_match = re.search(r'1084593332312887396> ([0-9,]+)/([0-9,]+)\n', embed_data['field0']['value'])
+        energy_match = re.search(r'> ([0-9,]+)/([0-9,]+)\n', embed_data['field0']['value'])
         energy_current = int(re.sub(r'\D','',energy_match.group(1)))
         energy_max = int(re.sub(r'\D','',energy_match.group(2)))
         try:
