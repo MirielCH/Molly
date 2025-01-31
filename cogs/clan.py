@@ -25,13 +25,15 @@ class ClanCog(commands.Cog):
     async def clan_members(
         self,
         ctx: discord.ApplicationContext,
-        view: Option(str, 'The view you want to see', choices=['Top 3 power', 'Guild seals'], default=None),
+        view: Option(str, 'The view you want to see', choices=['Top 3 power', 'Guild seals', 'Last claim time'], default=None),
     ) -> None:
         """Shows the guild members with the highest top 3 power"""
         current_view = 0
         if view is not None:
             if 'seal' in view.lower():
                 current_view = 1
+            elif 'claim' in view.lower():
+                current_view = 2
         await clan.command_clan_members(self.bot, ctx, current_view)
 
     @commands.command(name='guild', aliases=('clan',))
@@ -47,6 +49,13 @@ class ClanCog(commands.Cog):
         ]
         if any(string in arguments for string in strings_guild_seals):
             current_view = 1
+        strings_guild_seals = [
+            'claim',
+            'last',
+            'lc',
+        ]
+        if any(string in arguments for string in strings_guild_seals):
+            current_view = 2    
         await clan.command_clan_members(self.bot, ctx, current_view)
 
 

@@ -718,7 +718,8 @@ class ClanMembersView(discord.ui.View):
                 },
         }
         self.sort_keys = sort_keys
-        self.add_item(components.ClanMembersViewSortSelect(self, sort_keys))
+        if current_view in sort_keys:
+            self.add_item(components.ClanMembersViewSortSelect(self, sort_keys))
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         if interaction.user != self.user:

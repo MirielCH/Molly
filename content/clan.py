@@ -1,9 +1,11 @@
 # clan.py
 """Contains clan commands"""
 
+from datetime import datetime, timezone
 from typing import Optional, Tuple, Union
 
 import discord
+from discord import utils
 from discord.ext import commands
 
 from database import clans, users, upgrades, workers
@@ -85,11 +87,15 @@ async def embeds_clan_members(clan_settings: clans.Clan, current_view: Optional[
             for worker_name, worker_power in workers_by_power.items():
                 if 1 <= top_3_count <= 3: top_3_power += worker_power
                 top_3_count += 1
+            last_claim_time = datetime(1970, 1, 1, tzinfo=timezone.utc)
+            if member_settings.last_claim_time is not None: 
+                last_claim_time = member_settings.last_claim_time 
             members[clan_member.user_id] = {
                 'top_3_power': top_3_power,
                 'guild_seals_inventory': member_settings.inventory.guild_seal,
                 'guild_seals_contributed': clan_member.guild_seals_contributed,
-                'teamfarm_life': teamfarm_life_level
+                'teamfarm_life': teamfarm_life_level,
+                'last_claim_time': last_claim_time,
             }
         except exceptions.FirstTimeUserError:
             members_not_registered.append(clan_member)
@@ -130,6 +136,11 @@ async def embeds_clan_members(clan_settings: clans.Clan, current_view: Optional[
             f'{overview}\n'
             f'**`{guild_seals_inventory_total:,}`** {emojis.GUILD_SEAL_INVENTORY} found in inventories'
         )
+    if current_view == 2:
+        current_view_name = 'Last claim time'
+        if sort_key is None:
+            sort_key = 'last_claim_time'
+        overview = None
     embed = discord.Embed(
         color = settings.EMBED_COLOR,
         title = f'{clan_settings.clan_name.upper()} - {current_view_name}',
@@ -155,6 +166,13 @@ async def embeds_clan_members(clan_settings: clans.Clan, current_view: Optional[
                     f'`{index}`| **`{guild_seals_contributed_str}`**{emojis.GUILD_SEAL_CONTRIBUTED} '
                     f'**`{guild_seals_inventory_str}`**{emojis.GUILD_SEAL_INVENTORY} <@{member_id}>'
                 )
+            elif current_view == 2:
+                last_claim_time_timestamp = 'Never'
+                if member_data['last_claim_time'] > datetime(1970, 1, 1, tzinfo=timezone.utc):
+                    last_claim_time_timestamp = utils.format_dt(member_data['last_claim_time'], 'R')
+                field_value = (
+                    f'`{index}`| {last_claim_time_timestamp} <@{member_id}>'
+                )    
             if len(fields_members[field_no]) + len(field_value) > 1020:
                 field_no += 1
                 fields_members[field_no] = ''
@@ -250,6 +268,7 @@ async def embeds_clan_members(clan_settings: clans.Clan, current_view: Optional[
             ),
             inline = False
         )
+    field_legend = ''
     if current_view == 0:
         field_legend = (
             f'💥 Top 3 power\n'
@@ -260,11 +279,12 @@ async def embeds_clan_members(clan_settings: clans.Clan, current_view: Optional[
             f'{emojis.GUILD_SEAL_CONTRIBUTED} Guild seals contributed this week\n'
             f'{emojis.GUILD_SEAL_INVENTORY} Guild seals in inventory'
         )
-    embed.add_field(
-        name = 'Legend',
-        value = field_legend,
-        inline = False
-    )
+    if field_legend:
+        embed.add_field(
+            name = 'Legend',
+            value = field_legend,
+            inline = False
+        )
     if members_not_registered or members_no_upgrades or members_disabled:
         embeds.append(embed)
 

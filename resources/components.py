@@ -1312,6 +1312,7 @@ class ClanMembersViewSelect(discord.ui.Select):
         options = [
             discord.SelectOption(label='Top 3 power', value='0', emoji='💥'),
             discord.SelectOption(label='Guild seals', value='1', emoji=emojis.GUILD_SEAL),
+            discord.SelectOption(label='Last claim time', value='2', emoji=emojis.COOLDOWN),
         ]
         super().__init__(placeholder='Switch view ...', min_values=1, max_values=1, options=options, row=row,
                          custom_id='select_view')
