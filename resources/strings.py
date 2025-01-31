@@ -330,6 +330,13 @@ ENERGY_UPGRADE_LEVEL_MULTIPLIERS = {
     7: 2.2,
     8: 2.3, 
     9: 2.4,
+    10: 2.45,
+    11: 2.5,
+    12: 2.55,
+    13: 2.6,
+    14: 2.65,
+    15: 2.7,
+    16: 2.75, # Unconfirmed! Unsure if this level even exists yet
 }
 
 
@@ -359,7 +366,7 @@ ACTIVITIES_BOOSTS_ALIASES = {
 }
 
 
-GUILD_BUFF_THRESHOLDS = (5, 40, 250, 800, 2400, 5000, 7800)
+GUILD_BUFF_THRESHOLDS = (5, 40, 250, 800, 2_400, 5_000, 7_000, 10_000, 15_000)
 
 NUMBERS_INTEGER_ROMAN = {
     1: 'i',

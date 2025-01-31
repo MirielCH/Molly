@@ -213,6 +213,6 @@ async def track_worker_stats(message: discord.Message, embed_data: Dict,
                 if worker_level.workers_required != workers_required:
                     await worker_level.update(workers_required=workers_required)
             except exceptions.NoDataFoundError:
-                worker_level = await workers.insert_worker_level(level, workers_required)
+                worker_level = await workers.insert_worker_level(level + 1, workers_required)
         if user_settings.reactions_enabled: add_reaction = True
     return add_reaction
