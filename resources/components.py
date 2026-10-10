@@ -1323,13 +1323,20 @@ class ClanMembersViewSelect(discord.ui.Select):
         image = discord.MISSING
         if len(embeds) > 1:
             image = discord.File(settings.IMG_EMBED_WIDTH_LINE, filename='embed_width_line.png')
+        select_sort_present = False
         for child in self.view.children:
             if child.custom_id == 'select_sort_key':
+                select_sort_present = True
                 options = []
+                if self.view.current_view not in self.view.sort_keys:
+                    self.view.remove_item(child)
+                    break
                 for sort_method, (sort_key, emoji) in self.view.sort_keys[self.view.current_view].items():
                     options.append(discord.SelectOption(label=sort_method, value=sort_key, emoji=emoji))
                 child.options = options
                 break
+        if not select_sort_present and self.view.current_view in self.view.sort_keys:
+            self.view.add_item(ClanMembersViewSortSelect(self.view, self.view.sort_keys))
         await interaction.response.edit_message(embeds=embeds, view=self.view, file=image)
 
 
