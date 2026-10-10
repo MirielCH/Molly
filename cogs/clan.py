@@ -36,28 +36,6 @@ class ClanCog(commands.Cog):
                 current_view = 2
         await clan.command_clan_members(self.bot, ctx, current_view)
 
-    @commands.command(name='guild', aliases=('clan',))
-    @commands.bot_has_permissions(send_messages=True, embed_links=True)
-    async def prefix_clan_members(self, ctx: Union[commands.Context, discord.Message], *args: str) -> None:
-        """Shows the clan members with the highest top 3 power (prefix version)"""
-        arguments = ' '.join(args).lower() if args else ''
-        current_view = 0
-        strings_guild_seals = [
-            'seal',
-            'contribut',
-            'inv',
-        ]
-        if any(string in arguments for string in strings_guild_seals):
-            current_view = 1
-        strings_guild_seals = [
-            'claim',
-            'last',
-            'lc',
-        ]
-        if any(string in arguments for string in strings_guild_seals):
-            current_view = 2    
-        await clan.command_clan_members(self.bot, ctx, current_view)
-
 
 # Initialization
 def setup(bot):

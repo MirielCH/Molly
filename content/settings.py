@@ -534,8 +534,6 @@ async def embed_settings_reminders(bot: discord.Bot, ctx: discord.ApplicationCon
     reminder_channel = '`Last channel the reminder was updated in`'
     if user_settings.reminder_channel_id is not None:
         reminder_channel = f'<#{user_settings.reminder_channel_id}>'
-    guild_settings: guilds.Guild = await guilds.get_guild(ctx.guild.id)
-    prefix = guild_settings.prefix
     behaviour = (
         f'{emojis.BP} **DND mode**: {await functions.bool_to_text(user_settings.dnd_mode_enabled)}\n'
         f'{emojis.DETAIL} _If DND mode is enabled, Molly\'s reminders won\'t ping you._\n'
@@ -557,7 +555,8 @@ async def embed_settings_reminders(bot: discord.Bot, ctx: discord.ApplicationCon
         f'{emojis.BP} **Claim**: {await functions.bool_to_text(user_settings.reminder_claim.enabled)}\n'
         f'{emojis.BP} **Daily**: {await functions.bool_to_text(user_settings.reminder_daily.enabled)}\n'
         f'{emojis.BP} **Energy**: {await functions.bool_to_text(user_settings.reminder_energy.enabled)}\n'
-        f'{emojis.DETAIL} _You can create a reminder from `{prefix}list` or the profile timers (if enabled)._\n'
+        f'{emojis.DETAIL} _You can create a reminder from {await functions.get_bot_slash_command(bot, "reminders list")} '
+        f'or the profile timers (if enabled)._\n'
         f'{emojis.BP} **Shop items**: {await functions.bool_to_text(user_settings.reminder_shop.enabled)}\n'
         f'{emojis.DETAIL2} _Shows when sold out items are restocked in the {strings.SLASH_COMMANDS["shop list"]}._\n'
         f'{emojis.DETAIL} _Note that you need to open the shop to create reminders._\n'
@@ -583,15 +582,10 @@ async def embed_settings_reminders(bot: discord.Bot, ctx: discord.ApplicationCon
 async def embed_settings_server(bot: discord.Bot, ctx: discord.ApplicationContext,
                                 guild_settings: guilds.Guild) -> discord.Embed:
     """Server settings embed"""
-    server_settings = (
-        f'{emojis.BP} **Prefix**: `{guild_settings.prefix}`\n'
-        f'{emojis.DETAIL} _If you want to have a space after the prefix, you need to input it as `"prefix "`._'
-    )
     embed = discord.Embed(
         color = settings.EMBED_COLOR,
         title = f'{ctx.guild.name} server settings',
     )
-    embed.add_field(name='Settings', value=server_settings, inline=False)
     for event in strings.EVENTS:
         event_settings = getattr(guild_settings, f'event_{event}', None)
         if event_settings is None: continue
@@ -607,7 +601,7 @@ async def embed_settings_server(bot: discord.Bot, ctx: discord.ApplicationContex
 async def embed_settings_user(bot: discord.Bot, ctx: discord.ApplicationContext,
                               user_settings: users.User) -> discord.Embed:
     """User settings embed"""
-    bot = (
+    main = (
         f'{emojis.BP} **Bot**: {await functions.bool_to_text(user_settings.bot_enabled)}\n'
         f'{emojis.DETAIL} _You can toggle this with {await functions.get_bot_slash_command(bot, "on")} '
         f'and {await functions.get_bot_slash_command(bot, "off")}._\n'
@@ -623,7 +617,7 @@ async def embed_settings_user(bot: discord.Bot, ctx: discord.ApplicationContext,
         color = settings.EMBED_COLOR,
         title = f'{ctx.author.display_name}\'s user settings',
     )
-    embed.add_field(name='Main', value=bot, inline=False)
+    embed.add_field(name='Main', value=main, inline=False)
     embed.add_field(name='Tracking', value=tracking, inline=False)
     embed.add_field(name='Donor tier', value=donor_tier, inline=False)
     return embed

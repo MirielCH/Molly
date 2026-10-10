@@ -45,8 +45,7 @@ Reminder / Helper for the Discord bot IDLE FARM.
 
 ## Commands
 
-Molly uses slash commands but also supports some text commands.  
-Default prefix for text commands is `molly ` and is changeable in `/settings server`.  
+Molly uses slash commands and mention commands.  
 Use `/help` for an overview.  
 
 ## Dev commands

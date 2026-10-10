@@ -608,33 +608,6 @@ class SetReminderMessageButton(discord.ui.Button):
 
 
 # --- Settings: Server ---
-class ManageServerSettingsSelect(discord.ui.Select):
-    """Select to change server settings"""
-    def __init__(self, view: discord.ui.View, row: Optional[int] = None):
-        options = []
-        options.append(discord.SelectOption(label='Change prefix',
-                                            value='set_prefix', emoji=None))
-        super().__init__(placeholder='Change settings', min_values=1, max_values=1, options=options, row=row,
-                         custom_id='manage_server_settings')
-
-    async def callback(self, interaction: discord.Interaction):
-        select_value = self.values[0]
-        if select_value == 'set_prefix':
-            modal = modals.SetPrefixModal(self.view)
-            await interaction.response.send_modal(modal)
-            return
-        for child in self.view.children.copy():
-            if isinstance(child, ManageServerSettingsSelect):
-                self.view.remove_item(child)
-                self.view.add_item(ManageServerSettingsSelect(self.view))
-                break
-        embed = await self.view.embed_function(self.view.bot, self.view.ctx, self.view.guild_settings)
-        if interaction.response.is_done():
-            await interaction.message.edit(embed=embed, view=self.view)
-        else:
-            await interaction.response.edit_message(embed=embed, view=self.view)
-
-
 class ManageEventPingMessagesSelect(discord.ui.Select):
     """Select to change event ping messages"""
     def __init__(self, view: discord.ui.View, row: Optional[int] = None):

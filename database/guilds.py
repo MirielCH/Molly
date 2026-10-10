@@ -30,12 +30,10 @@ class Guild():
     event_lucky: EventPing
     event_packing: EventPing
     guild_id: int
-    prefix: str
 
     async def refresh(self) -> None:
         """Refreshes guild data from the database."""
         new_settings = await get_guild(self.guild_id)
-        self.prefix = new_settings.prefix
         self.event_energy = new_settings.event_energy
         self.event_hire = new_settings.event_hire
         self.event_lucky = new_settings.event_lucky
@@ -47,7 +45,6 @@ class Guild():
         Arguments
         ---------
         kwargs (column=value):
-            prefix: str
             event_energy_enabled: bool
             event_energy_message: str
             event_hire_enabled: bool
@@ -101,7 +98,6 @@ async def _dict_to_guild(record: dict) -> Guild:
                 message = record['event_packing_message'],
             ),
             guild_id = record['guild_id'],
-            prefix = record['prefix'],
         )
     except Exception as error:
         await errors.log_error(
@@ -110,62 +106,6 @@ async def _dict_to_guild(record: dict) -> Guild:
         raise LookupError(error)
 
     return guild
-
-
-async def _get_mixed_case_prefixes(prefix: str) -> List[str]:
-    """Turns a string into a list of all mixed case variations of said string
-
-    Returns
-    -------
-    All mixed case variations: List[str]
-    """
-    mixed_prefixes = []
-    all_prefixes = map(''.join, itertools.product(*((char.upper(), char.lower()) for char in prefix)))
-    for prefix in list(all_prefixes):
-        mixed_prefixes.append(prefix)
-    return mixed_prefixes
-
-
-# Read data
-async def get_all_prefixes(bot: commands.Bot, ctx: commands.Context) -> Tuple:
-    """Gets all prefixes. If no prefix is found, a record for the guild is created with the
-    default prefix.
-
-    Returns
-    -------
-    A tuple with the current server prefix and the pingable bot
-
-    Raises
-    ------
-    sqlite3.Error if something happened within the database.  Also logs this error to the database.
-    """
-    table = 'guilds'
-    function_name = 'get_all_prefixes'
-    sql = f'SELECT prefix FROM {table} WHERE guild_id=?'
-    guild_id = ctx.guild.id    
-    try:
-        cur = settings.DATABASE.cursor()
-        cur.execute(sql, (guild_id,))
-        record = cur.fetchone()
-        prefixes = []
-        if record:
-            prefix_db = record['prefix'].replace('"','')
-            prefix_db_mixed_case = await _get_mixed_case_prefixes(prefix_db)
-            for prefix in prefix_db_mixed_case:
-                prefixes.append(prefix)
-        else:
-            await insert_guild(guild_id)
-            prefix_default_mixed_case = await _get_mixed_case_prefixes(settings.DEFAULT_PREFIX)
-            for prefix in prefix_default_mixed_case:
-                prefixes.append(prefix)
-    except sqlite3.Error as error:
-        await errors.log_error(
-            strings.INTERNAL_ERROR_SQLITE3.format(error=error, table=table, function=function_name, sql=sql),
-            ctx
-        )
-        raise
-
-    return commands.when_mentioned_or(*prefixes)(bot, ctx)
 
 
 async def get_guild(guild_id: int) -> Guild:
@@ -208,7 +148,6 @@ async def _update_guild(guild_id: int, **kwargs) -> None:
     Arguments
     ---------
     kwargs (column=value):
-        prefix: str
         event_energy_enabled: bool
         event_energy_message: str
         event_hire_enabled: bool
@@ -262,7 +201,7 @@ async def insert_guild(guild_id: int) -> Guild:
     function_name = 'insert_guild'
     table = 'guilds'
     columns = ''
-    values = [guild_id, settings.DEFAULT_PREFIX]
+    values = [guild_id, 'molly ']
     for event, default_message in strings.DEFAULT_MESSAGES_EVENTS.items():
         columns = f'{columns},event_{event}_message'
         values.append(default_message)

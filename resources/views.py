@@ -448,7 +448,6 @@ class SettingsServerView(discord.ui.View):
             'Lucky reward': 'event_lucky',
             'Packing boxes': 'event_packing',
         }
-        self.add_item(components.ManageServerSettingsSelect(self))
         self.add_item(components.ToggleServerSettingsSelect(self, toggled_events, 'Toggle event pings'))
         self.add_item(components.ManageEventPingMessagesSelect(self))
 

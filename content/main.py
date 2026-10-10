@@ -89,47 +89,36 @@ async def embed_event_reductions(bot: discord.Bot, all_cooldowns: List[cooldowns
 
 async def embed_help(bot: discord.Bot, ctx: discord.ApplicationContext) -> discord.Embed:
     """Main menu embed"""
-    guild_settings: guilds.Guild = await guilds.get_guild(ctx.guild.id)
-    prefix = guild_settings.prefix
     commands_reminders = (
         f'{emojis.BP} {await functions.get_bot_slash_command(bot, "reminders list")} : Check your commands and reminders\n'
-        f'{emojis.DETAIL} _Aliases: `{prefix}list`, `{prefix}cd`_\n'
         f'{emojis.BP} {await functions.get_bot_slash_command(bot, "reminders add")} : Add a custom reminder\n'
-        f'{emojis.DETAIL} _Aliases: `{prefix}reminder`, `{prefix}rm`_\n'
 
     )
     commands_tracking = (
         f'{emojis.BP} {await functions.get_bot_slash_command(bot, "stats")} : Check your command stats\n'
-        f'{emojis.DETAIL} _Aliases: `{prefix}stats`, `{prefix}st`_\n'
         f'{emojis.BP} {await functions.get_bot_slash_command(bot, "workers")} : Check your worker power\n'
-        f'{emojis.DETAIL} _Aliases: `{prefix}workers`, `{prefix}wo`_\n'
     )
     commands_settings = (
         f'{emojis.BP} {await functions.get_bot_slash_command(bot, "on")} : Turn on Molly\n'
-        f'{emojis.DETAIL} _Aliases: `{prefix}on`_\n'
         f'{emojis.BP} {await functions.get_bot_slash_command(bot, "off")} : Turn off Molly\n'
-        f'{emojis.DETAIL} _Aliases: `{prefix}off`_\n'
         f'{emojis.BP} {await functions.get_bot_slash_command(bot, "settings helpers")} : Manage helpers\n'
         f'{emojis.BP} {await functions.get_bot_slash_command(bot, "settings messages")} : Manage reminder messages\n'
         f'{emojis.BP} {await functions.get_bot_slash_command(bot, "settings reminders")} : Manage reminder settings\n'
         f'{emojis.BP} {await functions.get_bot_slash_command(bot, "settings user")} : Manage user settings\n'
     )
-    guild_settings = (
+    settings_guild = (
         f'{emojis.BP} {await functions.get_bot_slash_command(bot, "settings guild")} : Manage guild reminders\n'
         f'{emojis.BP} {strings.SLASH_COMMANDS["guild list"]} : Add or update your guild\n'
         f'{emojis.BP} {await functions.get_bot_slash_command(bot, "guild members")} : Check power '
         f'and guild seals of your guild\n'
-        f'{emojis.DETAIL} _Aliases: `{prefix}guild`_\n'
     )
     server_settings = (
-        f'{emojis.BP} {await functions.get_bot_slash_command(bot, "settings server")} : Manage prefix and event pings\n'
+        f'{emojis.BP} {await functions.get_bot_slash_command(bot, "settings server")} : Manage event pings\n'
         f'{emojis.DETAIL} _Requires `Manage server` permission._\n'
     )
     commands_misc = (
         f'{emojis.BP} {await functions.get_bot_slash_command(bot, "calculator")} : A basic calculator\n'
-        f'{emojis.DETAIL} _Aliases: `{prefix}calc`_\n'
         f'{emojis.BP} {await functions.get_bot_slash_command(bot, "codes")} : All currently available codes\n'
-        f'{emojis.DETAIL} _Aliases: `{prefix}codes`_\n'
         f'{emojis.BP} {await functions.get_bot_slash_command(bot, "event-reductions")} : Check active event reductions\n'
         f'{emojis.BP} {await functions.get_bot_slash_command(bot, "purge data")} : Purge your user data\n'
     )
@@ -142,7 +131,7 @@ async def embed_help(bot: discord.Bot, ctx: discord.ApplicationContext) -> disco
     )
     embed.add_field(name='Reminders', value=commands_reminders, inline=False)
     embed.add_field(name='User settings', value=commands_settings, inline=False)
-    embed.add_field(name='Guild settings', value=guild_settings, inline=False)
+    embed.add_field(name='Guild settings', value=settings_guild, inline=False)
     embed.add_field(name='Server settings', value=server_settings, inline=False)
     embed.add_field(name='Tracking', value=commands_tracking, inline=False)
     embed.add_field(name='Miscellaneous', value=commands_misc, inline=False)

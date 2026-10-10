@@ -21,12 +21,6 @@ class WorkersCog(commands.Cog):
         """Shows all currently stored workers and their power"""
         await workers.command_workers_list(self.bot, ctx)
 
-    @commands.command(name='workers', aliases=('worker','wo'))
-    @commands.bot_has_permissions(send_messages=True, embed_links=True)
-    async def prefix_workers_list(self, ctx: Union[commands.Context, discord.Message]) -> None:
-        """Workers list command (prefix version)"""
-        await workers.command_workers_list(self.bot, ctx)
-
 
 # Initialization
 def setup(bot):

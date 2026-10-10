@@ -34,12 +34,6 @@ class MainCog(commands.Cog):
         """About command"""
         await main.command_about(self.bot, ctx)
 
-    @commands.command(name='help', aliases=('h',))
-    @commands.bot_has_permissions(send_messages=True, embed_links=True)
-    async def prefix_help(self, ctx: Union[commands.Context, discord.Message]) -> None:
-        """Main help command (prefix version)"""
-        await main.command_help(self.bot, ctx)
-
      # Events
     @commands.Cog.listener()
     async def on_application_command_error(self, ctx: discord.ApplicationContext, error: Exception) -> None:
@@ -166,7 +160,7 @@ class MainCog(commands.Cog):
             and (message.content.lower().replace('<@!','').replace('<@','').replace('>','')
                  .replace(str(self.bot.user.id),'')) == ''
         ):
-            await self.prefix_help(message)
+            await self.help(message)
 
     # Events
     @commands.Cog.listener()
@@ -183,9 +177,6 @@ class MainCog(commands.Cog):
             guild_settings: guilds.Guild = await guilds.get_guild(guild.id)
             welcome_message = (
                 f'Yeehaw! **{guild.name}**! I\'m here to help you with your IDLE FARMs!\n'
-                f'Some of my commands have prefix versions. My current prefix for this server is '
-                f'`{guild_settings.prefix}`. You can change this in '
-                f'{await functions.get_bot_slash_command(self.bot, "settings server")}.\n\n'
                 f'Note that I\'m off by default. Players that want to use me, need to use '
                 f'{await functions.get_bot_slash_command(self.bot, "on")} to activate me.\n'
             )
